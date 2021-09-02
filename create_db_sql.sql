@@ -1,0 +1,104 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS "Config_T";
+CREATE TABLE IF NOT EXISTS "Config_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"Program"	TEXT NOT NULL,
+	"Build"	TEXT NOT NULL,
+	"Config"	TEXT NOT NULL,
+	"Notes"	TEXT,
+	"OutDated_timestamp"	INTEGER NOT NULL DEFAULT 0,
+	UNIQUE("Program","Config","Build"),
+	PRIMARY KEY("PK")
+);
+DROP TABLE IF EXISTS "Tagger_Log_T";
+CREATE TABLE IF NOT EXISTS "Tagger_Log_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"FK_Config"	INTEGER NOT NULL,
+	"FK_RelStress"	INTEGER NOT NULL,
+	"WIP"	TEXT DEFAULT 'A',
+	"Station"	TEXT NOT NULL DEFAULT 'A',
+	"StartTimestamp"	REAL NOT NULL,
+	"EndTimestamp"	REAL NOT NULL,
+	"StartTime"	TEXT NOT NULL,
+	"EndTime"	TEXT NOT NULL,
+	"NameTag"	TEXT,
+	"FolderGroup"	TEXT,
+	"removed"	INTEGER NOT NULL DEFAULT 0,
+	"Notes"	TEXT,
+	"SampleSize"	INTEGER DEFAULT 1,
+	"SerialNumber"	TEXT,
+	"FailureMode"	TEXT,
+	PRIMARY KEY("PK")
+);
+DROP TABLE IF EXISTS "FALog_T";
+CREATE TABLE IF NOT EXISTS "FALog_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"FK_Config"	INTEGER NOT NULL DEFAULT 0,
+	"FK_RelStress"	INTEGER NOT NULL DEFAULT 0,
+	"Station"	TEXT NOT NULL DEFAULT 'A',
+	"SerialNumber"	TEXT NOT NULL DEFAULT 'A',
+	"Component"	TEXT DEFAULT 'A',
+	"FailureMode"	TEXT NOT NULL DEFAULT 'A',
+	"FA_Details"	TEXT DEFAULT 'A',
+	"StartTimestamp"	REAL NOT NULL,
+	"EndTimestamp"	REAL NOT NULL,
+	"StartTime"	TEXT NOT NULL,
+	"EndTime"	TEXT NOT NULL,
+	"removed"	INTEGER NOT NULL DEFAULT 0,
+	"FK_Tagger"	INTEGER,
+	"WIP"	TEXT,
+	PRIMARY KEY("PK")
+);
+DROP TABLE IF EXISTS "WIP_Status_T";
+CREATE TABLE IF NOT EXISTS "WIP_Status_T" (
+	"PK"	INTEGER NOT NULL,
+	"WIP"	TEXT NOT NULL DEFAULT NA,
+	"TimeStamp"	INTEGER NOT NULL,
+	"FK_RelStress"	INTEGER NOT NULL,
+	PRIMARY KEY("PK" AUTOINCREMENT)
+);
+DROP TABLE IF EXISTS "Config_SN_T";
+CREATE TABLE IF NOT EXISTS "Config_SN_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"Config_FK"	INTEGER NOT NULL,
+	"SerialNumber"	TEXT NOT NULL UNIQUE,
+	"DateAdded"	INTEGER,
+	"WIP"	TEXT,
+	"Stress_FK"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("PK" AUTOINCREMENT)
+);
+DROP TABLE IF EXISTS "RelLog_T";
+CREATE TABLE IF NOT EXISTS "RelLog_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"SerialNumber"	TEXT,
+	"Station"	TEXT NOT NULL,
+	"WIP"	TEXT DEFAULT 'NA',
+	"StartTimestamp"	REAL NOT NULL,
+	"EndTimestamp"	REAL,
+	"StartTime"	TEXT NOT NULL,
+	"EndTime"	TEXT,
+	"Notes"	TEXT,
+	"removed"	INTEGER NOT NULL DEFAULT 0,
+	"FK_Tagger"	INTEGER,
+	PRIMARY KEY("PK")
+);
+DROP TABLE IF EXISTS "RelStress_T";
+CREATE TABLE IF NOT EXISTS "RelStress_T" (
+	"PK"	INTEGER NOT NULL UNIQUE,
+	"RelStress"	TEXT NOT NULL,
+	"RelCheckpoint"	TEXT NOT NULL,
+	"DaysTillReachCheckpoint"	INTEGER DEFAULT 3,
+	"removed"	INTEGER DEFAULT 0,
+	"seqence"	INTEGER DEFAULT 0,
+	PRIMARY KEY("PK" AUTOINCREMENT),
+	UNIQUE("RelStress","RelCheckpoint")
+);
+DROP INDEX IF EXISTS "sn_table_index";
+CREATE INDEX IF NOT EXISTS "sn_table_index" ON "Config_SN_T" (
+	"SerialNumber",
+	"WIP",
+	"Stress_FK",
+	"Config_FK",
+	"DateAdded"
+);
+COMMIT;
