@@ -4,8 +4,7 @@ import os
 import sqlite3
 import sys
 import pandas as pd
-
-
+import timeit
 
 golden = 'temp.db'
 RMD = "ReliabilityManagementDB.db"
@@ -78,6 +77,7 @@ class DBsqlite:
 
     def __init__(self, address):
         self.__address__ = address
+        self.db_memory = sqlite3.connect(':memory:')
         self.__connect__()
         self.filter_set = dict(
             {
@@ -92,6 +92,38 @@ class DBsqlite:
                 "latest": False
             }
         )
+        self.df_latest_sn_history = self.__db_create_latest_sn_history__()
+
+    @property
+    def filtered_record_df(self):
+        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
+        #     record = self.cache_rel_log
+        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
+        #     record = self.cache_latest_sn_history
+        # else:
+        record = self.df_latest_sn_history
+        result = record[record["WIP"]==self.filter_set.get("wip")]
+        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
+        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
+        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
+        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
+        return result
+
+
+
+    def filtered_record_sql(self):
+        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
+        #     record = self.cache_rel_log
+        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
+        #     record = self.cache_latest_sn_history
+        # else:
+        record = self.df_latest_sn_history
+        result = record[record["WIP"]==self.filter_set.get("wip")]
+        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
+        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
+        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
+        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
+        return result
 
     @functools.cached_property
     def cache_sn_table(self):
@@ -217,11 +249,30 @@ class DBsqlite:
                              "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ")
         return RecordsDb(results, key="SerialNumber")
 
-    def clear_cache(self,cache_name):
-        if hasattr( object, cache_name ):
+    def __db_create_latest_sn_history__(self):
+        result = pd.read_sql_query("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
+                                   "RelLog_T.Notes from Config_SN_T "
+                                   "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
+                                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
+                                   "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
+                                   "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ", self.con)
+        return result
+
+    def __sql_create_latest_sn_history__(self):
+        result = self.db_memory.execute("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
+                                   "RelLog_T.Notes from Config_SN_T "
+                                   "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
+                                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
+                                   "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
+                                   "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK WHERE Config_SN_T.WIP = ?", (self.filter_set.get("wip"),))
+        return result
+
+    def clear_cache(self, cache_name):
+
+        if hasattr(object, cache_name):
             delattr(self, cache_name)
         else:
-            print(cache_name," doesn't exist")
+            print(cache_name, " doesn't exist")
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)
@@ -232,9 +283,8 @@ class DBsqlite:
         self.con.close()
 
     def fetch(self, sql):
-        # self.cur.execute(sql)
-        # result = self.cur.fetchall()
-        result = pd.read_sql_query(sql, self.con)
+        self.cur.execute(sql)
+        result = self.cur.fetchall()
         return result
 
     def execute(self, sql):

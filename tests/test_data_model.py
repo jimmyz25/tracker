@@ -63,8 +63,9 @@ def test_record_filter():
     def func(x):
         return x.get("SerialNumber") in {"32ANN3Q31MRB", "dfasdf"}
 
-    for i in range(100):
+    for i in range(1):
         a = db.cache_sn_table.record_filter(func=func).record_filter(func=func)
+        print(timeit.timeit(lambda: db.cache_sn_table.record_filter(func=func).record_filter(func=func), number=1000))
     assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
 
 
@@ -72,8 +73,9 @@ def test_key_filter():
     def func(x):
         return x.get("SerialNumber") == "32ANN3Q31MRB"
 
-    for i in range(100):
+    for i in range(1):
         a = db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func)
+        print(timeit.timeit(lambda: db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func), number=1000))
         assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
 
 
@@ -107,8 +109,9 @@ def test_stress():
 
 
 def test_latest_sn_history():
-    a = db.cache_latest_sn_history
     for i in range(1):
+        a = db.cache_latest_sn_history
+        # delattr(db,"cache_latest_sn_history")
         assert a.records.get("41C36MX9YSJM").get("Config_FK") == 1
 
 
@@ -144,6 +147,23 @@ def test_filtered_record():
     db.filter_set.clear()
     db.filter_set.update({"serial_number": "41C36MX9YSJM"})
     db.filter_set.update({"wip": "1675676"})
+    print(timeit.timeit(lambda: db.filtered_record.records.values(), number=1000))
     a = list(db.filtered_record.records.values())
     assert a[0].get("SerialNumber") == "41C36MX9YSJM"
 
+
+def test_dbsqlite():
+    db.__connect__()
+    print(timeit.timeit(lambda: db.con.backup(db.db_memory), number=20))
+    # for i in range (100):
+    #     a = db.__db_create_latest_sn_history__()
+    assert 1 == 1
+
+
+def test_filtered_record_df():
+    db.filter_set.clear()
+    db.filter_set.update({"serial_number": "41C36MX9YSJM"})
+    db.filter_set.update({"wip": "1675676"})
+
+    print(timeit.timeit(lambda: db.filtered_record_df, number=1000))
+    assert 1==1
