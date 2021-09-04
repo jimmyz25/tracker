@@ -34,9 +34,14 @@ def test_clear_cache():
 
 
 def test_sn_exist():
-    db = DBsqlite(RMD)
-    for i in range(100):
-        assert db.sn_exist("a") is False
+    print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=100000))
+    for i in range(1):
+        assert db.sn_exist("32ANN3Q31MRB") is True
+
+
+def test_stress_exist():
+    print(timeit.timeit(lambda: db.stress_exist(1), number=100000))
+    assert 1 == 1
 
 
 def test_update_sn_table():
@@ -52,31 +57,24 @@ def test_sync_wip_table():
 
 
 def test_wip_exist():
+    print(timeit.timeit(lambda: db.wip_exist(("asdfasdf")), number=1000))
     assert db.wip_exist("assdf") is False
 
 
 def test_config_exist():
-    assert db.config_exist(100) is False
+    print(timeit.timeit(lambda: db.config_exist(1), number=1000))
+    assert db.config_exist(1) is True
 
 
-def test_record_filter():
-    def func(x):
-        return x.get("SerialNumber") in {"32ANN3Q31MRB", "dfasdf"}
-
-    for i in range(1):
-        a = db.cache_sn_table.record_filter(func=func).record_filter(func=func)
-        print(timeit.timeit(lambda: db.cache_sn_table.record_filter(func=func).record_filter(func=func), number=1000))
-    assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
-
-
-def test_key_filter():
-    def func(x):
-        return x.get("SerialNumber") == "32ANN3Q31MRB"
-
-    for i in range(1):
-        a = db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func)
-        print(timeit.timeit(lambda: db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func), number=1000))
-        assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
+#
+# def test_key_filter():
+#     def func(x):
+#         return x.get("SerialNumber") == "32ANN3Q31MRB"
+#
+#     for i in range(1):
+#         a = db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func)
+#         print(timeit.timeit(lambda: db.cache_sn_table.key_filter("32ANN3Q31MRB").record_filter(func), number=1000))
+#         assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
 
 
 def test_sync_config_table():
@@ -115,10 +113,11 @@ def test_latest_sn_history():
         assert a.records.get("41C36MX9YSJM").get("Config_FK") == 1
 
 
-def test_selected_config_pk():
+def test_selected_config_pks():
     db.filter_set.update({"program": "Program1"})
     db.filter_set.update({"build": "P1"})
     db.filter_set.update({"config": "Config11"})
+    print(timeit.timeit(lambda: db.selected_config_pks, number=1000))
     a = db.selected_config_pks
     assert a.pop() == 1
 
@@ -137,6 +136,7 @@ def test_ckp_list_to_select():
 
 
 def test_selected_ckp_pks():
+    db.filter_set.clear()
     db.filter_set.update({"stress": "RelStress1"})
     db.filter_set.update({"checkpoint": "RelCheckpoint1-1"})
     a = db.selected_stress_pks
@@ -147,9 +147,21 @@ def test_filtered_record():
     db.filter_set.clear()
     db.filter_set.update({"serial_number": "41C36MX9YSJM"})
     db.filter_set.update({"wip": "1675676"})
-    print(timeit.timeit(lambda: db.filtered_record.records.values(), number=1000))
-    a = list(db.filtered_record.records.values())
-    assert a[0].get("SerialNumber") == "41C36MX9YSJM"
+    db.filter_set.update({"filter_table": "RelLog_T"})
+    print(timeit.timeit(lambda: db.filtered_record, number=1000))
+    a = db.filtered_record
+    assert a[0]["SerialNumber"] == "41C36MX9YSJM"
+
+
+# def test_record_filter():
+#     def func(x):
+#         return x.get("SerialNumber") in {"32ANN3Q31MRB", "dfasdf"}
+#
+#     db.filter_set.update({"filter_table": "RelLog_T"})
+#     # a = db.cache_sn_table.record_filter(func=func).record_filter(func=func)
+#     a = db.
+#     print(timeit.timeit(lambda: db.cache_sn_table.record_filter(func=func).record_filter(func=func), number=100))
+#     assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
 
 
 def test_dbsqlite():
@@ -160,10 +172,12 @@ def test_dbsqlite():
     assert 1 == 1
 
 
-def test_filtered_record_df():
-    db.filter_set.clear()
-    db.filter_set.update({"serial_number": "41C36MX9YSJM"})
-    db.filter_set.update({"wip": "1675676"})
+def test_sql_filter_str():
+    kwp = {
+        "CONFIG_FK": (1, 2, 3),
+        "SerialNumber": "abc",
+        "Program": "program1"
+    }
 
-    print(timeit.timeit(lambda: db.filtered_record_df, number=1000))
-    assert 1==1
+    print(db.sql_filter_str(kwp))
+    assert 1 == 1

@@ -5,6 +5,7 @@ import sqlite3
 import sys
 import pandas as pd
 import timeit
+import re
 
 golden = 'temp.db'
 RMD = "ReliabilityManagementDB.db"
@@ -60,25 +61,30 @@ class DBsqlite:
      on timestamp.
     """
 
+
     @staticmethod
-    def filter_func(x, parameter: str, value_set: set):
-        if isinstance(value_set, set):
-            if len(value_set) == 0:
-                return True
-            else:
-                return x.get(parameter) in value_set
+    def sql_filter_str(kwp: dict):
+        row = []
+        for key, value in kwp.items():
+            if isinstance(value, str):
+                value.strip().strip("%")
+                row.append(f' {key} LIKE \"{value}%\"')
+            elif isinstance(value, int):
+                row.append(f'{key} = {value}')
+            elif isinstance(value, tuple):
+                row.append(f'{key} in {value}')
+        if any(kwp.values()):
+            sql = "WHERE " + " AND".join(row)
         else:
-            if isinstance(value_set, str):
-                return x.get(parameter).startswith(value_set)
-            elif isinstance(value_set, int):
-                return x.get(parameter) in {value_set}
-            else:
-                return True
+            sql = " AND".join(row)
+        return sql
 
     def __init__(self, address):
         self.__address__ = address
-        self.db_memory = sqlite3.connect(':memory:')
         self.__connect__()
+        self.db_memory = sqlite3.connect(':memory:')
+        self.con.backup(self.db_memory)
+
         self.filter_set = dict(
             {
                 "config": None,
@@ -94,40 +100,10 @@ class DBsqlite:
         )
         self.df_latest_sn_history = self.__db_create_latest_sn_history__()
 
-    @property
-    def filtered_record_df(self):
-        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
-        #     record = self.cache_rel_log
-        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
-        #     record = self.cache_latest_sn_history
-        # else:
-        record = self.df_latest_sn_history
-        result = record[record["WIP"]==self.filter_set.get("wip")]
-        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
-        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
-        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
-        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
-        return result
-
-
-
-    def filtered_record_sql(self):
-        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
-        #     record = self.cache_rel_log
-        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
-        #     record = self.cache_latest_sn_history
-        # else:
-        record = self.df_latest_sn_history
-        result = record[record["WIP"]==self.filter_set.get("wip")]
-        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
-        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
-        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
-        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
-        return result
-
     @functools.cached_property
     def cache_sn_table(self):
-        return self.__create_cache_sn_table__()
+        result = self.con.execute(f'SELECT * FROM Config_SN_T').fetchall()
+        return result
 
     @functools.cached_property
     def cache_wip_table(self):
@@ -151,54 +127,83 @@ class DBsqlite:
 
     @property
     def selected_config_pks(self):
-        result = self.cache_config_table \
-            .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
-            .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
-            .record_filter(self.filter_func, parameter="Config", value_set=self.filter_set.get("config")) \
-            .records.values()
-        result = [x.get("PK") for x in result]
-        return set(result)
+        # result = self.cache_config_table \
+        #     .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
+        #     .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
+        #     .record_filter(self.filter_func, parameter="Config", value_set=self.filter_set.get("config")) \
+        #     .records.values()
+        # result = [x.get("PK") for x in result]
+        # return set(result)
+        sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
+                                                                "Build": self.filter_set.get("build"),
+                                                                "Config": self.filter_set.get("config")})
+        results = self.cur.execute(sql).fetchall()
+        return set(result["PK"] for result in results)
 
     @property
     def selected_stress_pks(self):
-        result = self.cache_stress_table \
-            .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
-            .record_filter(self.filter_func, parameter="RelCheckpoint", value_set=self.filter_set.get("checkpoint")) \
-            .records.values()
-        result = [x.get("PK") for x in result]
-        return set(result)
+        # result = self.cache_stress_table \
+        #     .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
+        #     .record_filter(self.filter_func, parameter="RelCheckpoint", value_set=self.filter_set.get("checkpoint")) \
+        #     .records.values()
+        # result = [x.get("PK") for x in result]
+        # return set(result)
+
+        sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
+                                                                   "RelCheckpoint": self.filter_set.get("checkpoint")})
+        results = self.cur.execute(sql).fetchall()
+        return set(result["PK"] for result in results)
 
     @property
     def config_list_to_select(self):
-        result = self.cache_config_table \
-            .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
-            .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
-            .records.values()
-        result = [x.get("Config") for x in result]
-        return set(result)
+        # result = self.cache_config_table \
+        #     .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
+        #     .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
+        #     .records.values()
+        # result = [x.get("Config") for x in result]
+        # return set(result)
+        sql = "SELECT Config FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
+                                                                    "Build": self.filter_set.get("build")})
+        results = self.cur.execute(sql).fetchall()
+        return set(result["Config"] for result in results)
 
     @property
     def ckp_list_to_select(self):
-        result = self.cache_stress_table \
-            .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
-            .records.values()
-        result = [x.get("RelCheckpoint") for x in result]
-        return set(result)
+        # result = self.cache_stress_table \
+        #     .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
+        #     .records.values()
+        # result = [x.get("RelCheckpoint") for x in result]
+        # return set(result)
+        sql = "SELECT RelCheckpoint FROM RelStress_T " + \
+              self.sql_filter_str({"RelStress": self.filter_set.get("stress")})
+        results = self.cur.execute(sql).fetchall()
+        return set(result["RelCheckpoint"] for result in results)
 
     @property
     def filtered_record(self):
-        if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
-            record = self.cache_rel_log
-        elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
-            record = self.cache_latest_sn_history
-        else:
-            record = self.cache_rel_log
+        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
+        #     record = self.cache_rel_log
+        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
+        #     record = self.cache_latest_sn_history
+        # else:
+        #     record = self.cache_rel_log
+        #
+        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
+        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
+        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
+        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
+        # return result
+        table = self.filter_set.get("filter_table")
+        sql = f'SELECT SerialNumber FROM {table} ' + \
+              self.sql_filter_str({"WIP": self.filter_set.get("wip"),
+                                   "SerialNumber": self.filter_set.get("serial_number"),
+                                   "Config_FK": self.selected_config_pks,
+                                   "FK_RelStress": self.selected_stress_pks})+\
+            ' LIMIT 1000'
+        # print (sql)
+        results = self.cur.execute(sql).fetchall()
+        return results
 
-        result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
-            .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
-            .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
-            .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
-        return result
 
     @property
     def program_list(self):
@@ -260,11 +265,12 @@ class DBsqlite:
 
     def __sql_create_latest_sn_history__(self):
         result = self.db_memory.execute("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
-                                   "RelLog_T.Notes from Config_SN_T "
-                                   "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
-                                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
-                                   "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
-                                   "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK WHERE Config_SN_T.WIP = ?", (self.filter_set.get("wip"),))
+                                        "RelLog_T.Notes from Config_SN_T "
+                                        "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
+                                        " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
+                                        "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
+                                        "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK WHERE Config_SN_T.WIP = ?",
+                                        (self.filter_set.get("wip"),))
         return result
 
     def clear_cache(self, cache_name):
@@ -297,7 +303,8 @@ class DBsqlite:
         """
         if not isinstance(sn, str):
             raise TypeError
-        return sn.upper() in self.cache_sn_table.records.keys()
+        result = self.con.execute(f'SELECT SerialNumber FROM Config_SN_T WHERE SerialNumber =?', (sn,)).fetchone()
+        return result is not None
 
     def wip_exist(self, wip):
         """
@@ -306,7 +313,9 @@ class DBsqlite:
         """
         if not isinstance(wip, str):
             raise TypeError
-        return wip.upper() in self.cache_wip_table.records.keys()
+        result = self.db_memory.execute(f'SELECT WIP FROM WIP_Status_T WHERE WIP =? LIMIT 1', (wip,)).fetchone()
+        return result is not None
+        # return wip.upper() in self.cache_wip_table.records.keys()
 
     def config_exist(self, idx):
         """
@@ -315,7 +324,9 @@ class DBsqlite:
         """
         if not isinstance(idx, int):
             raise TypeError
-        return idx in self.cache_config_table.records.keys()
+        # return idx in self.cache_config_table.records.keys()
+        result = self.con.execute(f'SELECT PK FROM Config_T WHERE PK =?', (idx,)).fetchone()
+        return result is not None
 
     def stress_exist(self, idx):
         """
@@ -324,7 +335,9 @@ class DBsqlite:
         """
         if not isinstance(idx, int):
             raise TypeError
-        return idx in self.cache_stress_table.records.keys()
+        # return idx in self.cache_stress_table.records.keys()
+        result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
+        return result is not None
 
     def get_sn_row(self, pk):
         result = self.cur.execute("SELECT Config_FK,Stress_FK,WIP,DateAdded,SerialNumber from Config_SN_T"
@@ -342,19 +355,22 @@ class DBsqlite:
             return dict(result)
 
     def sync_sn_table(self, rows):
-        for sn, row in rows.records.items():
-            if self.sn_exist(sn):
+        for row in rows:
+            if self.sn_exist(row["SerialNumber"]):
                 sql = f'UPDATE Config_SN_T SET Config_FK= ?,DateAdded = ?,WIP=?,Stress_FK=? WHERE ' \
-                      f'DateAdded<{row.get("DateAdded")}' \
+                      f'DateAdded<{row["DateAdded"]}' \
                       f' and SerialNumber = ?'
+                # print( (row["Config_FK"], row["DateAdded"], row["WIP"],
+                #                   row["Stress_FK"],
+                #                   row["SerialNumber"]))
                 self.cur.execute(sql,
-                                 (row.get("Config_FK"), row.get("DateAdded"), row.get("DateAdded"),
-                                  row.get("Stress_FK"),
-                                  sn))
+                                 (row["Config_FK"], row["DateAdded"], row["WIP"],
+                                  row["Stress_FK"],
+                                  row["SerialNumber"]))
             else:
                 self.cur.execute(f'INSERT INTO Config_SN_T (SerialNumber,Config_FK, Stress_FK, DateAdded, WIP)'
                                  f' VALUES (?,?,?,?,?)',
-                                 (sn, row.get("Config_FK"), row.get("Stress_FK"), row.get("DateAdded"), row.get("WIP")))
+                                 (row["SerialNumber"],row["Config_FK"], row["Stress_FK"], row["DateAdded"], row["WIP"]))
         self.con.commit()
         return True
 
