@@ -60,8 +60,6 @@ class DBsqlite:
     this is a database model to handle all database related operations, silver station will sync with gold station based
      on timestamp.
     """
-
-
     @staticmethod
     def sql_filter_str(kwp: dict):
         row = []
@@ -98,42 +96,15 @@ class DBsqlite:
                 "latest": False
             }
         )
-        self.df_latest_sn_history = self.__db_create_latest_sn_history__()
 
-    @functools.cached_property
+    @property
     def cache_sn_table(self):
-        result = self.con.execute(f'SELECT * FROM Config_SN_T').fetchall()
-        return result
-
-    @functools.cached_property
-    def cache_wip_table(self):
-        return self.__create_cache_wip_table__()
-
-    @functools.cached_property
-    def cache_latest_sn_history(self):
-        return self.__create_latest_sn_history__()
-
-    @functools.cached_property
-    def cache_rel_log(self):
-        return self.__create_cache_rel_log__()
-
-    @functools.cached_property
-    def cache_stress_table(self):
-        return self.__create_cache_stress_table__()
-
-    @functools.cached_property
-    def cache_config_table(self):
-        return self.__create_cache_config_table__()
+        sql = f'SELECT * FROM Config_SN_T ORDER BY DateAdded DESC LIMIT 50000'
+        results = self.cur.execute(sql).fetchall()
+        return results
 
     @property
     def selected_config_pks(self):
-        # result = self.cache_config_table \
-        #     .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
-        #     .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
-        #     .record_filter(self.filter_func, parameter="Config", value_set=self.filter_set.get("config")) \
-        #     .records.values()
-        # result = [x.get("PK") for x in result]
-        # return set(result)
         sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
                                                                 "Build": self.filter_set.get("build"),
                                                                 "Config": self.filter_set.get("config")})
@@ -142,13 +113,6 @@ class DBsqlite:
 
     @property
     def selected_stress_pks(self):
-        # result = self.cache_stress_table \
-        #     .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
-        #     .record_filter(self.filter_func, parameter="RelCheckpoint", value_set=self.filter_set.get("checkpoint")) \
-        #     .records.values()
-        # result = [x.get("PK") for x in result]
-        # return set(result)
-
         sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
                                                                    "RelCheckpoint": self.filter_set.get("checkpoint")})
         results = self.cur.execute(sql).fetchall()
@@ -156,12 +120,6 @@ class DBsqlite:
 
     @property
     def config_list_to_select(self):
-        # result = self.cache_config_table \
-        #     .record_filter(self.filter_func, parameter="Program", value_set=self.filter_set.get("program")) \
-        #     .record_filter(self.filter_func, parameter="Build", value_set=self.filter_set.get("build")) \
-        #     .records.values()
-        # result = [x.get("Config") for x in result]
-        # return set(result)
         sql = "SELECT Config FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
                                                                     "Build": self.filter_set.get("build")})
         results = self.cur.execute(sql).fetchall()
@@ -169,11 +127,6 @@ class DBsqlite:
 
     @property
     def ckp_list_to_select(self):
-        # result = self.cache_stress_table \
-        #     .record_filter(self.filter_func, parameter="RelStress", value_set=self.filter_set.get("stress")) \
-        #     .records.values()
-        # result = [x.get("RelCheckpoint") for x in result]
-        # return set(result)
         sql = "SELECT RelCheckpoint FROM RelStress_T " + \
               self.sql_filter_str({"RelStress": self.filter_set.get("stress")})
         results = self.cur.execute(sql).fetchall()
@@ -181,18 +134,6 @@ class DBsqlite:
 
     @property
     def filtered_record(self):
-        # if self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is False:
-        #     record = self.cache_rel_log
-        # elif self.filter_set.get("filter_table") == "RelLog_T" and self.filter_set.get("latest") is True:
-        #     record = self.cache_latest_sn_history
-        # else:
-        #     record = self.cache_rel_log
-        #
-        # result = record.record_filter(self.filter_func, parameter="WIP", value_set=self.filter_set.get("wip")) \
-        #     .record_filter(self.filter_func, parameter="SerialNumber", value_set=self.filter_set.get("serial_number")) \
-        #     .record_filter(self.filter_func, parameter="Config_FK", value_set=self.selected_config_pks) \
-        #     .record_filter(self.filter_func, parameter="FK_RelStress", value_set=self.selected_stress_pks)
-        # return result
         table = self.filter_set.get("filter_table")
         sql = f'SELECT SerialNumber FROM {table} ' + \
               self.sql_filter_str({"WIP": self.filter_set.get("wip"),
@@ -200,41 +141,26 @@ class DBsqlite:
                                    "Config_FK": self.selected_config_pks,
                                    "FK_RelStress": self.selected_stress_pks})+\
             ' LIMIT 1000'
-        # print (sql)
         results = self.cur.execute(sql).fetchall()
         return results
 
-
-    @property
+    @functools.cached_property
     def program_list(self):
-        program = [record.get("Program") for record in self.cache_config_table.records.values()]
-        return set(program)
+        sql = "SELECT Distinct Program FROM Config_T "
+        results = self.cur.execute(sql).fetchall()
+        return set(result["Program"] for result in results)
 
-    @property
+    @functools.cached_property
     def build_list(self):
-        build = [record.get("Build") for record in self.cache_config_table.records.values()]
-        return set(build)
+        sql = "SELECT Distinct Build FROM Config_T "
+        results = self.cur.execute(sql).fetchall()
+        return set(result["Build"] for result in results)
 
-    @property
+    @functools.cached_property
     def stress_list(self):
-        stress = [record.get("RelStress") for record in self.cache_stress_table.records.values()]
-        return set(stress)
-
-    def __create_cache_sn_table__(self):
-        results = self.fetch("SELECT * from Config_SN_T")
-        return RecordsDb(results, key="SerialNumber")
-
-    def __create_cache_wip_table__(self):
-        results = self.fetch("SELECT * FROM WIP_Status_T")
-        return RecordsDb(results, key="WIP")
-
-    def __create_cache_config_table__(self):
-        results = self.fetch("SELECT * FROM Config_T")
-        return RecordsDb(results, key="PK")
-
-    def __create_cache_stress_table__(self):
-        results = self.fetch("SELECT * FROM RelStress_T")
-        return RecordsDb(results, key="PK")
+        sql = "SELECT Distinct RelStress FROM RelStress_T "
+        results = self.cur.execute(sql).fetchall()
+        return set(result["RelStress"] for result in results)
 
     def __create_cache_rel_log__(self):
         results = self.fetch("SELECT RelLog_T.*,Config_SN_T.Config_FK,Config_SN_T.Stress_FK,"
@@ -253,32 +179,6 @@ class DBsqlite:
                              "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
                              "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ")
         return RecordsDb(results, key="SerialNumber")
-
-    def __db_create_latest_sn_history__(self):
-        result = pd.read_sql_query("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
-                                   "RelLog_T.Notes from Config_SN_T "
-                                   "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
-                                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
-                                   "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
-                                   "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ", self.con)
-        return result
-
-    def __sql_create_latest_sn_history__(self):
-        result = self.db_memory.execute("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
-                                        "RelLog_T.Notes from Config_SN_T "
-                                        "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
-                                        " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
-                                        "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
-                                        "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK WHERE Config_SN_T.WIP = ?",
-                                        (self.filter_set.get("wip"),))
-        return result
-
-    def clear_cache(self, cache_name):
-
-        if hasattr(object, cache_name):
-            delattr(self, cache_name)
-        else:
-            print(cache_name, " doesn't exist")
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)
@@ -375,40 +275,42 @@ class DBsqlite:
         return True
 
     def sync_wip_table(self, rows):
-        for wip, row in rows.records.items():
-            if self.wip_exist(wip):
+        for row in rows:
+            if self.wip_exist(row["WIP"]):
                 sql = f'UPDATE WIP_Status_T SET TimeStamp= ?,FK_RelStress=? WHERE ' \
-                      f'WIP_Status_T.TimeStamp<{row.get("TimeStamp")}' \
+                      f'WIP_Status_T.TimeStamp<{row["TimeStamp"]}' \
                       f' and WIP = ?'
-                self.cur.execute(sql, (row.get("TimeStamp"), row.get("FK_RelStress"), wip))
+                self.cur.execute(sql, (row["TimeStamp"], row["FK_RelStress"], row["WIP"]))
             else:
                 self.cur.execute(f'INSERT INTO WIP_Status_T (WIP, TimeStamp, FK_RelStress)'
                                  f' VALUES (?,?,?)',
-                                 (row.get("WIP"), row.get("TimeStamp"), row.get("FK_RelStress")))
+                                 (row["WIP"], row["TimeStamp"], row["FK_RelStress"]))
         self.con.commit()
         return True
 
     def sync_config_table(self, rows):
-        for configid, row in rows.records.items():
-            if not self.config_exist(configid):
+        for row in rows:
+            if not self.config_exist(row["PK"]):
                 sql = f'INSERT INTO Config_T (PK, Program, Build, Config, Notes) Values (?,?,?,?,?)'
                 self.cur.execute(sql, (
-                    row.get("PK"), row.get("Program"), row.get("Build"), row.get("Config"), row.get("Notes")))
+                    row["PK"], row["Program"], row["Build"], row["Config"], row["Notes"]))
             else:
-                assert row.get("Config") == self.cache_config_table.records.get(configid).get("Config")
+                config_name = self.cur.execute("SELECT Config From Config_T WHERE PK = ?", row['PK'])
+                assert row["Config"] == config_name
         self.con.commit()
         return True
 
     def sync_stress_table(self, rows):
-        for stressid, row in rows.records.items():
-            if not self.stress_exist(stressid):
+        for row in rows:
+            if not self.stress_exist(row["PK"]):
                 sql = f'INSERT INTO RelStress_T (PK, RelStress, RelCheckpoint,DaysTillReachCheckpoint,' \
                       f'removed,seqence) Values (?,?,?,?,?,?)'
                 self.cur.execute(sql,
-                                 (row.get("PK"), row.get("RelStress"), row.get("RelCheckpoint"),
-                                  row.get("DaysTillReachCheckpoint"), row.get("removed"), row.get("seqence")))
+                                 (row["PK"], row["RelStress"], row["RelCheckpoint"],
+                                  row["DaysTillReachCheckpoint"], row["removed"], row["seqence"]))
             else:
-                assert row.get("RelCheckpoint") == self.cache_stress_table.records.get(stressid).get("RelCheckpoint")
+                checkpoint_name = self.cur.execute("SELECT RelCheckpoint From RelStress_T WHERE PK = ?", row['PK'])
+                assert row.get("RelCheckpoint") == checkpoint_name
         self.con.commit()
         return True
 

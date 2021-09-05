@@ -44,7 +44,7 @@ def test_stress_exist():
     assert 1 == 1
 
 
-def test_update_sn_table():
+def test_sync_sn_table():
     gold.sync_sn_table(db.cache_sn_table)
     db.sync_sn_table(gold.cache_sn_table)
     assert True is True
@@ -181,3 +181,17 @@ def test_sql_filter_str():
 
     print(db.sql_filter_str(kwp))
     assert 1 == 1
+
+
+def test_program_list():
+    a = db.program_list
+    print(a)
+    print(timeit.timeit(lambda: db.program_list, number=1000))
+    assert a == {'Program1', 'Program2'}
+
+
+def test_stress_list():
+    a = db.stress_list
+    print(a)
+    print(timeit.timeit(lambda: db.stress_list, number=1000))
+    assert a =={'HTHH(6590)', 'RelStress1'}
