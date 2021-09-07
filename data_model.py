@@ -60,6 +60,7 @@ class DBsqlite:
     this is a database model to handle all database related operations, silver station will sync with gold station based
      on timestamp.
     """
+
     @staticmethod
     def sql_filter_str(kwp: dict):
         row = []
@@ -104,6 +105,30 @@ class DBsqlite:
         return results
 
     @property
+    def cache_config_table(self):
+        sql = f'SELECT * FROM Config_T'
+        results = self.cur.execute(sql).fetchall()
+        return results
+
+    @property
+    def cache_wip_table(self):
+        sql = f'SELECT * FROM WIP_Status_T'
+        results = self.cur.execute(sql).fetchall()
+        return results
+
+    @property
+    def cache_stress_table(self):
+        sql = f'SELECT * FROM RelStress_T'
+        results = self.cur.execute(sql).fetchall()
+        return results
+
+    @property
+    def cache_rel_log_table(self, timestamp: float = 0):
+        sql = f'SELECT * FROM RelLog_T WHERE StartTimestamp>{timestamp}'
+        results = self.cur.execute(sql).fetchall()
+        return results
+
+    @property
     def selected_config_pks(self):
         sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
                                                                 "Build": self.filter_set.get("build"),
@@ -139,8 +164,8 @@ class DBsqlite:
               self.sql_filter_str({"WIP": self.filter_set.get("wip"),
                                    "SerialNumber": self.filter_set.get("serial_number"),
                                    "Config_FK": self.selected_config_pks,
-                                   "FK_RelStress": self.selected_stress_pks})+\
-            ' LIMIT 1000'
+                                   "FK_RelStress": self.selected_stress_pks}) + \
+              ' LIMIT 100'
         results = self.cur.execute(sql).fetchall()
         return results
 
@@ -161,15 +186,6 @@ class DBsqlite:
         sql = "SELECT Distinct RelStress FROM RelStress_T "
         results = self.cur.execute(sql).fetchall()
         return set(result["RelStress"] for result in results)
-
-    def __create_cache_rel_log__(self):
-        results = self.fetch("SELECT RelLog_T.*,Config_SN_T.Config_FK,Config_SN_T.Stress_FK,"
-                             " RelStress_T.RelStress, RelStress_T.RelCheckpoint "
-                             "FROM RelLog_T "
-                             "Inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber "
-                             "Inner Join RelStress_T ON RelStress_T.Pk = Config_SN_T.Stress_FK "
-                             "Inner Join Config_T ON Config_T.PK = Config_SN_T.Config_FK ")
-        return RecordsDb(results, key="PK")
 
     def __create_latest_sn_history__(self):
         results = self.fetch("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
@@ -239,20 +255,12 @@ class DBsqlite:
         result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
         return result is not None
 
-    def get_sn_row(self, pk):
-        result = self.cur.execute("SELECT Config_FK,Stress_FK,WIP,DateAdded,SerialNumber from Config_SN_T"
-                                  " WHERE PK = ? ", (pk,)).fetchone()
-        if result is not None:
-            return dict(result)
-        else:
-            return None
-
-    def get_config(self, idx):
-        result = self.cur.execute("SELECT Program,Build,Config from Config_T WHERE PK = ?", (idx,)).fetchone()
-        if result is None:
-            return dict()
-        else:
-            return dict(result)
+    # def get_config(self, idx):
+    #     result = self.cur.execute("SELECT Program,Build,Config from Config_T WHERE PK = ?", (idx,)).fetchone()
+    #     if result is None:
+    #         return dict()
+    #     else:
+    #         return dict(result)
 
     def sync_sn_table(self, rows):
         for row in rows:
@@ -270,7 +278,8 @@ class DBsqlite:
             else:
                 self.cur.execute(f'INSERT INTO Config_SN_T (SerialNumber,Config_FK, Stress_FK, DateAdded, WIP)'
                                  f' VALUES (?,?,?,?,?)',
-                                 (row["SerialNumber"],row["Config_FK"], row["Stress_FK"], row["DateAdded"], row["WIP"]))
+                                 (
+                                 row["SerialNumber"], row["Config_FK"], row["Stress_FK"], row["DateAdded"], row["WIP"]))
         self.con.commit()
         return True
 
@@ -295,8 +304,8 @@ class DBsqlite:
                 self.cur.execute(sql, (
                     row["PK"], row["Program"], row["Build"], row["Config"], row["Notes"]))
             else:
-                config_name = self.cur.execute("SELECT Config From Config_T WHERE PK = ?", row['PK'])
-                assert row["Config"] == config_name
+                config_name = self.cur.execute("SELECT Config From Config_T WHERE PK = ?", (row["PK"],)).fetchone()
+                assert row["Config"] == config_name["Config"]
         self.con.commit()
         return True
 
@@ -309,10 +318,25 @@ class DBsqlite:
                                  (row["PK"], row["RelStress"], row["RelCheckpoint"],
                                   row["DaysTillReachCheckpoint"], row["removed"], row["seqence"]))
             else:
-                checkpoint_name = self.cur.execute("SELECT RelCheckpoint From RelStress_T WHERE PK = ?", row['PK'])
-                assert row.get("RelCheckpoint") == checkpoint_name
+                checkpoint_name = self.cur.execute("SELECT RelCheckpoint From RelStress_T WHERE PK = ?", (row['PK'],)) \
+                    .fetchone()
+                assert row["RelCheckpoint"] == checkpoint_name["RelCheckpoint"]
         self.con.commit()
         return True
+
+    def sync_rel_log_table(self, rows):
+        # make SN + starttime unique index, insert or ignore from A to B, then insert or ignore from B to A
+        for row in rows:
+            sql = f'INSERT or IGNORE INTO RelLog_T (SerialNumber,Station,WIP,StartTimestamp,' \
+                  f'EndTimestamp,StartTime,EndTime,Notes,removed,FK_Tagger,FK_RelStress)' \
+                  f' Values (?,?,?,?,?,?,?,?,?,?,?)'
+            self.cur.execute(sql,
+                             (row["SerialNumber"], row["Station"], row["WIP"], row["StartTimestamp"],
+                              row["EndTimestamp"], row["StartTime"], row["EndTime"], row["Notes"],
+                              row["removed"], row["FK_Tagger"], row["FK_RelStress"]))
+        self.con.commit()
+        return True
+        pass
 
     # TODO: we can use delta from T0(earliest checkpoint) for each SN, to estimate time to complete a certain checkpoint
     def time_needed(self):
@@ -358,47 +382,104 @@ class DBsqlite:
 
 class ConfigModel:
     def __init__(self, idx: int, database: DBsqlite):
-        self.id = idx
         self.database = database
+        self.id = idx
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, idx):
+        sql = f'SELECT Config, Program, Build From Config_T WHERE PK = {idx}'
+        if self.database.config_exist(idx):
+            result = self.database.cur.execute(sql).fetchone()
+            self._id = idx
+            self._config_name = result["Config"]
+            self._build = result["Build"]
+            self._program = result["Program"]
+        else:
+            self._id = None
+            self._config_name = None
+            self._build = None
+            self._program = None
 
     @property
     def config_name(self):
-        return self.database.cache_config_table.records.get(self.id).get("Config")
+        return self._config_name
 
     @property
     def program(self):
-        return self.database.cache_config_table.records.get(self.id).get("Program")
+        return self._program
 
     @property
     def build(self):
-        return self.database.cache_config_table.records.get(self.id).get("Build")
+        return self._build
 
 
 class StressModel:
     def __init__(self, idx: int, database: DBsqlite):
-        self.id = idx
         self.database = database
+        self.id = idx
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, idx):
+        sql = f'SELECT RelStress, RelCheckpoint From RelStress_T WHERE PK = {idx}'
+        if self.database.stress_exist(idx):
+            result = self.database.cur.execute(sql).fetchone()
+            self._id = idx
+            self._rel_stress = result["RelStress"]
+            self._rel_checkpoint = result["RelCheckpoint"]
+        else:
+            self._id = None
+            self._rel_stress = None
+            self._rel_checkpoint = None
 
     @property
     def rel_stress(self):
-        return self.database.cache_stress_table.records.get(self.id).get("RelStress")
+        return self._rel_stress
 
     @property
     def rel_checkpoint(self):
-        return self.database.cache_stress_table.records.get(self.id).get("RelCheckpoint")
+        return self._rel_checkpoint
 
 
 class SnModel:
     def __init__(self, sn: str, database: DBsqlite):
-        self.serial_number = sn
         self.database = database
+        self.serial_number = sn
+
+    @property
+    def serial_number(self):
+        return self._serial_number
+
+    @serial_number.setter
+    def serial_number(self, sn):
+        sql = f'SELECT Config_FK, WIP, Stress_FK From Config_SN_T WHERE SerialNumber = "{sn}"'
+        if self.database.sn_exist(sn):
+            result = self.database.cur.execute(sql).fetchone()
+            self._serial_number = sn
+            self._config = ConfigModel(result["Config_FK"], self.database)
+            self._stress = StressModel(result["Stress_FK"], self.database)
+            self._wip = result["WIP"]
+        else:
+            self._serial_number = sn
+            self._config = None
+            self._stress = None
+            self._wip = None
 
     @property
     def config(self):
-        config_pk = self.database.cache_sn_table.records.get(self.serial_number).get("Config_FK")
-        return ConfigModel(config_pk, self.database)
+        return self._config
 
     @property
     def stress(self):
-        stress_pk = self.database.cache_sn_table.records.get(self.serial_number).get("Stress_FK")
-        return StressModel(stress_pk, self.database)
+        return self._stress
+
+    @property
+    def wip(self):
+        return self._wip

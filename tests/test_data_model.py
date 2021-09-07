@@ -28,19 +28,15 @@ gold = DBsqlite(golden)
 #     db.con.commit()
 # db.con.close()
 
-def test_clear_cache():
-    db.clear_cache("adf")
-    assert 1 == 1
-
 
 def test_sn_exist():
-    print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=100000))
+    print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=1000))
     for i in range(1):
         assert db.sn_exist("32ANN3Q31MRB") is True
 
 
 def test_stress_exist():
-    print(timeit.timeit(lambda: db.stress_exist(1), number=100000))
+    print(timeit.timeit(lambda: db.stress_exist(1), number=1000))
     assert 1 == 1
 
 
@@ -78,7 +74,7 @@ def test_config_exist():
 
 
 def test_sync_config_table():
-    for i in range(10):
+    for i in range(1):
         db.sync_config_table(gold.cache_config_table)
     assert 1 == 1
 
@@ -99,18 +95,19 @@ def test_rel_checkpoint():
     assert stress.rel_checkpoint == "RelCheckpoint1-1"
 
 
-def test_stress():
-    for i in range(10):
-        sn = SnModel("41C36MX9YSJM", db)
-        assert sn.config.config_name == "Config11"
-        assert sn.config.program == "Program1"
+def test_SN_init():
+    sn = SnModel("41C36MX9YSJM", db)
+    print(timeit.timeit(lambda: SnModel("41C36MX9YSJM", db), number=1000))
+    assert sn.config.config_name == "Config11"
+    assert sn.config.program == "Program1"
 
 
-def test_latest_sn_history():
-    for i in range(1):
-        a = db.cache_latest_sn_history
-        # delattr(db,"cache_latest_sn_history")
-        assert a.records.get("41C36MX9YSJM").get("Config_FK") == 1
+#
+# def test_latest_sn_history():
+#     for i in range(1):
+#         a = db.cache_latest_sn_history
+#         # delattr(db,"cache_latest_sn_history")
+#         assert a.records.get("41C36MX9YSJM").get("Config_FK") == 1
 
 
 def test_selected_config_pks():
@@ -163,13 +160,13 @@ def test_filtered_record():
 #     print(timeit.timeit(lambda: db.cache_sn_table.record_filter(func=func).record_filter(func=func), number=100))
 #     assert a.records.get("32ANN3Q31MRB").get("Config_FK") == 13
 
-
-def test_dbsqlite():
-    db.__connect__()
-    print(timeit.timeit(lambda: db.con.backup(db.db_memory), number=20))
-    # for i in range (100):
-    #     a = db.__db_create_latest_sn_history__()
-    assert 1 == 1
+#
+# def test_dbsqlite():
+#     db.__connect__()
+#     print(timeit.timeit(lambda: db.con.backup(db.db_memory), number=20))
+#     # for i in range (100):
+#     #     a = db.__db_create_latest_sn_history__()
+#     assert 1 == 1
 
 
 def test_sql_filter_str():
@@ -194,4 +191,9 @@ def test_stress_list():
     a = db.stress_list
     print(a)
     print(timeit.timeit(lambda: db.stress_list, number=1000))
-    assert a =={'HTHH(6590)', 'RelStress1'}
+    assert a == {'HTHH(6590)', 'RelStress1'}
+
+
+def test_sync_rel_log_table():
+    gold.sync_rel_log_table(db.cache_rel_log_table)
+    assert True == True
