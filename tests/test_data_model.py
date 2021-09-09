@@ -1,6 +1,6 @@
 import datetime
 from unittest import TestCase
-
+import timeit
 from data_model import *
 import random
 import string
@@ -74,14 +74,12 @@ def test_config_exist():
 
 
 def test_sync_config_table():
-    for i in range(1):
-        db.sync_config_table(gold.cache_config_table)
+    db.sync_config_table(gold.cache_config_table)
     assert 1 == 1
 
 
 def test_sync_stress_table():
-    for i in range(10):
-        db.sync_stress_table(gold.cache_stress_table)
+    db.sync_stress_table(gold.cache_stress_table)
     assert 1 == 1
 
 
@@ -189,7 +187,6 @@ def test_program_list():
 
 def test_stress_list():
     a = db.stress_list
-    print(a)
     print(timeit.timeit(lambda: db.stress_list, number=1000))
     assert a == {'HTHH(6590)', 'RelStress1'}
 
@@ -197,3 +194,19 @@ def test_stress_list():
 def test_sync_rel_log_table():
     gold.sync_rel_log_table(db.cache_rel_log_table)
     assert True == True
+
+
+def test_latest_sn_history():
+    db.filter_set.clear()
+    db.filter_set.update({"serial_number": "41C36MX9YSJM"})
+    db.filter_set.update({"wip": "1675676"})
+    db.filter_set.update({"filter_table": "RelLog_T"})
+    print(timeit.timeit(lambda: db.latest_sn_history, number=1000))
+    a = db.filtered_record
+    assert a[0]["SerialNumber"] == "41C36MX9YSJM"
+
+
+def test_unit_count():
+    count = ConfigModel(1, db).unit_count
+    print(timeit.timeit(lambda: ConfigModel(1, db).unit_count, number=1000))
+    assert count == 1059

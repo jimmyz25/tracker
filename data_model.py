@@ -3,9 +3,6 @@ import functools
 import os
 import sqlite3
 import sys
-import pandas as pd
-import timeit
-import re
 
 golden = 'temp.db'
 RMD = "ReliabilityManagementDB.db"
@@ -169,32 +166,39 @@ class DBsqlite:
         results = self.cur.execute(sql).fetchall()
         return results
 
-    @functools.cached_property
+    @property
     def program_list(self):
         sql = "SELECT Distinct Program FROM Config_T "
         results = self.cur.execute(sql).fetchall()
         return set(result["Program"] for result in results)
 
-    @functools.cached_property
+    @property
     def build_list(self):
         sql = "SELECT Distinct Build FROM Config_T "
         results = self.cur.execute(sql).fetchall()
         return set(result["Build"] for result in results)
 
-    @functools.cached_property
+    @property
     def stress_list(self):
         sql = "SELECT Distinct RelStress FROM RelStress_T "
         results = self.cur.execute(sql).fetchall()
         return set(result["RelStress"] for result in results)
 
-    def __create_latest_sn_history__(self):
-        results = self.fetch("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
-                             "RelLog_T.Notes from Config_SN_T "
-                             "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
-                             " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
-                             "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
-                             "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ")
-        return RecordsDb(results, key="SerialNumber")
+    @property
+    def latest_sn_history(self):
+        sql = "SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp," \
+              " RelLog_T.Notes from Config_SN_T " \
+              "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+              " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+              "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
+              "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
+              self.sql_filter_str({"Config_SN_T.WIP": self.filter_set.get("wip"),
+                                   "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
+                                   "Config_FK": self.selected_config_pks,
+                                   "FK_RelStress": self.selected_stress_pks}) + \
+              ' LIMIT 50'
+        results = self.cur.execute(sql).fetchall()
+        return results
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)
@@ -255,22 +259,12 @@ class DBsqlite:
         result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
         return result is not None
 
-    # def get_config(self, idx):
-    #     result = self.cur.execute("SELECT Program,Build,Config from Config_T WHERE PK = ?", (idx,)).fetchone()
-    #     if result is None:
-    #         return dict()
-    #     else:
-    #         return dict(result)
-
     def sync_sn_table(self, rows):
         for row in rows:
             if self.sn_exist(row["SerialNumber"]):
                 sql = f'UPDATE Config_SN_T SET Config_FK= ?,DateAdded = ?,WIP=?,Stress_FK=? WHERE ' \
                       f'DateAdded<{row["DateAdded"]}' \
                       f' and SerialNumber = ?'
-                # print( (row["Config_FK"], row["DateAdded"], row["WIP"],
-                #                   row["Stress_FK"],
-                #                   row["SerialNumber"]))
                 self.cur.execute(sql,
                                  (row["Config_FK"], row["DateAdded"], row["WIP"],
                                   row["Stress_FK"],
@@ -279,7 +273,9 @@ class DBsqlite:
                 self.cur.execute(f'INSERT INTO Config_SN_T (SerialNumber,Config_FK, Stress_FK, DateAdded, WIP)'
                                  f' VALUES (?,?,?,?,?)',
                                  (
-                                 row["SerialNumber"], row["Config_FK"], row["Stress_FK"], row["DateAdded"], row["WIP"]))
+                                     row["SerialNumber"], row["Config_FK"], row["Stress_FK"], row["DateAdded"],
+                                     row["WIP"])
+                                 )
         self.con.commit()
         return True
 
@@ -339,11 +335,6 @@ class DBsqlite:
         pass
 
     # TODO: we can use delta from T0(earliest checkpoint) for each SN, to estimate time to complete a certain checkpoint
-    def time_needed(self):
-        pass
-
-    def add_description(self, records: dict):
-        pass
 
     def __get_col_names__(self, table_name):
         cols = []
@@ -358,9 +349,7 @@ class DBsqlite:
         question_marks = "(" + ",".join(["?" for _ in range(column_count)]) + ")"
         return question_marks
 
-    def insert_to_table(self, log: dict, tablename: str):
-        print("prepare to insert to {}".format(tablename))
-        """log's type is Log object"""
+    def __insert_to_table__(self, tablename: str, **log):
         col_to_add = []
         values = []
         for col in self.__get_col_names__(tablename):
@@ -376,7 +365,6 @@ class DBsqlite:
             print(e)
             return False
         self.con.commit()
-        print("log data successfully")
         return True
 
 
@@ -407,6 +395,14 @@ class ConfigModel:
     @property
     def config_name(self):
         return self._config_name
+
+    @property
+    def unit_count(self):
+        sql = f'SELECT COUNT (SerialNumber) as Unit_Count from Config_SN_T WHERE Config_FK = {self.id}'
+        # sql = f'SELECT COUNT (DISTINCT SerialNumber) as Unit_Count from
+        # (SELECT * From Config_SN_T WHERE Config_FK = {self.id}) as A'
+        result = self.database.cur.execute(sql).fetchone()
+        return result['Unit_Count']
 
     @property
     def program(self):

@@ -1,5 +1,4 @@
 
-
 from data_model import *
 import random
 import string
@@ -11,15 +10,18 @@ gold = DBsqlite(golden)
 
 db.con.backup(db.db_memory)
 
-print (timeit.timeit(lambda: db.db_memory.execute('SELECT * FROM RelLog_T WHERE PK=1;').fetchmany(10),number=1000))
-print (timeit.timeit(lambda: db.cur.execute('SELECT * FROM RelLog_T;').fetchmany(10),number=1000))
+print (timeit.timeit(lambda: db.db_memory.execute('SELECT * FROM RelLog_T WHERE PK=1;').fetchmany(10) ,number=1000))
+print (timeit.timeit(lambda: db.cur.execute('SELECT * FROM RelLog_T;').fetchmany(10) ,number=1000))
 
-print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp,"
+print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*, RelLog_T.StartTimestamp, "
+                                                  "RelLog_T.EndTimestamp, "
                                        "RelLog_T.Notes from Config_SN_T "
                                        "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and "
                                        " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
                                        "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
-                                       "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ORDER BY RelLog_T.StartTimestamp LIMIT 1000").fetchmany(1000),number=100))
+                                       "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK ORDER BY "
+                                                  "RelLog_T.StartTimestamp LIMIT 1000").fetchmany
+    (1000) ,number=100))
 
 print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*"
                                        " from Config_SN_T "
@@ -27,15 +29,18 @@ print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*"
                                        " Config_SN_T.SerialNumber = RelLog_T.SerialNumber "
                                        "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK "
                                        "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK "
-                                      "WHERE RelLog_T.SerialNumber like ? and Config_SN_T.WIP =? and Config_SN_T.Config_FK in {} LIMIT 1000 ".format(("asdf","sdfa")),
-                                                  ("df%","sadf")).fetchmany(100),number=1000))
+                                      "WHERE RelLog_T.SerialNumber like ? and Config_SN_T.WIP =? and Config_SN_T.Config_FK in {} LIMIT 1000 ".format
+    (("asdf" ,"sdfa")),
+                                                  ("df%" ,"sadf")).fetchmany(100) ,number=1000))
 
 print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*"
                                        " from Config_SN_T,RelLog_T "
-                                                  "WHERE Config_SN_T.SerialNumber = RelLog_T.SerialNumber LIMIT 1000").fetchmany(100),number=1000))
+                                                  "WHERE Config_SN_T.SerialNumber = RelLog_T.SerialNumber LIMIT 1000").fetchmany
+    (100) ,number=1000))
 
 print (timeit.timeit(lambda: db.db_memory.execute("SELECT Config_SN_T.*"
-                                       " from Config_SN_T Inner Join RelLog_T ON Config_SN_T.SerialNumber = RelLog_T.SerialNumber LIMIT 1000").fetchmany(100),number=1000))
+                                       " from Config_SN_T Inner Join RelLog_T ON Config_SN_T.SerialNumber = RelLog_T.SerialNumber LIMIT 1000").fetchmany
+    (100) ,number=1000))
 #
 # def sort1(self):
 #   db.cur.execute('SELECT * FROM RelLog_T;')
