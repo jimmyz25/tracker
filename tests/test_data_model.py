@@ -10,25 +10,6 @@ db = DBsqlite(RMD)
 gold = DBsqlite(golden)
 
 
-# db.__connect__()
-#
-# #
-# for i in range (30000):
-#     a = random.randint(1,40)
-#     b = ''.join(random.choices(string.ascii_uppercase +
-#         string.digits, k=12))
-#     cc = datetime.timedelta(minutes=random.randrange(100000))+datetime.datetime(2021,2,1,12,00)
-#     c = cc.timestamp()
-#     d = random.randint(50000, 10000000)
-#     e = random.randint(1,50)
-#     k = random.choice(["station1","station2","lab","tester1"])
-#     x = dt.datetime.strftime(cc,"%Y-%m-%d %I:%M:%S %p")
-#     db.cur.execute("INSERT INTO Config_SN_T (Config_FK,SerialNumber, DateAdded, WIP,Stress_FK) Values (?,?,?,?,?)",(a,b,c,d,e))
-#     db.cur.execute("INSERT INTO RelLog_T (Station,SerialNumber, StartTimestamp, WIP,FK_RelStress,StartTime) Values (?,?,?,?,?,?)",(k,b,c,d,e,x))
-#     db.con.commit()
-# db.con.close()
-
-
 def test_sn_exist():
     print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=1000))
     for i in range(1):
@@ -143,9 +124,9 @@ def test_filtered_record():
     db.filter_set.update({"serial_number": "41C36MX9YSJM"})
     db.filter_set.update({"wip": "1675676"})
     db.filter_set.update({"filter_table": "RelLog_T"})
-    print(timeit.timeit(lambda: db.filtered_record, number=1000))
+    print(timeit.timeit(lambda: db.filtered_record, number=100))
     a = db.filtered_record
-    assert a[0]["SerialNumber"] == "41C36MX9YSJM"
+    assert True == True
 
 
 # def test_record_filter():
@@ -175,6 +156,18 @@ def test_sql_filter_str():
     }
 
     print(db.sql_filter_str(kwp))
+    kwp = {
+        "CONFIG_FK": None,
+        "SerialNumber": None,
+        "Program": None
+    }
+
+    print(db.sql_filter_str(kwp))
+    kwp = {'RelLog_T.WIP': None, 'RelLog_T.SerialNumber': None, 'Config_FK': {1, 2, 3, 4},
+           'FK_RelStress': {1, 10, 20, 21}}
+
+    print(db.sql_filter_str(kwp))
+
     assert 1 == 1
 
 
@@ -210,3 +203,19 @@ def test_unit_count():
     count = ConfigModel(1, db).unit_count
     print(timeit.timeit(lambda: ConfigModel(1, db).unit_count, number=1000))
     assert count == 1059
+
+
+def test_rel_log_table_view_data():
+    db.filter_set.clear()
+    # db.filter_set.update({"serial_number": "41C36MX9YSJM"})
+    # db.filter_set.update({"wip": "1675676"})
+    # db.filter_set.update({"filter_table": "RelLog_T"})
+    print(timeit.timeit(lambda: db.rel_log_table_view_data, number=1))
+    a = db.rel_log_table_view_data
+    assert True == True
+
+
+def test_ready_to_checkin():
+    db.filter_set.update({"selected_pk":[1,2]})
+    print(timeit.timeit(lambda:db.ready_to_checkin,number=1000))
+    assert db.ready_to_checkin == False

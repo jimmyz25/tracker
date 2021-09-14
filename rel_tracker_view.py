@@ -55,6 +55,11 @@ class rel_tracker_view:
         return window
 
     def rel_lab_station_view(self):
+        table_col = ['PK','Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
+                     'Note']
+        show_heading=[False,True,True,True,True,True,True,True,True]
+        table_value = [[str(row) for row in range(9)] for col in range(1)]
+        #
         tab_new_left = [
             [sg.Txt(text="WIP", size=(15, 1)), sg.In()],
             [sg.Txt("Assign Config", size=(15, 1)), sg.In()],
@@ -62,21 +67,20 @@ class rel_tracker_view:
             [sg.Txt("SerialNumber", size=(15, 3), expand_y=True),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True)]
         ]
-        # new_tab_combined = [sg.Col(tab_new_left,size=(400,200)),sg.Col(tab_new_right,size=(400,200))]
-        tab1 = sg.Tab(layout=tab_new_left, title="Registor New Unit",disabled=True)
+        tab1 = sg.Tab(layout=tab_new_left, title="Registor New Unit", disabled=False)
 
         tab_old_left = [
-            [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="ab")],
-            [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="a", size=(40, 1))],
-            [sg.Txt("Config", size=(15, 1), key="-display-config"), sg.In("", key="ad", size=(40, 1))],
-            [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"), sg.In("", key="add", size=(40, 1))],
+            [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", enable_events=True)],
+            [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-",enable_events=True)],
+            [sg.Txt("Config", size=(15, 1), key="-display-config"), sg.In("", disabled=False, key="-Config_Input-")],
+            [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"), sg.In("",disabled=False, key="-Ckp_Input-")],
             [sg.Txt("Notes", size=(15, 3), expand_y=True, key="-add-note"),
-             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, key="ad33")]
+             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, key="-Note-")]
         ]
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150))
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150),enable_events=True,key="-Tab_Selection-")
 
         layout_status_column = [
             [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold')],
@@ -86,21 +90,20 @@ class rel_tracker_view:
         ]
         status_column = sg.Column(layout=layout_status_column, size=(200, 150))
         layout_button_column = [
-            [sg.B("A Record", size=(10, 1), pad=(5, 2), disabled_button_color="grey",enable_events=True),
-
-             sg.B("B Record", size=(10, 1), pad=(5, 2))],
-            [sg.B("C Record", size=(10, 1), pad=(5, 2)), sg.B("D Record", size=(10, 1), pad=(5, 2))],
-            [sg.B("E Record", size=(10, 1), pad=(5, 2)), sg.B("F Record", size=(10, 1), pad=(5, 2))],
-            [sg.B("G Record", size=(10, 1), pad=(5, 2)), sg.B("H Record", size=(10, 1), pad=(5, 2))],
-            [sg.B("I Record", size=(10, 1), pad=(5, 2)), sg.B("G Record", size=(10, 1), pad=(5, 2))],
+            [sg.B("Add", size=(20, 1), pad=(5, 2),visible=False)],
+            [sg.B("Reset", size=(20, 1), pad=(5, 2),visible=True)],
+            [sg.B("Update", size=(20, 1), pad=(5, 2),visible=False)],
+            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),visible=False), ],
+            [sg.B("Checkout", size=(20, 1), pad=(5, 2),visible=False)],
+            [sg.B("Delete", size=(20, 1), pad=(5, 2),visible=False)]
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 150))
-        table_view = sg.Table(values=[[str(row) for row in range(8)] for col in range(150)],
-                              headings=['Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
-                                        'Note'],
+        button_column = sg.Column(layout=layout_button_column, size=(200, 180))
+        table_view = sg.Table(values=table_value,visible_column_map=show_heading,
+                              headings=table_col,
                               expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]]
                               , enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
+
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
@@ -109,4 +112,43 @@ class rel_tracker_view:
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True)
+        # window["-SN_Input-"].bind("<KeyRelease>", "-KeyPress")
+        # window["-WIP_Input-"].bind("<KeyRelease>", "-KeyPress")
+        window["-Config_Input-"].bind("<Button-1>","-ConfigPop-")
+        window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        # window["-table_select-"].bind("<Double-1>","-Update_Table-")
+
+        return window
+
+    def popup_config_select(self):
+        layout1 = [
+            [sg.Txt("Program", size=15),
+             sg.InputCombo(size=30, values=[], key="Program", enable_events=True), sg.Stretch(),
+             sg.B("Clear", size=10)],
+            [sg.Txt("Build", size=15), sg.InputCombo(values=[], size=30, readonly=True,
+                                                     key="Build", enable_events=True), sg.Stretch()],
+            [sg.Txt("Config", size=15), sg.InputCombo(values=[], size=30, readonly=True,
+                                                      key="Config", enable_events=True), sg.Stretch()],
+            [sg.B("Save and Close", enable_events=True, key="-Save-"), sg.B("Clear", enable_events=True, key="-Clear-")]
+
+        ]
+
+        window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True)
+        window["Program"].bind("<KeyPress>", "-KeyPress")
+        return window
+
+    def popup_stress_select(self):
+        layout1 = [
+            [sg.Txt("RelStress", size=15),
+             sg.InputCombo(size=30, values=[], key="RelStress", enable_events=True), sg.Stretch()],
+            [sg.Txt("RelCheckpoint", size=15), sg.InputCombo(values=[], size=30, readonly=True,
+                                                     key="RelCheckpoint", enable_events=True), sg.Stretch()],
+            [sg.B("Save and Close", enable_events=True, key="-Save-"), sg.B("Clear", enable_events=True, key="-Clear-")]
+
+        ]
+
+        window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True)
+        window["RelStress"].bind("<KeyPress>", "-KeyPress")
         return window

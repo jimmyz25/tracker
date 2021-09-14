@@ -26,29 +26,26 @@ create_db_sql = os.path.join(application_path, create_db_sql)
 
 
 class RecordsDb:
-    def __init__(self, records: list, key, sort_func=None):
+    def __init__(self, records: list):
         """
         :param records: a list of dict
         :param key:
         :param sort_func: if sort_func is provided, only the last will be saved with a same key
         """
-        if records is not None:  # create a dict with sn as index
-            if sort_func is not None:
-                records.sort(key=sort_func)
-            a = {dict(result).get(key): dict(result) for result in records}
-            self.records = dict(a)
-        else:
-            self.records = dict()
-        self.key = key
+        self.records = records
+        self.value_list = []
 
-    def record_filter(self, func, **kwargs):
-        records = list(filter(lambda x: func(x, **kwargs), self.records.values()))
-        return RecordsDb(records, key=self.key)
+        # if records is not None:
+        #     for record in records:
+        #         self.value_list.append([dict(record).get(column) for column in self.col])
 
-    def key_filter(self, value):
-        keys = list(filter(lambda x: x == value, self.records))
-        records = [self.records.get(key) for key in keys]
-        return RecordsDb(records, key=self.key)
+    # @functools.cached_property
+    # def col(self):
+    #     if self.records is not None:  # create a dict with sn as index
+    #         one_row = dict(self.records[0])
+    #         return list(one_row.keys())
+    #     else:
+    #         return [""]
 
 
 # noinspection SpellCheckingInspection
@@ -64,15 +61,24 @@ class DBsqlite:
         for key, value in kwp.items():
             if isinstance(value, str):
                 value.strip().strip("%")
-                row.append(f' {key} LIKE \"{value}%\"')
+                if value != "":
+                    row.append(f' {key} LIKE \"{value}%\"')
             elif isinstance(value, int):
                 row.append(f'{key} = {value}')
+            elif isinstance(value, set):
+                if len(value) > 1:
+                    row.append(f'{key} in {tuple(value)}')
+                else:
+                    row.append(f'{key} = {value.pop()}')
             elif isinstance(value, tuple):
-                row.append(f'{key} in {value}')
+                if len(value) > 1:
+                    row.append(f'{key} in {tuple(value)}')
+                else:
+                    row.append(f'{key} = {value[0]}')
         if any(kwp.values()):
-            sql = "WHERE " + " AND".join(row)
+            sql = "WHERE " + " AND ".join(row)
         else:
-            sql = " AND".join(row)
+            sql = ""
         return sql
 
     def __init__(self, address):
@@ -80,6 +86,7 @@ class DBsqlite:
         self.__connect__()
         self.db_memory = sqlite3.connect(':memory:')
         self.con.backup(self.db_memory)
+        self.current_table = "RelLog_T"
 
         self.filter_set = dict(
             {
@@ -90,10 +97,53 @@ class DBsqlite:
                 "checkpoint": None,
                 "serial_number": None,
                 "wip": None,
-                "filter_table": "RelLog_T",
-                "latest": False
+                "selected_pk": None,
+                "update_mode": None
             }
         )
+
+    @property
+    def ready_to_add(self):
+        a = 0
+        b = 0
+        c = 0
+        if self.selected_config_pks is not None:
+            a = len(self.selected_config_pks)
+        if self.selected_stress_pks is not None:
+            b = len(self.selected_stress_pks)
+        if self.filter_set.get("serial_number") is not None:
+            c = 1
+        return a == 1 and b == 1 and c == 1
+
+    @property
+    def ready_to_update(self):
+        d = 0
+        if self.filter_set.get("selected_pk") is not None:
+            d = len(self.filter_set.get("selected_pk", []))
+        return self.ready_to_add and d == 1
+
+    @property
+    def ready_to_checkin(self):
+        if self.filter_set.get("selected_pk") is not None:
+            for pk in self.filter_set.get("selected_pk", []):
+                result = self.cur.execute(f"SELECT EndTimestamp from RelLog_T WHERE PK = {pk}").fetchone()
+                if result["EndTimestamp"] is None:
+                    return False
+            return True
+
+    @property
+    def ready_to_checkout(self):
+        return not self.ready_to_checkin
+
+    @property
+    def config_str(self):
+        return " ".join([str(self.filter_set.get("program", "")),
+                         str(self.filter_set.get("build", ""))
+                            , str(self.filter_set.get("config", ""))])
+
+    @property
+    def stress_str(self):
+        return " ".join([str(self.filter_set.get("stress", "")), str(self.filter_set.get("checkpoint", ""))])
 
     @property
     def cache_sn_table(self):
@@ -127,18 +177,26 @@ class DBsqlite:
 
     @property
     def selected_config_pks(self):
-        sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
-                                                                "Build": self.filter_set.get("build"),
-                                                                "Config": self.filter_set.get("config")})
-        results = self.cur.execute(sql).fetchall()
-        return set(result["PK"] for result in results)
+        if self.filter_set.get("program") is None and self.filter_set.get("build") is None \
+                and self.filter_set.get("config") is None:
+            return None
+        else:
+            sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
+                                                                    "Build": self.filter_set.get("build"),
+                                                                    "Config": self.filter_set.get("config")})
+            results = self.cur.execute(sql).fetchall()
+            return set(result["PK"] for result in results)
 
     @property
     def selected_stress_pks(self):
-        sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
-                                                                   "RelCheckpoint": self.filter_set.get("checkpoint")})
-        results = self.cur.execute(sql).fetchall()
-        return set(result["PK"] for result in results)
+        if self.filter_set.get("stress") is None and self.filter_set.get("checkpoint") is None:
+            return None
+        else:
+            sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
+                                                                       "RelCheckpoint": self.filter_set.get(
+                                                                           "checkpoint")})
+            results = self.cur.execute(sql).fetchall()
+            return set(result["PK"] for result in results)
 
     @property
     def config_list_to_select(self):
@@ -156,15 +214,40 @@ class DBsqlite:
 
     @property
     def filtered_record(self):
-        table = self.filter_set.get("filter_table")
-        sql = f'SELECT SerialNumber FROM {table} ' + \
+        table = self.current_table
+        sql = f'SELECT SerialNumber,Station,WIP,StartTime,EndTime, RelStress_T.RelStress, RelStress_T.RelCheckpoint ' \
+              f'FROM {table} ' \
+              f'Inner Join RelStress_T ON {table}.FK_RelStress = RelStress_T.PK ' + \
               self.sql_filter_str({"WIP": self.filter_set.get("wip"),
                                    "SerialNumber": self.filter_set.get("serial_number"),
                                    "Config_FK": self.selected_config_pks,
                                    "FK_RelStress": self.selected_stress_pks}) + \
-              ' LIMIT 100'
+              ' LIMIT 50'
         results = self.cur.execute(sql).fetchall()
         return results
+
+    @property
+    def rel_log_table_view_data(self):
+        table = self.current_table
+        sql = f'SELECT RelLog_T.PK,Config_T.Config, RelLog_T.WIP,RelLog_T.SerialNumber,' \
+              f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
+              f'RelStress_T.RelCheckpoint ' \
+              f'FROM {table} ' \
+              f'  left Join RelStress_T ON {table}.FK_RelStress = RelStress_T.PK ' + \
+              f'  left Join Config_SN_T ON {table}.SerialNumber = Config_SN_T.SerialNumber ' + \
+              f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+              self.sql_filter_str({"RelLog_T.WIP": self.filter_set.get("wip"),
+                                   "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
+                                   "Config_FK": self.selected_config_pks,
+                                   "FK_RelStress": self.selected_stress_pks}) + \
+              ' LIMIT 100'
+        # print(sql)
+        results = self.cur.execute(sql).fetchall()
+        if results is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in results]
+
 
     @property
     def program_list(self):
@@ -223,8 +306,14 @@ class DBsqlite:
         """
         if not isinstance(sn, str):
             raise TypeError
-        result = self.con.execute(f'SELECT SerialNumber FROM Config_SN_T WHERE SerialNumber =?', (sn,)).fetchone()
-        return result is not None
+        if sn == "":
+            return False
+        else:
+            # results = self.con.execute(f'SELECT SerialNumber FROM Config_SN_T WHERE SerialNumber like "{sn}%"') \
+            #     .fetchmany(size=2)
+            results = self.con.execute('SELECT SerialNumber FROM Config_SN_T WHERE SerialNumber = ?', (sn,)) \
+                .fetchone()
+            return results is not None
 
     def wip_exist(self, wip):
         """
@@ -392,6 +481,9 @@ class ConfigModel:
             self._build = None
             self._program = None
 
+    def __str__(self):
+        return " ".join([str(self.program), str(self.build), str(self.config_name)])
+
     @property
     def config_name(self):
         return self._config_name
@@ -443,6 +535,9 @@ class StressModel:
     def rel_checkpoint(self):
         return self._rel_checkpoint
 
+    def __str__(self):
+        return " ".join([str(self.rel_stress), str(self.rel_checkpoint)])
+
 
 class SnModel:
     def __init__(self, sn: str, database: DBsqlite):
@@ -455,10 +550,13 @@ class SnModel:
 
     @serial_number.setter
     def serial_number(self, sn):
-        sql = f'SELECT Config_FK, WIP, Stress_FK From Config_SN_T WHERE SerialNumber = "{sn}"'
+        if sn is None or sn == "":
+            sql = f'SerialNumber,SELECT Config_FK, WIP, Stress_FK From Config_SN_T"'
+        else:
+            sql = f'SELECT SerialNumber,Config_FK, WIP, Stress_FK From Config_SN_T WHERE SerialNumber like "{sn}%"'
         if self.database.sn_exist(sn):
             result = self.database.cur.execute(sql).fetchone()
-            self._serial_number = sn
+            self._serial_number = result["SerialNumber"]
             self._config = ConfigModel(result["Config_FK"], self.database)
             self._stress = StressModel(result["Stress_FK"], self.database)
             self._wip = result["WIP"]
