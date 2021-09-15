@@ -33,10 +33,10 @@ class rel_tracker_view:
     def preference_view(self):
         layout1 = [
             [sg.Txt("Station Name", size=15),
-             sg.InputText(default_text=self.default_settings.get('-station-', ''), size=30,
+             sg.InputText( size=30,
                           key="-Station_Name-"), sg.Stretch(),
              sg.B("Validate", size=10)],
-            [sg.Txt("Station Type", size=15), sg.DropDown(values=["a", "b"], size=30, readonly=True), sg.Stretch(),
+            [sg.Txt("Station Type", size=15), sg.DropDown(values=["a", "b"], size=30, readonly=True,key="-station-type"), sg.Stretch(),
              sg.B("Set", size=10)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
@@ -85,7 +85,7 @@ class rel_tracker_view:
         tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150),enable_events=True,key="-Tab_Selection-")
 
         layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold')],
+            [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold',key="-station_name-")],
             [sg.Txt("Last Sync: 24min ago")],
             [sg.Txt("Unit not in Sync:")],
             [sg.VStretch()]
@@ -146,8 +146,10 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Config Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
-                           finalize=True)
+                           finalize=True,modal=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
+        window.TKroot.grab_set()
+
         return window
 
     def popup_stress_select(self):
@@ -163,4 +165,5 @@ class rel_tracker_view:
         window = sg.Window('Stress Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
                            finalize=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
+        window.TKroot.grab_set()
         return window
