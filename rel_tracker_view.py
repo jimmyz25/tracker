@@ -145,7 +145,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Config Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
                            finalize=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
         return window
@@ -160,7 +160,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Stress Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
                            finalize=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
         return window

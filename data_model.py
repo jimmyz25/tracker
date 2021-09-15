@@ -124,6 +124,8 @@ class DBsqlite:
         c = 0
         ok_to_add = []
         duplicate = []
+        if self.filter_set.get("serial_number_list") is None:
+            return False
         for sn in self.filter_set.get("serial_number_list",[]):
             if self.sn_exist(sn):
                 duplicate.append(sn)
