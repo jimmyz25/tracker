@@ -145,7 +145,6 @@ class rel_log_vc():
                 rel_tracker_app.settings['-station-'] = values['-Station_Name-']
             elif event == "-Home-":
                 preference = preference_vc()
-                self.close_window()
                 preference.show()
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):

@@ -216,7 +216,7 @@ def test_rel_log_table_view_data():
 
 
 def test_ready_to_checkin():
-    db.filter_set.update({"selected_pk": [1, 2]})
+    db.filter_set.update({"selected_pk": [1, 2,1]})
     print(timeit.timeit(lambda: db.ready_to_checkin, number=1000))
     assert db.ready_to_checkin == False
 

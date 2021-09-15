@@ -159,8 +159,12 @@ class DBsqlite:
     @property
     def ready_to_checkin(self):
         if self.filter_set.get("selected_pk") is not None:
+            serial_number_list=[]
             for pk in self.filter_set.get("selected_pk", []):
-                result = self.cur.execute(f"SELECT EndTimestamp from RelLog_T WHERE PK = {pk}").fetchone()
+                result = self.cur.execute(f"SELECT SerialNumber,EndTimestamp from RelLog_T WHERE PK = {pk}").fetchone()
+                if result["SerialNumber"] in serial_number_list:
+                    return False
+                serial_number_list.append(result["SerialNumber"])
                 if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
                     return False
             return True
