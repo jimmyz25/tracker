@@ -216,6 +216,13 @@ def test_rel_log_table_view_data():
 
 
 def test_ready_to_checkin():
-    db.filter_set.update({"selected_pk":[1,2]})
-    print(timeit.timeit(lambda:db.ready_to_checkin,number=1000))
+    db.filter_set.update({"selected_pk": [1, 2]})
+    print(timeit.timeit(lambda: db.ready_to_checkin, number=1000))
     assert db.ready_to_checkin == False
+
+
+def test_ready_to_add():
+    db.filter_set.update({"serial_number_list": "66T6S8L9M76P, 41C36MX9YSJM, \n F6EZDQRQOSMP "})
+    print(db.ready_to_add)
+    print (db.filter_set)
+    assert True==True

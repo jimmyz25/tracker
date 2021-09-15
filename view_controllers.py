@@ -12,7 +12,7 @@ class rel_tracker_app:
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(40, 1),
-                  auto_size_buttons=True)
+                  auto_size_buttons=True,input_elements_background_color="#f7f7f7")
     dbmodel = DBsqlite(RMD)
 
     def __init__(self):
@@ -136,8 +136,6 @@ class rel_log_vc():
                     datasource]
             return data
 
-
-
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
@@ -149,51 +147,55 @@ class rel_log_vc():
                 preference = preference_vc()
                 self.close_window()
                 preference.show()
-            elif event.endswith("_Input-"):
-                rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
-                rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
-                if rel_tracker_app.dbmodel.sn_exist(self.window["-SN_Input-"].get()):
-                    sn = SnModel(self.window["-SN_Input-"].get(),database=rel_tracker_app.dbmodel)
-                    self.window["-SN_Input-"].update(str(sn.serial_number))
-                    self.window["-Config_Input-"].update(str(sn.config))
-                    self.window["-Ckp_Input-"].update(str(sn.stress))
-                    self.window["-WIP_Input-"].update(str(sn.wip))
+            elif event.endswith("_Input-") or event.endswith("_count-"):
+                if event.startswith("-New-"):
+                    serial_number_list = rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": serial_number_list.strip("\n").split("\n")})
+                    self.window["-New-SN_Input-"].update(
+                        value=serial_number_list+"\n")
+                    rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-New-WIP_Input-"].get()})
+                    if rel_tracker_app.dbmodel.ready_to_add:
+                        self.window["Add"].update(disabled=False)
+                    else:
+                        self.window["Add"].update(disabled=True)
+                else:
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
+                    rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
+                    if rel_tracker_app.dbmodel.sn_exist(self.window["-SN_Input-"].get()):
+                        sn = SnModel(self.window["-SN_Input-"].get(),database=rel_tracker_app.dbmodel)
+                        self.window["-SN_Input-"].update(str(sn.serial_number))
+                        self.window["-Config_Input-"].update(str(sn.config))
+                        self.window["-Ckp_Input-"].update(str(sn.stress))
+                        self.window["-WIP_Input-"].update(str(sn.wip))
                 self.window['-table_select-'].update(values=self.table_data)
             elif event.endswith("-ConfigPop-"):
                 config_popup = config_select_vc()
                 config_popup.show()
                 self.window["-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
+                self.window["-New-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
                 self.window['-table_select-'].update(values=self.table_data)
             elif event.endswith("-CkpPop-"):
                 stress_popup = stress_select_vc()
                 stress_popup.show()
                 self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+                self.window["-New-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "Reset":
                 self.window["-SN_Input-"].update(value="")
                 self.window["-Config_Input-"].update(value="")
                 self.window["-Ckp_Input-"].update(value="")
                 self.window["-WIP_Input-"].update(value="")
+                self.window["-New-SN_Input-"].update(value="")
+                self.window["-New-Config_Input-"].update(value="")
+                self.window["-New-Ckp_Input-"].update(value="")
+                self.window["-New-WIP_Input-"].update(value="")
                 rel_tracker_app.dbmodel.filter_set.clear()
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "-table_select-":
                 if len(values.get('-table_select-'))>0:
-                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]] #first one
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pk": values.get('-table_select-')})
-                    # sn = SnModel(selected[3],database=rel_tracker_app.dbmodel)
-                    # self.window["-SN_Input-"].update(str(sn.serial_number))
-                    # self.window["-Config_Input-"].update(str(sn.config))
-                    # self.window["-Ckp_Input-"].update(str(sn.stress))
-                    # self.window["-WIP_Input-"].update(str(sn.wip))
-                    # rel_tracker_app.dbmodel.filter_set.update({
-                    #     "program":sn.config.program,
-                    #     "build":sn.config.build,
-                    #     "config":sn.config.config_name,
-                    #     "wip":sn.wip,
-                    #     "stress":sn.stress.rel_stress,
-                    #     "checkpoint":sn.stress.rel_checkpoint
-                    # })
             elif event == "update":
+                self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode":True})
                 selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]] #first one
                 rel_tracker_app.dbmodel.filter_set.update({"selected_pk": values.get('-table_select-')})
@@ -211,12 +213,45 @@ class rel_log_vc():
                     "checkpoint":sn.stress.rel_checkpoint,
                     "serial_number": sn.serial_number
                 })
-
-
-
-            print (event,values)
             print(rel_tracker_app.dbmodel.filter_set)
-            print(rel_tracker_app.dbmodel.ready_to_update)
+            print (event,values)
+            if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
+                self.window['Registor New Unit'].update(disabled=True)
+                for key in self.window.AllKeysDict.keys():
+                    if isinstance(key, str):
+                        if key.endswith("Input-") or key.endswith("-Note-"):
+                            self.window[key].update(background_color="#ecdab9")
+            else:
+                self.window['Registor New Unit'].update(disabled=False)
+                for key in self.window.AllKeysDict.keys():
+                    if isinstance(key, str):
+                        if key.endswith("Input-") or key.endswith("-Note-"):
+                            self.window[key].update(background_color="#f7f7f7")
+
+            if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get()=="Registor New Unit":
+                self.window["Add"].update(disabled=False)
+            else:
+                self.window["Add"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_update:
+                self.window["Update"].update(disabled=False)
+            else:
+                self.window["Update"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_checkin:
+                self.window["CheckIn"].update(disabled=False)
+            else:
+                self.window["CheckIn"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-'))>0:
+                self.window["Checkout"].update(disabled=False)
+            else:
+                self.window["Checkout"].update(disabled=True)
+            if rel_tracker_app.dbmodel.filter_set.get("selected_pk"):
+                self.window["Delete"].update(disabled=False)
+            else:
+                self.window["Delete"].update(disabled=True)
+            if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
+                total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
+                self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
+
         self.close_window()
 
     def close_window(self):

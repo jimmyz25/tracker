@@ -61,20 +61,22 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(9)] for col in range(1)]
         #
         tab_new_left = [
-            [sg.Txt(text="WIP", size=(15, 1)), sg.In()],
-            [sg.Txt("Assign Config", size=(15, 1)), sg.In()],
-            [sg.Txt("initial Checkpoint", size=(15, 1)), sg.In()],
-            [sg.Txt("SerialNumber", size=(15, 3), expand_y=True),
-             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True)]
+            [sg.Txt(text="WIP", size=(15, 1)), sg.In(key="-New-WIP_Input-", enable_events=True)],
+            [sg.Txt("Assign Config", size=(15, 1)), sg.In(key="-New-Config_Input-",enable_events=True)],
+            [sg.Txt("initial Checkpoint", size=(15, 1)), sg.In(key="-New-Ckp_Input-",enable_events=True)],
+            [sg.Txt("Notes", size=(15, 1)), sg.In(key="-New-Note-", enable_events=False)],
+            [sg.Txt("SerialNumber (list)", size=(15, 3), expand_y=True,key="-Multi_SN-"),
+             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True,enable_events=False,key="-New-SN_Input-"
+                          ,tooltip="multiple SN seperate by comma, enter to count\n Note:duplicates will be removed ")]
         ]
-        tab1 = sg.Tab(layout=tab_new_left, title="Registor New Unit", disabled=False)
+        tab1 = sg.Tab(layout=tab_new_left, title="Registor New Unit")
 
         tab_old_left = [
             [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", enable_events=True)],
             [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-",enable_events=True)],
             [sg.Txt("Config", size=(15, 1), key="-display-config"), sg.In("", disabled=False, key="-Config_Input-")],
             [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"), sg.In("",disabled=False, key="-Ckp_Input-")],
-            [sg.Txt("Notes", size=(15, 3), expand_y=True, key="-add-note"),
+            [sg.Txt("Notes", size=(15, 3), expand_y=True),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, key="-Note-")]
         ]
 
@@ -90,12 +92,18 @@ class rel_tracker_view:
         ]
         status_column = sg.Column(layout=layout_status_column, size=(200, 150))
         layout_button_column = [
-            [sg.B("Add", size=(20, 1), pad=(5, 2),visible=False)],
-            [sg.B("Reset", size=(20, 1), pad=(5, 2),visible=True)],
-            [sg.B("Update", size=(20, 1), pad=(5, 2),visible=False)],
-            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),visible=False), ],
-            [sg.B("Checkout", size=(20, 1), pad=(5, 2),visible=False)],
-            [sg.B("Delete", size=(20, 1), pad=(5, 2),visible=False)]
+            [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
+            [sg.B("Reset", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=False)],
+            [sg.B("Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
+            [sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
+            [sg.B("Checkout", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
+            [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
+                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)]
         ]
         button_column = sg.Column(layout=layout_button_column, size=(200, 180))
         table_view = sg.Table(values=table_value,visible_column_map=show_heading,
@@ -116,6 +124,10 @@ class rel_tracker_view:
         # window["-WIP_Input-"].bind("<KeyRelease>", "-KeyPress")
         window["-Config_Input-"].bind("<Button-1>","-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
+        window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
+        window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
         # window["-table_select-"].bind("<Double-1>","-Update_Table-")
 
         return window

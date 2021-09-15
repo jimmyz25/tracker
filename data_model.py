@@ -3,6 +3,7 @@ import functools
 import os
 import sqlite3
 import sys
+import re
 
 golden = 'temp.db'
 RMD = "ReliabilityManagementDB.db"
@@ -29,8 +30,6 @@ class RecordsDb:
     def __init__(self, records: list):
         """
         :param records: a list of dict
-        :param key:
-        :param sort_func: if sort_func is provided, only the last will be saved with a same key
         """
         self.records = records
         self.value_list = []
@@ -96,38 +95,71 @@ class DBsqlite:
                 "stress": None,
                 "checkpoint": None,
                 "serial_number": None,
+                "serial_number_list": None,
                 "wip": None,
                 "selected_pk": None,
                 "update_mode": None
             }
         )
 
+    def clean_up_sn_list(self, sn_list: str):
+        if isinstance(sn_list,str):
+            temp1 = re.split(',', re.sub('[^a-zA-Z0-9.]', ',', sn_list))
+            temp2 = [sn.strip().upper() for sn in temp1 if len(sn) > 0]
+            res = []
+            for i in temp2:
+                if i not in res and not self.sn_exist(i):
+                    res.append(i)
+            self.filter_set.update({"serial_number_list":res})
+            result = "\n".join(res)
+            return result
+        else:
+            return ""
+
+
     @property
     def ready_to_add(self):
         a = 0
         b = 0
         c = 0
+        ok_to_add = []
+        duplicate = []
+        for sn in self.filter_set.get("serial_number_list",[]):
+            if self.sn_exist(sn):
+                duplicate.append(sn)
+            else:
+                ok_to_add.append(sn)
+        if len(duplicate) == 0 and len(ok_to_add) > 0:
+            c = 1
         if self.selected_config_pks is not None:
             a = len(self.selected_config_pks)
         if self.selected_stress_pks is not None:
             b = len(self.selected_stress_pks)
-        if self.filter_set.get("serial_number") is not None:
-            c = 1
         return a == 1 and b == 1 and c == 1
 
     @property
     def ready_to_update(self):
+        a = 0
+        b = 0
+        c = 0
         d = 0
         if self.filter_set.get("selected_pk") is not None:
             d = len(self.filter_set.get("selected_pk", []))
-        return self.ready_to_add and d == 1
+        if self.selected_config_pks is not None:
+            a = len(self.selected_config_pks)
+        if self.filter_set.get("serial_number") is not None:
+            c = 1
+        if self.selected_stress_pks is not None:
+            b = len(self.selected_stress_pks)
+
+        return a == 1 and b == 1 and c == 1 and d == 1
 
     @property
     def ready_to_checkin(self):
         if self.filter_set.get("selected_pk") is not None:
             for pk in self.filter_set.get("selected_pk", []):
                 result = self.cur.execute(f"SELECT EndTimestamp from RelLog_T WHERE PK = {pk}").fetchone()
-                if result["EndTimestamp"] is None:
+                if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
                     return False
             return True
 
@@ -138,8 +170,8 @@ class DBsqlite:
     @property
     def config_str(self):
         return " ".join([str(self.filter_set.get("program", "")),
-                         str(self.filter_set.get("build", ""))
-                            , str(self.filter_set.get("config", ""))])
+                         str(self.filter_set.get("build", "")),
+                         str(self.filter_set.get("config", ""))])
 
     @property
     def stress_str(self):
@@ -248,7 +280,6 @@ class DBsqlite:
         else:
             return [dict(result) for result in results]
 
-
     @property
     def program_list(self):
         sql = "SELECT Distinct Program FROM Config_T "
@@ -305,7 +336,7 @@ class DBsqlite:
         :return: bool
         """
         if not isinstance(sn, str):
-            raise TypeError
+            return False
         if sn == "":
             return False
         else:
