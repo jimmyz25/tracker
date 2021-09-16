@@ -23,14 +23,15 @@ class rel_tracker_app:
     def apply_user_settings(window: sg.Window):
         for key in rel_tracker_app.settings.keys():
             if isinstance(key, str) and key in window.key_dict.keys():
-                if isinstance(window[key], sg.PySimpleGUI.Input):
+                if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                     window[key].update(value=rel_tracker_app.settings.get(key))
         rel_tracker_app.dbmodel.filter_set = rel_tracker_app.settings["filter_set"]
 
     @staticmethod
     def save_user_settings(window: sg.Window):
         for key in window.key_dict.keys():
-            if isinstance(key, str) and isinstance(window[key], sg.PySimpleGUI.Input):
+            if isinstance(key, str) and isinstance(window[key], sg.PySimpleGUI.Input) \
+                    or isinstance(window[key], sg.PySimpleGUI.Combo):
                 rel_tracker_app.settings[key] = window[key].get()
         rel_tracker_app.settings["filter_set"] = rel_tracker_app.dbmodel.filter_set
         sg.user_settings_save()
@@ -39,7 +40,7 @@ class rel_tracker_app:
     def reset_window_inputs(cls, window: sg.Window):
         # clear all input in window
         for key in window.key_dict.keys():
-            if isinstance(key, str) and isinstance(window[key], sg.PySimpleGUI.Input):
+            if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                 window[key].update(value="")
         # clear filterset
         cls.dbmodel.filter_set.clear()
@@ -59,54 +60,6 @@ class welcome_vc:
             if event == sg.WIN_CLOSED:
                 break
 
-
-# class popup_view1:
-#     def __init__(self, app:rel_tracker_app):
-#         view = rel_tracker_view(app.settings)
-#         self.window = view.rel_lab_station_view()
-#
-#     def show(self):
-#         while True:  # the event loop
-#             event, values = self.window.read()
-#             if event == sg.WIN_CLOSED:
-#                 break
-#             elif event == "Save Preference":
-#                 self.window['-station-'] = values['-Station_Name-']
-#         self.close_window()
-#
-#     def close_window(self):
-#         sg.user_settings_save()
-#         self.window.close()
-
-
-class template_view:
-    def __init__(self):
-        """
-        view: view class, do not write
-        window: a vc to display and control a view from view class
-        """
-        self.__view__ = rel_tracker_view(rel_tracker_app.settings)
-        self.window = self.__view__.rel_lab_station_view()
-        self.window['-Home-'].bind('<Button-1>', "")
-        rel_tracker_app.view_list.append(self.window)
-        # self.show()
-
-    def show(self):
-        while True:  # the event loop
-            event, values = self.window.read()
-            if event == sg.WIN_CLOSED:
-                break
-            elif event == "Save Preference":
-                rel_tracker_app.settings['-station-'] = values['-Station_Name-']
-            elif event == "-Home-":
-                preference = preference_vc()
-                preference.show()
-
-            elif event == "-table_select-":
-                print(event, values)
-            print(event, values)
-        self.close_window()
-
     def close_window(self):
         sg.user_settings_save()
         self.window.close()
@@ -120,24 +73,27 @@ class preference_vc:
 
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
-
         self.window = view.preference_view()
+        self.window["-station-type-"].update(values=["RelLog Station", "b", "c"])
         rel_tracker_app.apply_user_settings(self.window)
-        self.window["-station-type"].update(values=["a", "b", "c"])
 
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
-            if event == sg.WIN_CLOSED:
+            if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Save Preference":
                 rel_tracker_app.save_user_settings(self.window)
             print(event, values)
+
         self.close_window()
 
     def close_window(self):
         # selection = self.window["-station-type"].get()
-
+        rel_tracker_app.save_user_settings(self.window)
+        if self.window["-station-type-"].get() == 'RelLog Station':
+            print("attampting to attach relLogvc")
+        rel_tracker_app.view_list.append(rel_log_vc())
         self.window.close()
         # if selection == "a":
         #     print("will go to rel_lab_station")
@@ -149,9 +105,9 @@ class rel_log_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.rel_lab_station_view()
-        rel_tracker_app.view_list.append(self)
         rel_tracker_app.apply_user_settings(self.window)
         self.window['-table_select-'].update(values=self.table_data)
+        self.complete_quit = True
 
     # def __update_view__(self, values):
     #     if values.get("-table_select-") is not None:
@@ -172,13 +128,15 @@ class rel_log_vc:
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
-            if event == sg.WIN_CLOSED:
+            if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Save Preference":
                 rel_tracker_app.settings['-station-'] = values['-Station_Name-']
             elif event == "-Home-":
+                self.complete_quit = False
                 preference = preference_vc()
-                preference.show()
+                rel_tracker_app.view_list.append(preference)
+                break
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):
                     serial_number_list = rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
@@ -260,7 +218,7 @@ class rel_log_vc:
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
-            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or event=="update":
+            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or event == "update":
                 if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
                     self.window["Add"].update(disabled=False)
                 else:
@@ -290,17 +248,17 @@ class rel_log_vc:
         self.window.close()
         print("window closed")
         rel_tracker_app.save_user_settings(self.window)
-        sys.exit()
+        if self.complete_quit:
+            sys.exit()
 
 
 class config_select_vc:
-    def __init__(self, master: sg.Window):
+    def __init__(self, master: sg.Window = None):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_config_select()
         self.master = master
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
-        rel_tracker_app.view_list.append(self)
         # program_list = rel_tracker_app.dbmodel.program_list
         self.window["Program"].update(value=rel_tracker_app.dbmodel.filter_set.get("program"),
                                       values=list(rel_tracker_app.dbmodel.program_list))
@@ -352,7 +310,6 @@ class stress_select_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_stress_select()
         self.window.TKroot.grab_set()
-        rel_tracker_app.view_list.append(self)
         # program_list = rel_tracker_app.dbmodel.program_list
         self.window["RelStress"].update(value=rel_tracker_app.dbmodel.filter_set.get("stress"),
                                         values=list(rel_tracker_app.dbmodel.stress_list))

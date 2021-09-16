@@ -18,7 +18,7 @@ class rel_tracker_view:
         column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 200))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
-                           finalize=True, auto_close=True, auto_close_duration=5, background_color='#4267B2')
+                           finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         return window
 
     @staticmethod
@@ -38,7 +38,7 @@ class rel_tracker_view:
                           key="-Station_Name-"), sg.Stretch(),
              sg.B("Validate", size=10)],
             [sg.Txt("Station Type", size=15),
-             sg.DropDown(values=["a", "b"], size=30, readonly=True, key="-station-type"), sg.Stretch(),
+             sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-",enable_events=True), sg.Stretch(),
              sg.B("Set", size=10)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
@@ -48,12 +48,12 @@ class rel_tracker_view:
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
-            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync"), sg.Rad("OFF", group_id="auto_sync")],
+            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync",default=True), sg.Rad("OFF", group_id="auto_sync")],
             [sg.Btn("Save Preference", size=15), sg.Btn("New Window", key="-New_Window-")]
         ]
 
         window = sg.Window('Preference', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True)
+                           finalize=True,enable_close_attempted_event=True)
         return window
 
     def rel_lab_station_view(self):
@@ -122,17 +122,13 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True)
-        # window["-SN_Input-"].bind("<KeyRelease>", "-KeyPress")
-        # window["-WIP_Input-"].bind("<KeyRelease>", "-KeyPress")
+                           finalize=True,enable_close_attempted_event=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
         window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
-        # window["-table_select-"].bind("<Double-1>","-Update_Table-")
-
         return window
 
     @staticmethod
