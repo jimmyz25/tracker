@@ -31,11 +31,24 @@ class rel_tracker_view:
             [column1, sg.Stretch(), sg.Txt("FRL project only", font='Heletica 10', text_color='#4267B2', size=(15, 1))]]
 
     @staticmethod
+    def __status__():
+        layout_status_column = [
+            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+                    )],
+            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
+            [sg.Txt("")],
+            [sg.Txt("Notes of selected row", key="-additional_info-")],
+            [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-note_show-", disabled=True)]
+        ]
+        status_column = sg.Column(layout=layout_status_column, size=(200, 180))
+        return status_column
+
+    @staticmethod
     def preference_view():
         layout1 = [
             [sg.Txt("Station Name", size=15),
              sg.InputText(size=30,
-                          key="-Station_Name-"), sg.Stretch(),
+                          key="-Station_Name-",tooltip="maximum character: 18"), sg.Stretch(),
              sg.B("Validate", size=10)],
             [sg.Txt("Station Type", size=15),
              sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-",enable_events=True), sg.Stretch(),
@@ -49,7 +62,7 @@ class rel_tracker_view:
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
-            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync",default=True),
+            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync", default=True),
              sg.Rad("OFF", group_id="auto_sync")],
             [sg.Btn("Save Preference", size=15), sg.Btn("New Window", key="-New_Window-")]
         ]
@@ -59,17 +72,13 @@ class rel_tracker_view:
         return window
 
     def rel_lab_station_view(self):
-        table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
-                     'Note']
-        show_heading = [False, True, True, True, True, True, True, True, True]
-        table_value = [[str(row) for row in range(9)] for col in range(1)]
 
         tab_new_left = [
             [sg.Txt(text="WIP", size=(15, 1)), sg.In(key="-New-WIP_Input-", enable_events=True)],
             [sg.Txt("Assign Config", size=(15, 1)), sg.In(key="-New-Config_Input-", enable_events=True)],
             [sg.Txt("initial Checkpoint", size=(15, 1)), sg.In(key="-New-Ckp_Input-", enable_events=True)],
             [sg.Txt("Notes", size=(15, 1)), sg.In(key="-New-Note-", enable_events=False)],
-            [sg.Txt("SerialNumber (list)", size=(15, 3), expand_y=True, key="-Multi_SN-"),
+            [sg.Txt("SerialNumber (0)", size=(15, 3), expand_y=True, key="-Multi_SN-"),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
                           tooltip="multiple SN seperate by comma, enter to count\n Note:duplicates will be removed ")]
         ]
@@ -89,15 +98,8 @@ class rel_tracker_view:
 
         tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 180), enable_events=True, key="-Tab_Selection-")
 
-        layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
-                    ,tooltip="maximum character: 10")],
-            [sg.Txt("Last Sync: 24min ago",key="-last_sync-")],
-            [sg.Txt("")],
-            [sg.Txt("Notes of selected row", key="-additional_info-")],
-            [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-note_show-",disabled=True)]
-        ]
-        status_column = sg.Column(layout=layout_status_column, size=(200, 180))
+
+
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
@@ -110,19 +112,30 @@ class rel_tracker_view:
             [sg.B("Checkout", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
             [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)]
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 180))
+        button_column = sg.Column(layout=layout_button_column, size=(200, 200))
+
+        table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
+                     'Note']
+        show_heading = [False, True, True, True, True, True, True, True, True]
+        table_value = [[str(row) for row in range(9)] for col in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
-                              expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
+        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
-            [tab_group, button_column, status_column, sg.Stretch()],
-            [table_view]
+            [tab_group, button_column, self.__status__(), sg.Stretch()],
+            [sg.Txt("Latest Checkpoint Only", size=20),
+             sg.Rad("T", group_id="table_show_latest", default=False,enable_events=True, key="-show_latest1-"),
+             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [table_view],
+            [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -133,6 +146,7 @@ class rel_tracker_view:
         window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
         window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
+
         return window
 
     @staticmethod

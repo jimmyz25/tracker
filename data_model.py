@@ -98,7 +98,8 @@ class DBsqlite:
                 "serial_number_list": None,
                 "wip": None,
                 "selected_pk": None,
-                "update_mode": None
+                "update_mode": None,
+                "show_latest": None
             }
         )
 
@@ -287,6 +288,25 @@ class DBsqlite:
             return [dict(result) for result in results]
 
     @property
+    def latest_sn_history(self):
+        sql = f"SELECT Config_SN_T.*, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
+              " RelLog_T.Notes,RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
+              "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+              " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+              "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
+              "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
+              self.sql_filter_str({"Config_SN_T.WIP": self.filter_set.get("wip"),
+                                   "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
+                                   "Config_FK": self.selected_config_pks,
+                                   "FK_RelStress": self.selected_stress_pks}) + \
+              ' LIMIT 50'
+        results = self.cur.execute(sql).fetchall()
+        if results is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in results]
+
+    @property
     def program_list(self):
         sql = "SELECT Distinct Program FROM Config_T "
         results = self.cur.execute(sql).fetchall()
@@ -304,21 +324,7 @@ class DBsqlite:
         results = self.cur.execute(sql).fetchall()
         return set(result["RelStress"] for result in results)
 
-    @property
-    def latest_sn_history(self):
-        sql = "SELECT Config_SN_T.*, RelLog_T.StartTimestamp, RelLog_T.EndTimestamp," \
-              " RelLog_T.Notes from Config_SN_T " \
-              "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
-              " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-              "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
-              "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
-              self.sql_filter_str({"Config_SN_T.WIP": self.filter_set.get("wip"),
-                                   "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
-                                   "Config_FK": self.selected_config_pks,
-                                   "FK_RelStress": self.selected_stress_pks}) + \
-              ' LIMIT 50'
-        results = self.cur.execute(sql).fetchall()
-        return results
+
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)
@@ -528,8 +534,6 @@ class ConfigModel:
     @property
     def unit_count(self):
         sql = f'SELECT COUNT (SerialNumber) as Unit_Count from Config_SN_T WHERE Config_FK = {self.id}'
-        # sql = f'SELECT COUNT (DISTINCT SerialNumber) as Unit_Count from
-        # (SELECT * From Config_SN_T WHERE Config_FK = {self.id}) as A'
         result = self.database.cur.execute(sql).fetchone()
         return result['Unit_Count']
 

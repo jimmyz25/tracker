@@ -21,9 +21,7 @@ class rel_tracker_app:
 
     @staticmethod
     def apply_user_settings(window: sg.Window):
-        print("apply_user_setting")
-        print(window.AllKeysDict.keys())
-        print(window.key_dict.keys())
+
         for key in rel_tracker_app.settings.keys():
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
@@ -31,8 +29,8 @@ class rel_tracker_app:
         station_name = str(rel_tracker_app.settings.get('-Station_Name-'))
         if "-station_name-" in window.key_dict.keys():
             window["-station_name-"].update(value=station_name)
-
         rel_tracker_app.dbmodel.filter_set = rel_tracker_app.settings["filter_set"]
+        print("USER SETTINGS APPLIED")
 
     @staticmethod
     def save_user_settings(window: sg.Window):
@@ -42,6 +40,7 @@ class rel_tracker_app:
                 rel_tracker_app.settings[key] = window[key].get()
         rel_tracker_app.settings["filter_set"] = rel_tracker_app.dbmodel.filter_set
         sg.user_settings_save()
+        print("user setting saved")
 
     @classmethod
     def reset_window_inputs(cls, window: sg.Window):
@@ -53,6 +52,7 @@ class rel_tracker_app:
         cls.dbmodel.filter_set.clear()
         # save settings to jason file
         cls.save_user_settings(window)
+        print("window rested")
 
 
 class welcome_vc:
@@ -91,21 +91,15 @@ class preference_vc:
                 break
             elif event == "Save Preference":
                 rel_tracker_app.save_user_settings(self.window)
-            print(event, values)
 
         self.close_window()
 
     def close_window(self):
-        # selection = self.window["-station-type"].get()
+
         rel_tracker_app.save_user_settings(self.window)
-        if self.window["-station-type-"].get() == 'RelLog Station':
-            print("attampting to attach relLogvc")
+
         rel_tracker_app.view_list.append(rel_log_vc())
         self.window.close()
-        # if selection == "a":
-        #     print("will go to rel_lab_station")
-        #     view = rel_tracker_view.rel_lab_station_view()
-        #     view.show()
 
 
 class rel_log_vc:
@@ -124,9 +118,13 @@ class rel_log_vc:
     @property
     def table_data(self):
         if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
+            # if in update mode, do not refresh table, update(values = None) means no update
             return None
         else:
-            datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
+            if rel_tracker_app.dbmodel.filter_set.get("show_latest"):
+                datasource = rel_tracker_app.dbmodel.latest_sn_history
+            else:
+                datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
             data = [[row.get("PK"), row.get("Config"), row.get("WIP"), row.get("SerialNumber"), row.get("RelStress"),
                      row.get("RelCheckpoint"), row.get("StartTime"), row.get("EndTime"), row.get("Note")] for row in
                     datasource]
@@ -135,6 +133,8 @@ class rel_log_vc:
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
+            if not isinstance(event, str):
+                continue
             if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Save Preference":
@@ -191,10 +191,14 @@ class rel_log_vc:
                 rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "-table_select-":
-                if len(values.get('-table_select-')) > 0:
+                count = len(values.get('-table_select-'))
+                if count > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pk": values.get('-table_select-')})
-                selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]
-                self.window["-note_show-"].update(value=str(selected[-1]))
+                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
+                    selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
+                    selected_sn = [row[3] for row in selected]
+                    self.window["-note_show-"].update(value=str(selected[0][-1]))
+                    print(selected_sn,"in selection")
             elif event == "update":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
@@ -214,8 +218,13 @@ class rel_log_vc:
                     "checkpoint": sn.stress.rel_checkpoint,
                     "serial_number": sn.serial_number
                 })
-            print(rel_tracker_app.dbmodel.filter_set)
-            print(event, values)
+                print("currently in UPDATE MODE, operating on previous record, proceed with CARE")
+            elif event == "-show_latest0-":
+                rel_tracker_app.dbmodel.filter_set.update({"show_latest": False})
+                self.window['-table_select-'].update(values=self.table_data)
+            elif event == "-show_latest1-":
+                rel_tracker_app.dbmodel.filter_set.update({"show_latest": True})
+                self.window['-table_select-'].update(values=self.table_data)
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Register New Unit'].update(disabled=True)
@@ -253,6 +262,7 @@ class rel_log_vc:
                 if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                     total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                     self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
+
         self.close_window()
 
     def close_window(self):
@@ -290,7 +300,6 @@ class config_select_vc:
                                                   filter(lambda x: x.startswith(self.window["Program"].get()),
                                                          rel_tracker_app.dbmodel.program_list)))
             elif event in ("Program", "Build", "Config"):
-                print("something is selected")
                 if event == "Config":
                     temp_config_selection = self.window["Config"].get()
                 else:
@@ -339,7 +348,6 @@ class stress_select_vc:
                                                     filter(lambda x: x.startswith(self.window["RelStress"].get()),
                                                            rel_tracker_app.dbmodel.program_list)))
             elif event in ("RelStress", "RelCheckpoint"):
-                print("something is selected")
                 if event == "RelCheckpoint":
                     temp_ckp_selection = self.window["RelCheckpoint"].get()
                 else:
@@ -355,7 +363,6 @@ class stress_select_vc:
                 rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
                 self.window["RelStress"].update(value=None, values=list(rel_tracker_app.dbmodel.stress_list))
                 self.window["RelCheckpoint"].update(values=list(rel_tracker_app.dbmodel.ckp_list_to_select))
-            print(event, values)
         self.close_window()
 
     def close_window(self):
