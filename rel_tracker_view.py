@@ -30,13 +30,15 @@ class rel_tracker_view:
         return [
             [column1, sg.Stretch(), sg.Txt("FRL project only", font='Heletica 10', text_color='#4267B2', size=(15, 1))]]
 
-    def preference_view(self):
+    @staticmethod
+    def preference_view():
         layout1 = [
             [sg.Txt("Station Name", size=15),
-             sg.InputText( size=30,
+             sg.InputText(size=30,
                           key="-Station_Name-"), sg.Stretch(),
              sg.B("Validate", size=10)],
-            [sg.Txt("Station Type", size=15), sg.DropDown(values=["a", "b"], size=30, readonly=True,key="-station-type"), sg.Stretch(),
+            [sg.Txt("Station Type", size=15),
+             sg.DropDown(values=["a", "b"], size=30, readonly=True, key="-station-type"), sg.Stretch(),
              sg.B("Set", size=10)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
@@ -55,62 +57,63 @@ class rel_tracker_view:
         return window
 
     def rel_lab_station_view(self):
-        table_col = ['PK','Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
+        table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
-        show_heading=[False,True,True,True,True,True,True,True,True]
+        show_heading = [False, True, True, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(9)] for col in range(1)]
-        #
+
         tab_new_left = [
             [sg.Txt(text="WIP", size=(15, 1)), sg.In(key="-New-WIP_Input-", enable_events=True)],
-            [sg.Txt("Assign Config", size=(15, 1)), sg.In(key="-New-Config_Input-",enable_events=True)],
-            [sg.Txt("initial Checkpoint", size=(15, 1)), sg.In(key="-New-Ckp_Input-",enable_events=True)],
+            [sg.Txt("Assign Config", size=(15, 1)), sg.In(key="-New-Config_Input-", enable_events=True)],
+            [sg.Txt("initial Checkpoint", size=(15, 1)), sg.In(key="-New-Ckp_Input-", enable_events=True)],
             [sg.Txt("Notes", size=(15, 1)), sg.In(key="-New-Note-", enable_events=False)],
-            [sg.Txt("SerialNumber (list)", size=(15, 3), expand_y=True,key="-Multi_SN-"),
-             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True,enable_events=False,key="-New-SN_Input-"
-                          ,tooltip="multiple SN seperate by comma, enter to count\n Note:duplicates will be removed ")]
+            [sg.Txt("SerialNumber (list)", size=(15, 3), expand_y=True, key="-Multi_SN-"),
+             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
+                          tooltip="multiple SN seperate by comma, enter to count\n Note:duplicates will be removed ")]
         ]
-        tab1 = sg.Tab(layout=tab_new_left, title="Registor New Unit")
+        tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
 
         tab_old_left = [
             [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", enable_events=True)],
-            [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-",enable_events=True)],
+            [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-", enable_events=True)],
             [sg.Txt("Config", size=(15, 1), key="-display-config"), sg.In("", disabled=False, key="-Config_Input-")],
-            [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"), sg.In("",disabled=False, key="-Ckp_Input-")],
+            [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"),
+             sg.In("", disabled=False, key="-Ckp_Input-")],
             [sg.Txt("Notes", size=(15, 3), expand_y=True),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, key="-Note-")]
         ]
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150),enable_events=True,key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150), enable_events=True, key="-Tab_Selection-")
 
         layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold',key="-station_name-")],
+            [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold', key="-station_name-")],
             [sg.Txt("Last Sync: 24min ago")],
             [sg.Txt("Unit not in Sync:")],
             [sg.VStretch()]
         ]
         status_column = sg.Column(layout=layout_status_column, size=(200, 150))
         layout_button_column = [
-            [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
-            [sg.B("Reset", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=False)],
-            [sg.B("Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
-            [sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
-            [sg.B("Checkout", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)],
-            [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948","#a8d8eb")
-                  , disabled_button_color=("#e9f4fa","#a8d8eb"),disabled=True)]
+            [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Reset", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Checkout", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)]
         ]
         button_column = sg.Column(layout=layout_button_column, size=(200, 180))
-        table_view = sg.Table(values=table_value,visible_column_map=show_heading,
+        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
                               expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]]
-                              , enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
+                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
         layout = [
             [self.__facebook__()],
@@ -122,7 +125,7 @@ class rel_tracker_view:
                            finalize=True)
         # window["-SN_Input-"].bind("<KeyRelease>", "-KeyPress")
         # window["-WIP_Input-"].bind("<KeyRelease>", "-KeyPress")
-        window["-Config_Input-"].bind("<Button-1>","-ConfigPop-")
+        window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
@@ -132,7 +135,8 @@ class rel_tracker_view:
 
         return window
 
-    def popup_config_select(self):
+    @staticmethod
+    def popup_config_select():
         layout1 = [
             [sg.Txt("Program", size=15),
              sg.InputCombo(size=30, values=[], key="Program", enable_events=True), sg.Stretch(),
@@ -146,18 +150,19 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Config Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
-                           finalize=True,modal=True)
+                           finalize=True, modal=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
         window.TKroot.grab_set()
 
         return window
 
-    def popup_stress_select(self):
+    @staticmethod
+    def popup_stress_select():
         layout1 = [
             [sg.Txt("RelStress", size=15),
              sg.InputCombo(size=30, values=[], key="RelStress", enable_events=True), sg.Stretch()],
             [sg.Txt("RelCheckpoint", size=15), sg.InputCombo(values=[], size=30, readonly=True,
-                                                     key="RelCheckpoint", enable_events=True), sg.Stretch()],
+                                                             key="RelCheckpoint", enable_events=True), sg.Stretch()],
             [sg.B("Save and Close", enable_events=True, key="-Save-"), sg.B("Clear", enable_events=True, key="-Clear-")]
 
         ]

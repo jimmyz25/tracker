@@ -17,10 +17,6 @@ class rel_tracker_app:
     dbmodel = DBsqlite(RMD)
 
     def __init__(self):
-        self.settings = None
-        self.initialize()
-
-    def initialize(self):
         pass
 
     @staticmethod
@@ -120,7 +116,7 @@ class template_view:
             window.show()
 
 
-class preference_vc():
+class preference_vc:
 
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
@@ -149,7 +145,7 @@ class preference_vc():
         #     view.show()
 
 
-class rel_log_vc():
+class rel_log_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.rel_lab_station_view()
@@ -157,10 +153,10 @@ class rel_log_vc():
         rel_tracker_app.apply_user_settings(self.window)
         self.window['-table_select-'].update(values=self.table_data)
 
-    def __update_view__(self, values):
-        if values.get("-table_select-") is not None:
-            # add, checkin, checkout,update,delete is avialbe
-            pass
+    # def __update_view__(self, values):
+    #     if values.get("-table_select-") is not None:
+    #         # add, checkin, checkout,update,delete is avialbe
+    #         pass
 
     @property
     def table_data(self):
@@ -186,14 +182,13 @@ class rel_log_vc():
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):
                     serial_number_list = rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
-                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": serial_number_list.strip("\n").split("\n")})
                     self.window["-New-SN_Input-"].update(
                         value=serial_number_list + "\n")
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-New-WIP_Input-"].get()})
-                    if rel_tracker_app.dbmodel.ready_to_add:
-                        self.window["Add"].update(disabled=False)
-                    else:
-                        self.window["Add"].update(disabled=True)
+                    # if rel_tracker_app.dbmodel.ready_to_add:
+                    #     self.window["Add"].update(disabled=False)
+                    # else:
+                    #     self.window["Add"].update(disabled=True)
                 else:
                     rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
@@ -252,20 +247,20 @@ class rel_log_vc():
                 })
             print(rel_tracker_app.dbmodel.filter_set)
             print(event, values)
-            #after each input, check app status and enable or disable buttons
+            # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
-                self.window['Registor New Unit'].update(disabled=True)
+                self.window['Register New Unit'].update(disabled=True)
                 for key in self.window.AllKeysDict.keys():
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#ecdab9")
             else:
-                self.window['Registor New Unit'].update(disabled=False)
+                self.window['Register New Unit'].update(disabled=False)
                 for key in self.window.AllKeysDict.keys():
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
-            if event.endswith("_Input-") or event == '-table_select-':
+            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or event=="update":
                 if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
                     self.window["Add"].update(disabled=False)
                 else:
@@ -289,16 +284,16 @@ class rel_log_vc():
                 if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                     total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                     self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
-
         self.close_window()
 
     def close_window(self):
+        self.window.close()
         print("window closed")
         rel_tracker_app.save_user_settings(self.window)
         sys.exit()
 
 
-class config_select_vc():
+class config_select_vc:
     def __init__(self, master: sg.Window):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_config_select()
@@ -351,7 +346,7 @@ class config_select_vc():
         self.window.close()
 
 
-class stress_select_vc():
+class stress_select_vc:
 
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
