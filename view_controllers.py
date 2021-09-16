@@ -39,6 +39,17 @@ class rel_tracker_app:
         rel_tracker_app.settings["filter_set"] = rel_tracker_app.dbmodel.filter_set
         sg.user_settings_save()
 
+    @classmethod
+    def reset_window_inputs(cls, window: sg.Window):
+        # clear all input in window
+        for key in window.key_dict.keys():
+            if isinstance(key, str) and isinstance(window[key], sg.PySimpleGUI.Input):
+                window[key].update(value="")
+        # clear filterset
+        cls.dbmodel.filter_set.clear()
+        # save settings to jason file
+        cls.save_user_settings(window)
+
 
 class welcome_vc:
     def __init__(self):
@@ -116,7 +127,7 @@ class preference_vc():
 
         self.window = view.preference_view()
         rel_tracker_app.apply_user_settings(self.window)
-        self.window["-station-type"].update(values=["a","b","c"])
+        self.window["-station-type"].update(values=["a", "b", "c"])
 
     def show(self):
         while True:  # the event loop
@@ -125,7 +136,7 @@ class preference_vc():
                 break
             elif event == "Save Preference":
                 rel_tracker_app.save_user_settings(self.window)
-            print(event,values)
+            print(event, values)
         self.close_window()
 
     def close_window(self):
@@ -145,7 +156,6 @@ class rel_log_vc():
         rel_tracker_app.view_list.append(self)
         rel_tracker_app.apply_user_settings(self.window)
         self.window['-table_select-'].update(values=self.table_data)
-        self.window.TKroot.protocol("WM_DELETE_WINDOW", sys.exit)
 
     def __update_view__(self, values):
         if values.get("-table_select-") is not None:
@@ -207,15 +217,16 @@ class rel_log_vc():
                 self.window["-New-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "Reset":
-                self.window["-SN_Input-"].update(value="")
-                self.window["-Config_Input-"].update(value="")
-                self.window["-Ckp_Input-"].update(value="")
-                self.window["-WIP_Input-"].update(value="")
-                self.window["-New-SN_Input-"].update(value="")
-                self.window["-New-Config_Input-"].update(value="")
-                self.window["-New-Ckp_Input-"].update(value="")
-                self.window["-New-WIP_Input-"].update(value="")
-                rel_tracker_app.dbmodel.filter_set.clear()
+                # self.window["-SN_Input-"].update(value="")
+                # self.window["-Config_Input-"].update(value="")
+                # self.window["-Ckp_Input-"].update(value="")
+                # self.window["-WIP_Input-"].update(value="")
+                # self.window["-New-SN_Input-"].update(value="")
+                # self.window["-New-Config_Input-"].update(value="")
+                # self.window["-New-Ckp_Input-"].update(value="")
+                # self.window["-New-WIP_Input-"].update(value="")
+                # rel_tracker_app.dbmodel.filter_set.clear()
+                rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "-table_select-":
                 if len(values.get('-table_select-')) > 0:
@@ -241,6 +252,7 @@ class rel_log_vc():
                 })
             print(rel_tracker_app.dbmodel.filter_set)
             print(event, values)
+            #after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Registor New Unit'].update(disabled=True)
                 for key in self.window.AllKeysDict.keys():
@@ -253,41 +265,41 @@ class rel_log_vc():
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
-
-            if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Registor New Unit":
-                self.window["Add"].update(disabled=False)
-            else:
-                self.window["Add"].update(disabled=True)
-            if rel_tracker_app.dbmodel.ready_to_update:
-                self.window["Update"].update(disabled=False)
-            else:
-                self.window["Update"].update(disabled=True)
-            if rel_tracker_app.dbmodel.ready_to_checkin:
-                self.window["CheckIn"].update(disabled=False)
-            else:
-                self.window["CheckIn"].update(disabled=True)
-            if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-')) > 0:
-                self.window["Checkout"].update(disabled=False)
-            else:
-                self.window["Checkout"].update(disabled=True)
-            if rel_tracker_app.dbmodel.filter_set.get("selected_pk"):
-                self.window["Delete"].update(disabled=False)
-            else:
-                self.window["Delete"].update(disabled=True)
-            if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
-                total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
-                self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
+            if event.endswith("_Input-") or event == '-table_select-':
+                if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
+                    self.window["Add"].update(disabled=False)
+                else:
+                    self.window["Add"].update(disabled=True)
+                if rel_tracker_app.dbmodel.ready_to_update:
+                    self.window["Update"].update(disabled=False)
+                else:
+                    self.window["Update"].update(disabled=True)
+                if rel_tracker_app.dbmodel.ready_to_checkin:
+                    self.window["CheckIn"].update(disabled=False)
+                else:
+                    self.window["CheckIn"].update(disabled=True)
+                if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-')) > 0:
+                    self.window["Checkout"].update(disabled=False)
+                else:
+                    self.window["Checkout"].update(disabled=True)
+                if rel_tracker_app.dbmodel.filter_set.get("selected_pk"):
+                    self.window["Delete"].update(disabled=False)
+                else:
+                    self.window["Delete"].update(disabled=True)
+                if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
+                    total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
+                    self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
 
         self.close_window()
 
     def close_window(self):
         print("window closed")
         rel_tracker_app.save_user_settings(self.window)
-        self.window.close()
+        sys.exit()
 
 
 class config_select_vc():
-    def __init__(self,master:sg.Window):
+    def __init__(self, master: sg.Window):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_config_select()
         self.master = master
@@ -325,18 +337,17 @@ class config_select_vc():
                 self.window["Config"].update(value=temp_config_selection,
                                              values=list(rel_tracker_app.dbmodel.config_list_to_select))
             elif event == "-Save-":
-                self.close_window()
+                break
             elif event == "-Clear-":
                 rel_tracker_app.dbmodel.filter_set.update({"program": None})
                 rel_tracker_app.dbmodel.filter_set.update({"build": None})
                 rel_tracker_app.dbmodel.filter_set.update({"config": None})
-                self.window["Program"].update(value=None, values=list(rel_tracker_app.dbmodel.program_list))
+                self.window["Program"].update(values=list(rel_tracker_app.dbmodel.program_list))
                 self.window["Build"].update(values=list(rel_tracker_app.dbmodel.build_list))
                 self.window["Config"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
         self.close_window()
 
     def close_window(self):
-        sg.user_settings_save()
         self.window.close()
 
 
