@@ -42,13 +42,15 @@ class rel_tracker_view:
              sg.B("Set", size=10)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
-             sg.FolderBrowse(size=(10, 1), tooltip="abcasdfasdf", target=(sg.ThisRow, -2))],
+             sg.FolderBrowse(size=(10, 1), tooltip="Input folder where data will be saved before tagging",
+                             target=(sg.ThisRow, -2))],
             [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
-            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync",default=True), sg.Rad("OFF", group_id="auto_sync")],
+            [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync",default=True),
+             sg.Rad("OFF", group_id="auto_sync")],
             [sg.Btn("Save Preference", size=15), sg.Btn("New Window", key="-New_Window-")]
         ]
 
@@ -85,15 +87,17 @@ class rel_tracker_view:
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 150), enable_events=True, key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 180), enable_events=True, key="-Tab_Selection-")
 
         layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 22 bold', key="-station_name-")],
-            [sg.Txt("Last Sync: 24min ago")],
-            [sg.Txt("Unit not in Sync:")],
-            [sg.VStretch()]
+            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+                    ,tooltip="maximum character: 10")],
+            [sg.Txt("Last Sync: 24min ago",key="-last_sync-")],
+            [sg.Txt("")],
+            [sg.Txt("Notes of selected row", key="-additional_info-")],
+            [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-note_show-",disabled=True)]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(200, 150))
+        status_column = sg.Column(layout=layout_status_column, size=(200, 180))
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],

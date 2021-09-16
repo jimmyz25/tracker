@@ -21,10 +21,17 @@ class rel_tracker_app:
 
     @staticmethod
     def apply_user_settings(window: sg.Window):
+        print("apply_user_setting")
+        print(window.AllKeysDict.keys())
+        print(window.key_dict.keys())
         for key in rel_tracker_app.settings.keys():
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                     window[key].update(value=rel_tracker_app.settings.get(key))
+        station_name = str(rel_tracker_app.settings.get('-Station_Name-'))
+        if "-station_name-" in window.key_dict.keys():
+            window["-station_name-"].update(value=station_name)
+
         rel_tracker_app.dbmodel.filter_set = rel_tracker_app.settings["filter_set"]
 
     @staticmethod
@@ -143,6 +150,7 @@ class rel_log_vc:
                     self.window["-New-SN_Input-"].update(
                         value=serial_number_list + "\n")
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-New-WIP_Input-"].get()})
+                    self.window["-WIP_Input-"].update(self.window["-New-WIP_Input-"].get())
                     # if rel_tracker_app.dbmodel.ready_to_add:
                     #     self.window["Add"].update(disabled=False)
                     # else:
@@ -156,6 +164,7 @@ class rel_log_vc:
                         self.window["-Config_Input-"].update(str(sn.config))
                         self.window["-Ckp_Input-"].update(str(sn.stress))
                         self.window["-WIP_Input-"].update(str(sn.wip))
+                    self.window["-New-WIP_Input-"].update(self.window["-WIP_Input-"].get())
                 self.window['-table_select-'].update(values=self.table_data)
             elif event.endswith("-ConfigPop-"):
                 config_popup = config_select_vc(self.window)
@@ -184,6 +193,8 @@ class rel_log_vc:
             elif event == "-table_select-":
                 if len(values.get('-table_select-')) > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pk": values.get('-table_select-')})
+                selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]
+                self.window["-note_show-"].update(value=str(selected[-1]))
             elif event == "update":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
