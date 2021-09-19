@@ -97,9 +97,10 @@ class DBsqlite:
                 "serial_number": None,
                 "serial_number_list": None,
                 "wip": None,
-                "selected_pk": None,
+                "selected_row": None,
                 "update_mode": None,
-                "show_latest": None
+                "show_latest": None,
+                "selected_pks" :None
             }
         )
 
@@ -159,14 +160,27 @@ class DBsqlite:
 
     @property
     def ready_to_checkin(self):
-        if self.filter_set.get("selected_pk") is not None:
+        #no duplicate SN is allowed, all SN needs to complete current checkpoint
+        #TODO there is a bug, if SN hasn't checked out the latest checkpoint but
+        # earier checkpoint is selected, then it'll allow user to check the SN to next checkpoint
+        if self.filter_set.get("selected_pks") is not None:
             serial_number_list=[]
-            for pk in self.filter_set.get("selected_pk", []):
-                result = self.cur.execute(f"SELECT SerialNumber,EndTimestamp from RelLog_T WHERE PK = {pk}").fetchone()
-                if result["SerialNumber"] in serial_number_list:
+            for pk in self.filter_set.get("selected_pks", []):
+                sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber, Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
+                      "left join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                      " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+                      "WHERE RelLog_T.PK = ?"
+                result = self.cur.execute(sql, (pk,)).fetchone()
+                # if result is None:
+                #     return False
+                # print(result)
+                # print("asdfsdf")
+                sn = result["SerialNumber"]
+                if sn in serial_number_list:
                     return False
                 serial_number_list.append(result["SerialNumber"])
                 if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
+                    # print (result["EndTimestamp"] )
                     return False
             return True
 

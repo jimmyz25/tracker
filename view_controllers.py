@@ -134,6 +134,7 @@ class rel_log_vc:
             return data
 
     def show(self):
+        #TODO currently, when right click update, lastest info (not necessarly the row that user selected is added to the inputs, but the row to be updated will still be the row selected. this is a bug to be fixed
         while True:  # the event loop
             event, values = self.window.read()
             if not isinstance(event, str):
@@ -191,10 +192,14 @@ class rel_log_vc:
                     # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
                     selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
                     selected_sn = [row[3] for row in selected]
+                    selected_pk = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
                     self.window["-note_show-"].update(value=str(selected[0][-1]))
                     print(selected_sn, "in selection")
                 if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
+                    selected_pk = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
                     self.window["-SN_Input-"].update(str(sn.serial_number))
@@ -243,11 +248,12 @@ class rel_log_vc:
                     self.window["Update"].update(disabled=False)
                 else:
                     self.window["Update"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_checkin:
+                ready_to_checkin = rel_tracker_app.dbmodel.ready_to_checkin
+                if ready_to_checkin:
                     self.window["CheckIn"].update(disabled=False)
                 else:
                     self.window["CheckIn"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-')) > 0:
+                if not ready_to_checkin and len(values.get('-table_select-')) > 0:
                     self.window["Checkout"].update(disabled=False)
                 else:
                     self.window["Checkout"].update(disabled=True)
@@ -258,7 +264,7 @@ class rel_log_vc:
                 if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                     total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                     self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
-
+            print(rel_tracker_app.dbmodel.ready_to_checkin)
 
         self.close_window()
 
@@ -288,8 +294,8 @@ class fa_log_vc:
                 datasource = rel_tracker_app.dbmodel.latest_sn_history
             else:
                 datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
-            data = [[row.get("PK"), row.get("Config"), row.get("WIP"), row.get("SerialNumber"), row.get("RelStress"),
-                     row.get("RelCheckpoint"), row.get("StartTime"), row.get("EndTime"), row.get("Note")] for row in
+            data = [[row.get("PK"),  row.get("SerialNumber"), row.get("RelStress"),
+                     row.get("RelCheckpoint")] for row in
                     datasource]
             return data
 
@@ -332,12 +338,13 @@ class fa_log_vc:
                 count = len(values.get('-table_select-'))
                 if count > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
+
                     # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
                     selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
-                    selected_sn = [row[3] for row in selected]
+                    selected_sn = [row[1] for row in selected]
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
+                    sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
                     self.window["-SN_Input-"].update(str(sn.serial_number))
                     self.window["-Config_Input-"].update(str(sn.config))
                     self.window["-Ckp_Input-"].update(str(sn.stress))

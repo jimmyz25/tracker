@@ -126,7 +126,7 @@ class rel_tracker_view:
                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -135,7 +135,7 @@ class rel_tracker_view:
              sg.Rad("T", group_id="table_show_latest", default=False,enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -225,32 +225,30 @@ class rel_tracker_view:
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
         ]
         button_column = sg.Column(layout=layout_button_column, size=(200, 280),expand_y=True)
-
-        layout_failure_column = [
-            [sg.Txt("failure mode here")]
-        ]
-        failure_column = sg.Column(layout_failure_column, visible=False,key="-failure_column-")
-        status_column = self.__status__()
-
-        table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
-                     'Note']
-        show_heading = [False, True, True, True, True, True, True, True, True]
-        table_value = [[str(row) for row in range(9)] for col in range(1)]
+        table_col = ['PK', 'SerialNumber', 'Stress', 'Checkpoint']
+        show_heading = [False, True, True,True]
+        table_value = [[str(row) for row in range(4)] for col in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col,select_mode=sg.SELECT_MODE_BROWSE,
+                              headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=10, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
-                              enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+                              enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
+        layout_status_column = [
+            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+                    )],
+            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
+            [table_view]
+        ]
+        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
+        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
-            [filter_column, button_column,status_column ,failure_column, sg.Stretch()],
+            [filter_column, button_column,status_column, sg.Stretch()],
             [sg.Txt("Latest Checkpoint Only", size=20),
              sg.Rad("T", group_id="table_show_latest", default=False,enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
-            [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
