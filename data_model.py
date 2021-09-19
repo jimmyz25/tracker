@@ -171,10 +171,6 @@ class DBsqlite:
                       " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                       "WHERE RelLog_T.PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
-                # if result is None:
-                #     return False
-                # print(result)
-                # print("asdfsdf")
                 sn = result["SerialNumber"]
                 if sn in serial_number_list:
                     return False

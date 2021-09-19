@@ -40,7 +40,7 @@ class rel_tracker_view:
             [sg.Txt("Notes of selected row", key="-additional_info-")],
             [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-note_show-", disabled=True)]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(200, 180),key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(200, 180), key="-status-column")
         return status_column
 
     @staticmethod
@@ -48,10 +48,11 @@ class rel_tracker_view:
         layout1 = [
             [sg.Txt("Station Name", size=15),
              sg.InputText(size=30,
-                          key="-Station_Name-",tooltip="maximum character: 18"), sg.Stretch(),
+                          key="-Station_Name-", tooltip="maximum character: 18"), sg.Stretch(),
              sg.B("Validate", size=10)],
             [sg.Txt("Station Type", size=15),
-             sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-",enable_events=True), sg.Stretch(),
+             sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-", enable_events=True),
+             sg.Stretch(),
              sg.B("Set", size=10)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
@@ -68,11 +69,10 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Preference', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True,enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True)
         return window
 
     def rel_lab_station_view(self):
-
         tab_new_left = [
             [sg.Txt(text="WIP", size=(15, 1)), sg.In(key="-New-WIP_Input-", enable_events=True)],
             [sg.Txt("Assign Config", size=(15, 1)), sg.In(key="-New-Config_Input-", enable_events=True)],
@@ -97,8 +97,6 @@ class rel_tracker_view:
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
         tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 180), enable_events=True, key="-Tab_Selection-")
-
-
 
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -132,14 +130,14 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, self.__status__(), sg.Stretch()],
             [sg.Txt("Latest Checkpoint Only", size=20),
-             sg.Rad("T", group_id="table_show_latest", default=False,enable_events=True, key="-show_latest1-"),
+             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
             [table_view],
             # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True,enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
@@ -188,7 +186,6 @@ class rel_tracker_view:
         return window
 
     def fa_log_view(self):
-
         layout_filter_column = [
             [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", enable_events=True)],
             [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-", enable_events=True)],
@@ -196,27 +193,24 @@ class rel_tracker_view:
             [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"),
              sg.In("", disabled=True, key="-Ckp_Input-")],
             [sg.Txt("Failure Mode Sets", size=(15, 1)),
-             sg.Combo(["cosmetic inspection set 1","cosmetic inspection set 2"], disabled=False,
+             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
                       key="-failure_mode_set-", size=(38, 1))],
             [sg.Txt("Failure Mode", size=(15, 1)),
-             sg.Listbox(values=["failure mode 1","failure mode 2"],select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,size=(38,10))],
+             sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        size=(38, 10))],
             # [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-failure_detail-")]
         ]
 
         filter_column = sg.Column(layout=layout_filter_column)
 
         layout_button_column = [
-
+            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+                    )],
             [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.Sizer(5,5)],
-            [sg.Txt("Data Tagging", size=(20,1),justification='center')],
-            [sg.B("Start Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.Sizer(5,5)],
-            [sg.Txt("Failure Report",size=(20,1),justification='center')],
+            [sg.Sizer(5, 5)],
+            [sg.Sizer(5, 5)],
+            [sg.Txt("Failure Report", size=(20, 1), justification='center')],
             [sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.B("Generate Reports", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -224,35 +218,43 @@ class rel_tracker_view:
             [sg.B("Rename Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 280),expand_y=True)
+        button_column = sg.Column(layout=layout_button_column, size=(200, 280), expand_y=True)
         table_col = ['PK', 'SerialNumber', 'Stress', 'Checkpoint']
-        show_heading = [False, True, True,True]
+        show_heading = [False, True, True, True]
         table_value = [[str(row) for row in range(4)] for col in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=10, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
         layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
-                    )],
-            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
             [table_view]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(300, 280), key="-status-column")
+
+        table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',"Detail"]
+        show_heading = [False, True, True, True, True, True, True, True]
+        table_value2 = [[str(row) for row in range(8)] for col in range(1)]
+        table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
+                               headings=table_col,
+                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
+                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                               enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
+
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
-            [filter_column, button_column,status_column, sg.Stretch()],
+            [filter_column, status_column, button_column, sg.Stretch()],
             [sg.Txt("Latest Checkpoint Only", size=20),
-             sg.Rad("T", group_id="table_show_latest", default=False,enable_events=True, key="-show_latest1-"),
+             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [table_view2]
             # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True,enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 
