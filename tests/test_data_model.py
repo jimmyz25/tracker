@@ -90,10 +90,12 @@ def test_SN_init():
 
 
 def test_selected_config_pks():
+    db.filter_set.clear()
     db.filter_set.update({"program": "Program1"})
-    db.filter_set.update({"build": "P1"})
-    db.filter_set.update({"config": "Config11"})
-    print(timeit.timeit(lambda: db.selected_config_pks, number=1000))
+    # db.filter_set.update({"build": "P1"})
+    # db.filter_set.update({"config": "Config11"})
+    # print(timeit.timeit(lambda: db.selected_config_pks, number=1000))
+    print(db.selected_config_pks)
     a = db.selected_config_pks
     assert a.pop() == 1
 
@@ -150,23 +152,25 @@ def test_filtered_record():
 
 def test_sql_filter_str():
     kwp = {
-        "CONFIG_FK": (1, 2, 3),
-        "SerialNumber": "abc",
-        "Program": "program1"
-    }
-
-    print(db.sql_filter_str(kwp))
-    kwp = {
         "CONFIG_FK": None,
-        "SerialNumber": None,
+        "SerialNumber": 1,
         "Program": None
     }
 
     print(db.sql_filter_str(kwp))
-    kwp = {'RelLog_T.WIP': None, 'RelLog_T.SerialNumber': None, 'Config_FK': {1, 2, 3, 4},
-           'FK_RelStress': {1, 10, 20, 21}}
-
-    print(db.sql_filter_str(kwp))
+    # kwp = {
+    #     "CONFIG_FK": "sd",
+    #     "SerialNumber": None,
+    #     "Program": {1, 2, 3, 4}
+    # }
+    #
+    # # print(db.sql_filter_str(kwp))
+    # kwp = {'RelLog_T.WIP': None, 'RelLog_T.SerialNumber': None, 'Config_FK': {1, 2, 3, 4},
+    #        'FK_RelStress': {1, 10, 20, 21}}
+    #
+    # # print(db.sql_filter_str(kwp))
+    # db.filter_set.clear()
+    # db.filter_set.update({'program': 'Program1', 'build': 'P1', 'config': 'Config13'})
 
     assert 1 == 1
 
@@ -216,8 +220,7 @@ def test_rel_log_table_view_data():
 
 
 def test_ready_to_checkin():
-    db.filter_set.update({"selected_pks": [1, 2,1]})
-    db.ready_to_checkin
+    db.filter_set.update({"selected_pks": [1, 2, 1]})
     print(timeit.timeit(lambda: db.ready_to_checkin, number=1000))
     assert db.ready_to_checkin == False
 
@@ -225,5 +228,15 @@ def test_ready_to_checkin():
 def test_ready_to_add():
     db.filter_set.update({"serial_number_list": "66T6S8L9M76P, 41C36MX9YSJM, \n F6EZDQRQOSMP "})
     print(db.ready_to_add)
-    print (db.filter_set)
-    assert True==True
+    print(db.filter_set)
+    assert True == True
+
+
+def test_fa_log_table_view_data():
+    db.filter_set.clear()
+    # db.filter_set.update({"serial_number": "41C36MX9YSJM"})
+    # db.filter_set.update({"wip": "1675676"})
+    # db.filter_set.update({"filter_table": "RelLog_T"})
+    print(timeit.timeit(lambda: db.fa_log_table_view_data, number=1))
+    a = db.fa_log_table_view_data
+    assert True == True

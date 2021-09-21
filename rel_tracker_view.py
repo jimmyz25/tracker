@@ -180,28 +180,111 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Stress Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
-                           finalize=True)
+                           finalize=True, modal=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
         window.TKroot.grab_set()
         return window
 
-    def fa_log_view(self):
+    @staticmethod
+    def popup_fm_select():
         layout_filter_column = [
+
+            [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", disabled=True,size=(20,1))],
+            [sg.Txt("Current Checkpoint", size=(15, 1)),
+             sg.In("", disabled=True, key="-Ckp_Input-",size=(20,1))],
+            [sg.Txt("Failure Mode Sets", size=(15, 1)),
+             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
+                      key="-failure_mode_set-", size=(20, 1))],
+            [sg.Txt("Failure Mode", size=(15, 1)),
+             sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        size=(20, 10))],
+        ]
+
+        filter_column = sg.Column(layout=layout_filter_column)
+
+        layout_button_column = [
+            [sg.Sizer(40,100)],
+            [sg.B("Add >>>", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Add New FailureMode set", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Add Failure Mode to Set", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Delete Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+        ]
+        button_column = sg.Column(layout=layout_button_column, size=(200, 280), expand_y=True)
+        table_col = ['PK','failure mode set', 'failure mode', 'detail']
+        show_heading = [False, True, True, True]
+        table_value = [[str(row) for row in range(4)] for col in range(1)]
+        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
+                              headings=table_col,size=(40,10),
+                              expand_x=True, num_rows=8, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
+
+        layout_done_column = [
+             [table_view],
+            [sg.Multiline(default_text="",size=(40,3))]
+        ]
+
+        done_column = sg.Column(layout=layout_done_column)
+
+        layout_button_column2 = [
+            [sg.Sizer(40, 100)],
+            [sg.B("Remove Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+        ]
+        button_column2 = sg.Column(layout=layout_button_column2, size=(200, 280), expand_y=True)
+
+        # layout_status_column = [
+        #     [sg.Txt("Failure Mode Sets", size=(15, 1)),
+        #      sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
+        #               key="-failure_mode_set-", size=(20, 1))],
+        #     [sg.Txt("Failure Mode", size=(15, 1)),
+        #      sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+        #                 size=(20, 15))],
+        # ]
+        # status_column = sg.Column(layout=layout_status_column, size=(300, 280), key="-status-column")
+
+        # table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
+        #              "Detail"]
+
+        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+
+        layout = [
+            [filter_column, button_column, done_column,button_column2],
+        ]
+
+        window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False)
+        window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        return window
+
+    def fa_log_view(self):
+        table_col = ['PK', 'SerialNumber', 'Stress', 'Checkpoint']
+        show_heading = [False, True, True, True]
+        table_value = [[str(row) for row in range(4)] for col in range(1)]
+        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
+                              headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
+                              expand_x=True, num_rows=4, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
+
+        layout_filter_column = [
+            [sg.Txt("---Filters", size=(40, 1))],
             [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", enable_events=True)],
             [sg.Txt(text="WIP", size=(15, 1), key="-display_wip-"), sg.In(key="-WIP_Input-", enable_events=True)],
             [sg.Txt("Config", size=(15, 1), key="-display-config"), sg.In("", disabled=True, key="-Config_Input-")],
             [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"),
              sg.In("", disabled=True, key="-Ckp_Input-")],
-            [sg.Txt("Failure Mode Sets", size=(15, 1)),
-             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
-                      key="-failure_mode_set-", size=(38, 1))],
             [sg.Txt("Failure Mode", size=(15, 1)),
-             sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                        size=(38, 10))],
-            # [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-failure_detail-")]
+             sg.In("", disabled=False, key="-Failure_Mode_Input-")],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column)
+        filter_column = sg.Column(layout=layout_filter_column,size=(300, 180),)
 
         layout_button_column = [
             [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
@@ -209,28 +292,24 @@ class rel_tracker_view:
             [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.Sizer(5, 5)],
-            [sg.Sizer(5, 5)],
-            [sg.Txt("Failure Report", size=(20, 1), justification='center')],
             [sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Generate Reports", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Rename Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+
+            [sg.B("Append Data", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 280), expand_y=True)
-        table_col = ['PK', 'SerialNumber', 'Stress', 'Checkpoint']
-        show_heading = [False, True, True, True]
-        table_value = [[str(row) for row in range(4)] for col in range(1)]
-        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
-                              enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
+        button_column = sg.Column(layout=layout_button_column, size=(200, 180), expand_y=True)
+
         layout_status_column = [
-            [table_view]
+            [sg.Txt("---SerialNumber to select", size=(40, 1))],
+            [sg.Txt("Last Checkpoint Only", size=20),
+             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
+             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [table_view],
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(300, 280), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',"Detail"]
         show_heading = [False, True, True, True, True, True, True, True]
@@ -238,7 +317,7 @@ class rel_tracker_view:
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
-                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                               header_background_color="white",
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
@@ -246,9 +325,6 @@ class rel_tracker_view:
         layout = [
             [self.__facebook__()],
             [filter_column, status_column, button_column, sg.Stretch()],
-            [sg.Txt("Latest Checkpoint Only", size=20),
-             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
             [table_view2]
             # [output_view]
         ]
