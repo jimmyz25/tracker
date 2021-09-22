@@ -5,7 +5,7 @@ from view_controllers import *
 if __name__ == '__main__':
     app = rel_tracker_app()
     loading_page = welcome_vc()
-    initial = failure_mode_vc()
+    initial = fa_log_vc()
     app.view_list.append(initial)
     while True:
         if len(app.view_list) == 0:

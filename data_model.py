@@ -67,15 +67,15 @@ class DBsqlite:
             elif isinstance(value, set):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
-                elif len(value) ==1:
+                elif len(value) == 1:
                     row.append(f'{key} = {value.pop()}')
             elif isinstance(value, tuple):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
                 else:
                     row.append(f'{key} = {value[0]}')
-        if len(row)==0:
-            sql=""
+        if len(row) == 0:
+            sql = ""
         else:
             sql = "WHERE " + " AND ".join(row)
 
@@ -98,11 +98,13 @@ class DBsqlite:
                 "serial_number": None,
                 "serial_number_list": None,
                 "wip": None,
+                "failure_group": None,
                 "failure_mode": None,
                 "selected_row": None,
                 "update_mode": None,
                 "show_latest": None,
-                "selected_pks": None
+                "selected_pks": None,
+                "station": None
             }
         )
 
@@ -226,6 +228,19 @@ class DBsqlite:
         return results
 
     @property
+    def cache_failure_mode_of_sn_table(self):
+        sql = f'SELECT PK,FailureGroup,FailureMode FROM FALog_T ' + \
+              self.sql_filter_str({
+                  "SerialNumber": self.filter_set.get("serial_number"),
+                  "FK_RelStress": self.selected_stress_pks
+              })
+        results = self.cur.execute(sql).fetchall()
+        if results is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in results]
+
+    @property
     def selected_config_pks(self):
         if self.filter_set.get("program") is None and self.filter_set.get("build") is None \
                 and self.filter_set.get("config") is None:
@@ -261,6 +276,38 @@ class DBsqlite:
               self.sql_filter_str({"RelStress": self.filter_set.get("stress")})
         results = self.cur.execute(sql).fetchall()
         return set(result["RelCheckpoint"] for result in results)
+
+    @property
+    def failure_mode_group_list(self):
+        sql = "SELECT Distinct FailureGroup FROM FailureMode_T "
+        results = self.cur.execute(sql).fetchall()
+        return set(result["FailureGroup"] for result in results)
+
+    @property
+    def failure_mode_list_to_select(self):
+        sql = "SELECT FailureMode FROM FailureMode_T  " + \
+              self.sql_filter_str(({"FailureGroup": self.filter_set.get("failure_group")}))
+        results = self.cur.execute(sql).fetchall()
+        sql = "SELECT FailureMode From FALog_T " + self.sql_filter_str({
+            "SerialNumber": self.filter_set.get("serial_number"),
+            "FK_RelStress": self.selected_stress_pks
+        })
+        result_existing = self.cur.execute(sql).fetchall()
+        all_failure_mode = set(result["FailureMode"] for result in results)
+        existing = set(result["FailureMode"] for result in result_existing)
+        return all_failure_mode - existing
+
+    # @property
+    # def str_selected_config(self):
+    #     selected_pk = self.selected_config_pks
+    #     if self.selected_config_pks:
+    #         if len(selected_pk) == 1:
+    #             first_config = ConfigModel(selected_pk.pop())
+    #             return str(first_config)
+    #         else:
+    #             return "Multiple Configs"
+    #     else:
+    #         return "no config assigned"
 
     @property
     def filtered_record(self):
@@ -494,6 +541,33 @@ class DBsqlite:
         return True
         pass
 
+    def insert_to_failure_log_table(self):
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(self.filter_set.get("failure_mode"),list):
+            for failure_mode in self.filter_set.get("failure_mode"):
+                log = {
+                    "FK_RelStress": self.selected_stress_pks.pop(),
+                    "Station": self.filter_set.get('station'),
+                    "SerialNumber": self.filter_set.get("serial_number"),
+                    "FailureGroup": self.filter_set.get("failure_group"),
+                    "FailureMode": failure_mode,
+                    "StartTimestamp": current_time,
+                    "StartTime":time_str,
+                    "WIP": SnModel(self.filter_set.get("serial_number"),self).wip,
+                    "removed":0
+                }
+                self.__insert_to_table__("FALog_T",**log)
+
+    def delete_from_failure_log_table(self):
+        if isinstance(self.filter_set.get("selected_pks"), list):
+            for pk in self.filter_set.get("selected_pks"):
+                sql = f"DELETE FROM FALog_T WHERE PK = {pk}"
+                print (sql)
+                self.cur.execute(sql)
+            self.con.commit()
+
+
     # TODO: we can use delta from T0(earliest checkpoint) for each SN, to estimate time to complete a certain checkpoint
 
     def __get_col_names__(self, table_name):
@@ -512,6 +586,7 @@ class DBsqlite:
     def __insert_to_table__(self, tablename: str, **log):
         col_to_add = []
         values = []
+        print(log)
         for col in self.__get_col_names__(tablename):
             values.append(log.get(col))
             col_to_add.append(col)
@@ -519,6 +594,8 @@ class DBsqlite:
         values_tup = tuple(values)
         ques_mark = self.__construct_question_mark__(tablename)
         sql = "INSERT INTO " + tablename + " (" + cols_str + ") VALUES " + ques_mark
+        print(sql)
+        print(values_tup)
         try:
             self.cur.execute(sql, values_tup)
         except sqlite3.Error as e:

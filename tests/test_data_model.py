@@ -240,3 +240,18 @@ def test_fa_log_table_view_data():
     print(timeit.timeit(lambda: db.fa_log_table_view_data, number=1))
     a = db.fa_log_table_view_data
     assert True == True
+
+
+def test_failure_mode_group_list():
+    # db.failure_mode_group_list
+    print(timeit.timeit(lambda: db.failure_mode_group_list, number=1000))
+    print(db.failure_mode_group_list)
+    assert True == True
+
+
+def test_failure_mode_list_to_select():
+    db.filter_set.clear()
+    db.filter_set.update({"failure_group":"Default"})
+    print(timeit.timeit(lambda: db.failure_mode_list_to_select, number=1000))
+    print(db.failure_mode_list_to_select)
+    assert True == True

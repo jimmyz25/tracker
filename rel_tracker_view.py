@@ -189,9 +189,60 @@ class rel_tracker_view:
     def popup_fm_select():
         layout_filter_column = [
 
-            [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"), sg.In(key="-SN_Input-", disabled=True,size=(20,1))],
+            [sg.Txt("Failure Mode Sets", size=(15, 1)),
+             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
+                      key="-failure_mode_set-", size=(20, 1),enable_events=True)],
+            [sg.Txt("Failure Mode", size=(15, 1)),
+             sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        size=(20, 11),key="-failure_to_select-",enable_events=True)],
+        ]
+
+        filter_column = sg.Column(layout=layout_filter_column)
+
+        layout_button_column = [
+            [sg.Sizer(10,50)],
+            [sg.B("Add >>>", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True,key="-Add-")],
+            [sg.B("Remove <<<", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True,key="-Remove-")],
+        ]
+        button_column = sg.Column(layout=layout_button_column, expand_y=True)
+        table_col = ['PK','failure mode set', 'failure mode', 'detail']
+        show_heading = [False, True, True, True]
+        table_value = [[str(row) for row in range(4)] for col in range(1)]
+        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
+                              headings=table_col,size=(40,10),
+                              expand_x=True, num_rows=12, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
+
+        layout_done_column = [
+             [table_view],
+            [sg.VStretch()]
+
+        ]
+
+        done_column = sg.Column(layout=layout_done_column)
+
+        layout = [
+            [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-"),
+             sg.In(key="-SN_Input-", disabled=True, size=(20, 1))],
             [sg.Txt("Current Checkpoint", size=(15, 1)),
-             sg.In("", disabled=True, key="-Ckp_Input-",size=(20,1))],
+             sg.In("", disabled=True, key="-Ckp_Input-", size=(20, 1))],
+            [filter_column, button_column, done_column],
+            [sg.B("Add details", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.Multiline(default_text="", size=(40, 15),expand_x=True)]
+        ]
+
+        window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False)
+        window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        return window
+
+    @staticmethod
+    def popup_fm_config():
+        layout_filter_column = [
             [sg.Txt("Failure Mode Sets", size=(15, 1)),
              sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
                       key="-failure_mode_set-", size=(20, 1))],
@@ -203,64 +254,22 @@ class rel_tracker_view:
         filter_column = sg.Column(layout=layout_filter_column)
 
         layout_button_column = [
-            [sg.Sizer(40,100)],
-            [sg.B("Add >>>", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Add New FailureMode set", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Add Failure Mode to Set", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+            [sg.B("Group Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  tooltip="each failure mode can only belongs to one group")],
+            [sg.B("Create New Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.B("Delete Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 280), expand_y=True)
-        table_col = ['PK','failure mode set', 'failure mode', 'detail']
-        show_heading = [False, True, True, True]
-        table_value = [[str(row) for row in range(4)] for col in range(1)]
-        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col,size=(40,10),
-                              expand_x=True, num_rows=8, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
-                              enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
-
-        layout_done_column = [
-             [table_view],
-            [sg.Multiline(default_text="",size=(40,3))]
-        ]
-
-        done_column = sg.Column(layout=layout_done_column)
-
-        layout_button_column2 = [
-            [sg.Sizer(40, 100)],
-            [sg.B("Remove Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-        ]
-        button_column2 = sg.Column(layout=layout_button_column2, size=(200, 280), expand_y=True)
-
-        # layout_status_column = [
-        #     [sg.Txt("Failure Mode Sets", size=(15, 1)),
-        #      sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
-        #               key="-failure_mode_set-", size=(20, 1))],
-        #     [sg.Txt("Failure Mode", size=(15, 1)),
-        #      sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-        #                 size=(20, 15))],
-        # ]
-        # status_column = sg.Column(layout=layout_status_column, size=(300, 280), key="-status-column")
-
-        # table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
-        #              "Detail"]
-
-        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        button_column = sg.Column(layout=layout_button_column,expand_y=True)
 
         layout = [
-            [filter_column, button_column, done_column,button_column2],
+            [filter_column, button_column],
         ]
 
-        window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False)
-        window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         return window
 
     def fa_log_view(self):
@@ -284,23 +293,21 @@ class rel_tracker_view:
              sg.In("", disabled=False, key="-Failure_Mode_Input-")],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column,size=(300, 180),)
+        filter_column = sg.Column(layout=layout_filter_column,size=(300, 150),)
 
         layout_button_column = [
             [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
                     )],
             [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.Sizer(5, 5)],
+            [sg.B("Configure Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
             [sg.B("Update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-
-            [sg.B("Append Data", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 180), expand_y=True)
+        button_column = sg.Column(layout=layout_button_column, size=(200, 150), expand_y=True)
 
         layout_status_column = [
             [sg.Txt("---SerialNumber to select", size=(40, 1))],
@@ -309,7 +316,7 @@ class rel_tracker_view:
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
             [table_view],
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(300, 150), key="-status-column")
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',"Detail"]
         show_heading = [False, True, True, True, True, True, True, True]
