@@ -304,8 +304,8 @@ class rel_tracker_view:
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            # [sg.B("Update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+            #       disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
         ]
         button_column = sg.Column(layout=layout_button_column, size=(200, 150), expand_y=True)
 
@@ -326,7 +326,7 @@ class rel_tracker_view:
                                headings=table_col,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                                header_background_color="white",
-                               enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
+                               enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 

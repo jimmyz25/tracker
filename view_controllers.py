@@ -198,15 +198,11 @@ class rel_log_vc:
                     self.window["-note_show-"].update(value=str(selected[0][-1]))
                     print(selected_sn, "in selection")
                 if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
-                    selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
-                    selected_pk = [row[0] for row in selected]
+                    selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')] [0] # first one
+                    selected_pk = [selected[0]]
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
-                    self.window["-SN_Input-"].update(str(sn.serial_number))
-                    self.window["-Config_Input-"].update(str(sn.config))
-                    self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    self.window["-WIP_Input-"].update(str(sn.wip))
                     rel_tracker_app.dbmodel.filter_set.update({
                         "program": sn.config.program,
                         "build": sn.config.build,
@@ -216,6 +212,10 @@ class rel_log_vc:
                         "checkpoint": sn.stress.rel_checkpoint,
                         "serial_number": sn.serial_number
                     })
+                    self.window["-SN_Input-"].update(str(sn.serial_number))
+                    self.window["-Config_Input-"].update(str(sn.config))
+                    self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+                    self.window["-WIP_Input-"].update(str(sn.wip))
             elif event == "update":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
@@ -322,11 +322,14 @@ class fa_log_vc:
             elif event == "Report Failure":
                 failure_mode_popup = failure_mode_vc(self.window)
                 failure_mode_popup.show()
+                rel_tracker_app.dbmodel.filter_set.update({
+                    "failure_mode":None
+                })
+                self.window["-fa_table_select-"].update(values=self.fa_table_data)
             elif event == "Configure Failure Modes":
                 failure_mode_config_popup = failure_mode_config_vc(self.window)
                 failure_mode_config_popup.show()
             elif event.endswith("_Input-"):
-                print(event,values)
                 rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Input-")})
@@ -372,10 +375,10 @@ class fa_log_vc:
                         "checkpoint": selected[3],
                         "serial_number": sn.serial_number
                     })
-                    self.window["-SN_Input-"].update(str(sn.serial_number))
-                    self.window["-Config_Input-"].update(str(sn.config))
-                    self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    self.window["-WIP_Input-"].update(str(sn.wip))
+                    # self.window["-SN_Input-"].update(str(sn.serial_number))
+                    # self.window["-Config_Input-"].update(str(sn.config))
+                    # self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+                    # self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
 
             elif event == "-fa_table_select-":
@@ -394,10 +397,10 @@ class fa_log_vc:
                         "checkpoint": selected[5],
                         "serial_number": sn.serial_number
                     })
-                    self.window["-SN_Input-"].update(str(sn.serial_number))
-                    self.window["-Config_Input-"].update(str(sn.config))
-                    self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    self.window["-WIP_Input-"].update(str(sn.wip))
+                    # self.window["-SN_Input-"].update(str(sn.serial_number))
+                    # self.window["-Config_Input-"].update(str(sn.config))
+                    # self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+                    # self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-table_select-"].update(values=self.rel_table_data)
 
             elif event == "-show_latest0-":
@@ -408,10 +411,10 @@ class fa_log_vc:
                 self.window['-table_select-'].update(values=self.rel_table_data)
 
             if len(values.get("-fa_table_select-"))>0 or len(values.get("-table_select-"))>0:
-                self.window["Update Failure"].update(disabled=False)
+                # self.window["Update Failure"].update(disabled=False)
                 self.window["Report Failure"].update(disabled=False)
             else:
-                self.window["Update Failure"].update(disabled=True)
+                # self.window["Update Failure"].update(disabled=True)
                 self.window["Report Failure"].update(disabled=True)
 
         self.close_window()

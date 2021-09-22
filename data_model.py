@@ -155,15 +155,14 @@ class DBsqlite:
         b = 0
         c = 0
         d = 0
-        if self.filter_set.get("selected_pk") is not None:
-            d = len(self.filter_set.get("selected_pk", []))
+        if self.filter_set.get("selected_pks") is not None:
+            d = len(self.filter_set.get("selected_pks", []))
         if self.selected_config_pks is not None:
             a = len(self.selected_config_pks)
         if self.filter_set.get("serial_number") is not None:
             c = 1
         if self.selected_stress_pks is not None:
             b = len(self.selected_stress_pks)
-
         return a == 1 and b == 1 and c == 1 and d == 1
 
     @property
