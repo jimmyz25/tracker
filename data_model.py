@@ -53,9 +53,7 @@ class DBsqlite:
     this is a database model to handle all database related operations, silver station will sync with gold station based
      on timestamp.
     """
-
-    @staticmethod
-    def sql_filter_str(kwp: dict):
+    def sql_filter_str(self, kwp: dict,final=True):
         row = []
         for key, value in kwp.items():
             if isinstance(value, str):
@@ -64,20 +62,27 @@ class DBsqlite:
                     row.append(f' {key} LIKE \"{value}%\"')
             elif isinstance(value, int):
                 row.append(f'{key} = {value}')
-            elif isinstance(value, set):
+            elif isinstance(value, set) or isinstance(value, list):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
                 elif len(value) == 1:
-                    row.append(f'{key} = {value.pop()}')
+                    row.append(self.sql_filter_str({key:list(value)[0]}, final=False))
             elif isinstance(value, tuple):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
-                else:
-                    row.append(f'{key} = {value[0]}')
-        if len(row) == 0:
-            sql = ""
+                elif len(value) == 1:
+                    row.append(self.sql_filter_str({key:value[0]}, final=False))
+        if final:
+            row = list(filter(lambda x: x != "", row))
+            if len(row) == 0:
+                sql = ""
+            else:
+                sql = "WHERE " + " AND ".join(row)
         else:
-            sql = "WHERE " + " AND ".join(row)
+            if len(row) == 0:
+                sql = ""
+            else:
+                sql = " AND ".join(row)
 
         return sql
 
@@ -179,7 +184,6 @@ class DBsqlite:
                     return False
                 serial_number_list.append(result["SerialNumber"])
                 if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
-                    # print (result["EndTimestamp"] )
                     return False
             return True
 
@@ -229,7 +233,7 @@ class DBsqlite:
 
     @property
     def cache_failure_mode_of_sn_table(self):
-        sql = f'SELECT PK,FailureGroup,FailureMode FROM FALog_T ' + \
+        sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
               self.sql_filter_str({
                   "SerialNumber": self.filter_set.get("serial_number"),
                   "FK_RelStress": self.selected_stress_pks
@@ -244,7 +248,7 @@ class DBsqlite:
     def selected_config_pks(self):
         if self.filter_set.get("program") is None and self.filter_set.get("build") is None \
                 and self.filter_set.get("config") is None:
-            return None
+            return set([None])
         else:
             sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
                                                                     "Build": self.filter_set.get("build"),
@@ -255,7 +259,7 @@ class DBsqlite:
     @property
     def selected_stress_pks(self):
         if self.filter_set.get("stress") is None and self.filter_set.get("checkpoint") is None:
-            return None
+            return set([None])
         else:
             sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
                                                                        "RelCheckpoint": self.filter_set.get(
@@ -296,18 +300,6 @@ class DBsqlite:
         all_failure_mode = set(result["FailureMode"] for result in results)
         existing = set(result["FailureMode"] for result in result_existing)
         return all_failure_mode - existing
-
-    # @property
-    # def str_selected_config(self):
-    #     selected_pk = self.selected_config_pks
-    #     if self.selected_config_pks:
-    #         if len(selected_pk) == 1:
-    #             first_config = ConfigModel(selected_pk.pop())
-    #             return str(first_config)
-    #         else:
-    #             return "Multiple Configs"
-    #     else:
-    #         return "no config assigned"
 
     @property
     def filtered_record(self):
@@ -358,6 +350,7 @@ class DBsqlite:
                                    "FailureMode": self.filter_set.get("failure_mode"),
                                    "FK_RelStress": self.selected_stress_pks}) + \
               ' LIMIT 100'
+        print(sql)
         results = self.cur.execute(sql).fetchall()
         if results is None:
             return [dict()]
@@ -377,6 +370,7 @@ class DBsqlite:
                                    "Config_FK": self.selected_config_pks,
                                    "FK_RelStress": self.selected_stress_pks}) + \
               ' LIMIT 50'
+
         results = self.cur.execute(sql).fetchall()
         if results is None:
             return [dict()]
@@ -563,9 +557,16 @@ class DBsqlite:
         if isinstance(self.filter_set.get("selected_pks"), list):
             for pk in self.filter_set.get("selected_pks"):
                 sql = f"DELETE FROM FALog_T WHERE PK = {pk}"
-                print (sql)
                 self.cur.execute(sql)
             self.con.commit()
+
+    def update_failure_log_table(self, **log):
+        if isinstance(self.filter_set.get("selected_pks"), list):
+            condition = {
+                "PK": self.filter_set.get("selected_pks")
+            }
+            self.__update_to_table__("FALog_T",condition=condition, **log)
+        self.con.commit()
 
 
     # TODO: we can use delta from T0(earliest checkpoint) for each SN, to estimate time to complete a certain checkpoint
@@ -586,7 +587,6 @@ class DBsqlite:
     def __insert_to_table__(self, tablename: str, **log):
         col_to_add = []
         values = []
-        print(log)
         for col in self.__get_col_names__(tablename):
             values.append(log.get(col))
             col_to_add.append(col)
@@ -594,14 +594,33 @@ class DBsqlite:
         values_tup = tuple(values)
         ques_mark = self.__construct_question_mark__(tablename)
         sql = "INSERT INTO " + tablename + " (" + cols_str + ") VALUES " + ques_mark
-        print(sql)
-        print(values_tup)
         try:
             self.cur.execute(sql, values_tup)
         except sqlite3.Error as e:
             print(e)
             return False
         self.con.commit()
+        return True
+
+    def __update_to_table__(self, tablename: str, condition: dict, **log):
+        set_statement = []
+        value_list = []
+        condition = self.sql_filter_str(condition)
+        for key,value in log.items():
+            s = f" SET {key} = ? "
+            if value is not None or value !="":
+                set_statement.append(s)
+                value_list.append(value)
+        set_statements = ",".join(set_statement)
+        sql = "UPDATE " + tablename + set_statements + condition
+        try:
+            self.cur.execute(sql,value_list)
+        except sqlite3.Error as e:
+            print(e)
+            return False
+
+        self.con.commit()
+
         return True
 
 

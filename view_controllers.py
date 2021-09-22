@@ -310,8 +310,6 @@ class fa_log_vc:
         while True:  # the event loop
 
             event, values = self.window.read()
-            self.window["Update Failure"].update(disabled=True)
-            self.window["Report Failure"].update(disabled=True)
             if not isinstance(event, str):
                 continue
             if event == "-WINDOW CLOSE ATTEMPTED-":
@@ -328,14 +326,17 @@ class fa_log_vc:
                 failure_mode_config_popup = failure_mode_config_vc(self.window)
                 failure_mode_config_popup.show()
             elif event.endswith("_Input-"):
+                print(event,values)
                 rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
+                rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Input-")})
                 if rel_tracker_app.dbmodel.sn_exist(self.window["-SN_Input-"].get()):
                     sn = SnModel(self.window["-SN_Input-"].get(), database=rel_tracker_app.dbmodel)
                     self.window["-SN_Input-"].update(str(sn.serial_number))
                     self.window["-Config_Input-"].update(str(sn.config))
                     self.window["-Ckp_Input-"].update(str(sn.stress))
                     self.window["-WIP_Input-"].update(str(sn.wip))
+
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
             elif event.endswith("-ConfigPop-"):
@@ -355,7 +356,6 @@ class fa_log_vc:
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
             elif event == "-table_select-":
-
                 # selecting srialnumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
                 if count > 0:
@@ -377,16 +377,13 @@ class fa_log_vc:
                     self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                     self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
-                    self.window["Report Failure"].update(disabled=False)
+
             elif event == "-fa_table_select-":
-                # selecting srialnumber table will set filters to selection row state
-                self.window["Update Failure"].update(disabled=False)
                 count = len(values.get('-fa_table_select-'))
                 if count > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-fa_table_select-')})
                     selected = self.window['-fa_table_select-'].get()[values.get('-fa_table_select-')[0]]  # first one
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-fa_table_select-')})
-                    print(selected)
                     sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
                     rel_tracker_app.dbmodel.filter_set.update({
                         "program": sn.config.program,
@@ -409,6 +406,14 @@ class fa_log_vc:
             elif event == "-show_latest1-":
                 rel_tracker_app.dbmodel.filter_set.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.rel_table_data)
+
+            if len(values.get("-fa_table_select-"))>0 or len(values.get("-table_select-"))>0:
+                self.window["Update Failure"].update(disabled=False)
+                self.window["Report Failure"].update(disabled=False)
+            else:
+                self.window["Update Failure"].update(disabled=True)
+                self.window["Report Failure"].update(disabled=True)
+
         self.close_window()
 
     def close_window(self):
@@ -529,6 +534,7 @@ class failure_mode_vc:
         self.window = view.popup_fm_select()
         self.window["-SN_Input-"].update(str(rel_tracker_app.dbmodel.filter_set.get("serial_number")))
         self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+        self.highlighted_selection = None
 
         self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
         self.window["-failure_mode_set-"].update(value="Default",
@@ -553,7 +559,7 @@ class failure_mode_vc:
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
                 break
-            if event == "-failure_mode_set-":
+            elif event == "-failure_mode_set-":
                 rel_tracker_app.dbmodel.filter_set.update({"failure_group": self.window["-failure_mode_set-"].get()})
                 self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_select)
             elif event == "-failure_to_select- ":
@@ -568,7 +574,6 @@ class failure_mode_vc:
                 print(f"{values.get('-failure_to_select-')} added for {sn}")
                 self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_select)
                 self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
-                # rel_tracker_app.dbmodel.filter_set.update({"failure_mode":None})
             elif event == "-Remove-":
                 rel_tracker_app.dbmodel.delete_from_failure_log_table()
                 self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_select)
@@ -576,12 +581,28 @@ class failure_mode_vc:
                 print("remove something")
             elif event == "-highlighted_failures-":
                 rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-highlighted_failures-')})
-                # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
                 selected = [self.window['-highlighted_failures-']
                                 .get()[index] for index in values.get('-highlighted_failures-')]
+
                 selected_pk = [row[0] for row in selected]
                 rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
-
+                if len(selected) > 0:
+                    if selected[0][3] is None:
+                        self.window["-fa-detail-"].update(value="")
+                    else:
+                        self.window["-fa-detail-"].update(value=selected[0][3])
+            elif event == "Add details":
+                if self.window["-fa-detail-"].get() is None:
+                    detail = ""
+                else:
+                    detail = self.window["-fa-detail-"].get()
+                log = {
+                    "FA_Details": detail
+                }
+                rel_tracker_app.dbmodel.update_failure_log_table(**log)
+                # self.window["-highlighted_failures-"].update(values=None)
+                # self.highlighted_selection = values.get("-highlighted_failures-")
+                self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
             if len(values.get("-highlighted_failures-")) > 0:
                 self.window["Add details"].update(disabled=False)
                 self.window["-Remove-"].update(disabled=False)
@@ -592,7 +613,7 @@ class failure_mode_vc:
                 self.window["-Add-"].update(disabled=False)
             else:
                 self.window["-Add-"].update(disabled=True)
-            print(event, values)
+
 
         self.close_window()
 

@@ -151,20 +151,15 @@ def test_filtered_record():
 
 
 def test_sql_filter_str():
-    kwp = {
-        "CONFIG_FK": None,
-        "SerialNumber": 1,
-        "Program": None
-    }
 
+    kwp = {
+        'PK': [3],
+        "CONFIG_FK": "sd",
+        "SerialNumber": None,
+        "Program": {1, 2, 3, 4}
+    }
     print(db.sql_filter_str(kwp))
-    # kwp = {
-    #     "CONFIG_FK": "sd",
-    #     "SerialNumber": None,
-    #     "Program": {1, 2, 3, 4}
-    # }
-    #
-    # # print(db.sql_filter_str(kwp))
+    # print(db.sql_filter_str(kwp))
     # kwp = {'RelLog_T.WIP': None, 'RelLog_T.SerialNumber': None, 'Config_FK': {1, 2, 3, 4},
     #        'FK_RelStress': {1, 10, 20, 21}}
     #
