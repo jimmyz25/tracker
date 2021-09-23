@@ -157,7 +157,6 @@ class DBsqlite:
             b = len(self.selected_stress_pks)
         return a == 1 and b == 1 and c == 1 and d == 1
 
-
     @property
     def ready_to_checkin(self):
         if self.cur is None:
@@ -169,7 +168,7 @@ class DBsqlite:
                       f"Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
                       "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
                       " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-                      "WHERE RelLog_T.PK = ?"
+                      " WHERE RelLog_T.PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
                 if result:
                     sn = result["SerialNumber"]
