@@ -5,6 +5,7 @@ import timeit
 #TODO insert then update is a bit problematic, need to let insert return True then update and all return true then commit
 #TODO allow checkin only if latest is shown
 
+
 import PySimpleGUI
 
 from rel_tracker_view import *
