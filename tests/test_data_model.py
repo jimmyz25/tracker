@@ -13,7 +13,7 @@ gold = DBsqlite(golden)
 def test_sn_exist():
     print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=1000))
     for i in range(1):
-        assert db.sn_exist("32ANN3Q31MRB") is True
+        assert db.sn_exist("A") is True
 
 
 def test_stress_exist():
@@ -247,6 +247,6 @@ def test_failure_mode_group_list():
 def test_failure_mode_list_to_select():
     db.filter_set.clear()
     db.filter_set.update({"failure_group":"Default"})
-    print(timeit.timeit(lambda: db.failure_mode_list_to_select, number=1000))
-    print(db.failure_mode_list_to_select)
+    print(timeit.timeit(lambda: db.failure_mode_list_to_add_to_sn, number=1000))
+    print(db.failure_mode_list_to_add_to_sn)
     assert True == True

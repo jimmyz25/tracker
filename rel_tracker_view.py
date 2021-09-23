@@ -49,23 +49,25 @@ class rel_tracker_view:
             [sg.Txt("Station Name", size=15),
              sg.InputText(size=30,
                           key="-Station_Name-", tooltip="maximum character: 18"), sg.Stretch(),
-             sg.B("Validate", size=10)],
+             sg.B("Initialize", size=10,tooltip="all local data will be moved")],
             [sg.Txt("Station Type", size=15),
              sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-", enable_events=True),
              sg.Stretch(),
-             sg.B("Set", size=10)],
+            ],
             [sg.HorizontalSeparator()],
-            [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
+            [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True, key="-Input_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), tooltip="Input folder where data will be saved before tagging",
                              target=(sg.ThisRow, -2))],
-            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
+            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True, key="-Output_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.HorizontalSeparator()],
-            [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True), sg.Stretch(),
+            [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True, key="-Golden_Database-"), sg.Stretch(),
+             sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
+            [sg.Txt("Local Database", size=15), sg.InputText(size=30, readonly=True, key="-Local_Database-"), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync", default=True),
              sg.Rad("OFF", group_id="auto_sync")],
-            [sg.Btn("Save Preference", size=15), sg.Btn("New Window", key="-New_Window-")]
+            [sg.Btn("Save Preference", size=15), ]
         ]
 
         window = sg.Window('Preference', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -243,24 +245,24 @@ class rel_tracker_view:
     @staticmethod
     def popup_fm_config():
         layout_filter_column = [
-            [sg.Txt("Failure Mode Sets", size=(15, 1)),
-             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False,
+            [sg.Txt("Failure Mode Group", size=(15, 1)),
+             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"], disabled=False, enable_events=True,
                       key="-failure_mode_set-", size=(20, 1))],
             [sg.Txt("Failure Mode", size=(15, 1)),
              sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                        size=(20, 10))],
+                        size=(20, 10),key="-failure_mode_list-",enable_events=True)],
         ]
 
         filter_column = sg.Column(layout=layout_filter_column)
 
         layout_button_column = [
             [sg.B("Group Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True,
                   tooltip="each failure mode can only belongs to one group")],
             [sg.B("Create New Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Delete Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Archive Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
