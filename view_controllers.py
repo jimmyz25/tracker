@@ -2,6 +2,11 @@
 import timeit
 
 # import PySimpleGUI as sg
+#TODO insert then update is a bit problematic, need to let insert return True then update and all return true then commit
+#TODO allow checkin only if latest is shown
+
+import PySimpleGUI
+
 from rel_tracker_view import *
 from data_model import *
 
@@ -50,7 +55,9 @@ class rel_tracker_app:
         latest = cls.dbmodel.filter_set.get("show_latest")
         # clear all input in window
         for key in window.key_dict.keys():
-            if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
+            if isinstance(window[key], sg.PySimpleGUI.Input) or \
+                    isinstance(window[key], sg.PySimpleGUI.Combo) or\
+                    isinstance(window[key], PySimpleGUI.PySimpleGUI.Multiline):
                 window[key].update(value="")
         # clear filterset
         cls.dbmodel.filter_set.clear()
@@ -167,6 +174,20 @@ class rel_log_vc:
                 self.window['-table_select-'].update(values=self.table_data)
                 self.window["-New-SN_Input-"].update(value="")
                 rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+            elif event == "CheckIn":
+                rel_tracker_app.dbmodel.filter_set.update(
+                    {
+                        "station": rel_tracker_app.settings.get("-Station_Name-")
+                    }
+                )
+                stress_popup = stress_select_vc(self.window)
+                stress_popup.show()
+                if rel_tracker_app.dbmodel.ready_to_checkin:
+                    rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
+                    rel_tracker_app.reset_window_inputs(self.window)
+                    self.window['-table_select-'].update(values=self.table_data)
+                else:
+                    print("not able to checkin")
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):
                     #check if exists or any duplicate in the list,clean up and return a string, on backend, filter set is updated
@@ -282,7 +303,6 @@ class rel_log_vc:
                 if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                     total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                     self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
-
         self.close_window()
 
     def close_window(self):
@@ -470,16 +490,13 @@ class config_select_vc:
                                               values=list(
                                                   filter(lambda x: x.startswith(self.window["Program"].get()),
                                                          rel_tracker_app.dbmodel.program_list)))
-            elif event in ("Program", "Build", "Config"):
-                if event == "Config":
-                    temp_config_selection = self.window["Config"].get()
-                else:
-                    temp_config_selection = None
-
-                self.window["Config"].update(value=temp_config_selection,
-                                             values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            elif event in ("Program", "Build"):
                 rel_tracker_app.dbmodel.filter_set.update({"program": self.window["Program"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"build": self.window["Build"].get()})
+                rel_tracker_app.dbmodel.filter_set.update({"config": None})
+                self.window["Config"].update(value="",
+                                             values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            elif event == "Config":
                 rel_tracker_app.dbmodel.filter_set.update({"config": self.window["Config"].get()})
 
             elif event == "-Save-":

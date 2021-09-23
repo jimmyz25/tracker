@@ -41,25 +41,28 @@ class DBsqlite:
      on timestamp.
     """
 
-    def sql_filter_str(self, kwp: dict, final=True):
+    def sql_filter_str(self, kwp: dict, final=True,strict=False):
         row = []
         for key, value in kwp.items():
             if isinstance(value, str):
                 value.strip().strip("%")
                 if value != "":
-                    row.append(f' {key} LIKE \"{value}%\"')
+                    if strict:
+                        row.append(f' {key} = \"{value}\"')
+                    else:
+                        row.append(f' {key} LIKE \"{value}%\"')
             elif isinstance(value, int):
                 row.append(f'{key} = {value}')
             elif isinstance(value, set) or isinstance(value, list):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
                 elif len(value) == 1:
-                    row.append(self.sql_filter_str({key: list(value)[0]}, final=False))
+                    row.append(self.sql_filter_str({key: list(value)[0]}, final=False,strict=strict))
             elif isinstance(value, tuple):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
                 elif len(value) == 1:
-                    row.append(self.sql_filter_str({key: value[0]}, final=False))
+                    row.append(self.sql_filter_str({key: value[0]}, final=False,strict=strict))
         if final:
             row = list(filter(lambda x: x != "", row))
             if len(row) == 0:
@@ -80,7 +83,6 @@ class DBsqlite:
         self.db_memory = sqlite3.connect(':memory:')
         # self.con.backup(self.db_memory)
         self.current_table = "RelLog_T"
-
         self.filter_set = dict(
             {
                 "config": None,
@@ -98,7 +100,8 @@ class DBsqlite:
                 "show_latest": None,
                 "selected_pks": None,
                 "station": None,
-                "station_filter": None
+                "station_filter": None,
+                "note": None
             }
         )
 
@@ -163,15 +166,18 @@ class DBsqlite:
             for pk in self.filter_set.get("selected_pks", []):
                 sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber, " \
                       f"Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
-                      "left join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                      "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
                       " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                       "WHERE RelLog_T.PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
-                sn = result["SerialNumber"]
-                if sn in serial_number_list:
-                    return False
-                serial_number_list.append(result["SerialNumber"])
-                if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
+                if result:
+                    sn = result["SerialNumber"]
+                    if sn in serial_number_list:
+                        return False
+                    serial_number_list.append(result["SerialNumber"])
+                    if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
+                        return False
+                else:
                     return False
             return True
 
@@ -382,7 +388,7 @@ class DBsqlite:
                                        "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
                                        "Config_FK": self.selected_config_pks,
                                        "FK_RelStress": self.selected_stress_pks}) + \
-                  ' LIMIT 50'
+                  ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 50'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -650,7 +656,67 @@ class DBsqlite:
                     self.__insert_to_table__("RelLog_T", **log)
                     self.__insert_to_table__("Config_SN_T", **log)
 
-    # TODO: we can use delta from T0(earliest checkpoint) for each SN, to estimate time to complete a certain checkpoint
+    def checkin_to_new_checkpoint_rellog_table(self):
+        #TODO need to fix this
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        stress_pk = self.selected_stress_pks.pop()
+        for pk in self.filter_set.get("selected_pks"):
+            result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?",(pk,)).fetchone()
+            log = {
+                        "FK_RelStress": stress_pk,
+                        "Stress_FK": stress_pk,
+                        "DateAdded": current_time,
+                        "Station": self.filter_set.get('station'),
+                        "SerialNumber": result["SerialNumber"],
+                        "StartTimestamp": current_time,
+                        "StartTime": time_str,
+                        "EndTimestamp": None,
+                        "EndTime": None,
+                        "WIP": result["WIP"],
+                        "removed": 0,
+                        "notes": None
+                    }
+            self.__insert_to_table__("RelLog_T", **log)
+            condition ={
+                "SerialNumber": result["SerialNumber"],
+            }
+            log = {
+                "FK_RelStress": stress_pk,
+                "Stress_FK": stress_pk,
+                "DateAdded": current_time,
+                "Station": self.filter_set.get('station'),
+                "StartTimestamp": current_time,
+                "StartTime": time_str,
+                "EndTimestamp": None,
+                "EndTime": None,
+                "WIP": result["WIP"],
+                "removed": 0,
+                "notes": None
+            }
+            self.__update_to_table__("Config_SN_T",condition, **log)
+        # print(self.selected_config_pks)
+        # if isinstance(self.filter_set.get("serial_number_list"), list):
+        #     for sn in self.filter_set.get("serial_number_list"):
+        #         stress_fk = self.selected_stress_pks.pop()
+        #         log = {
+        #             "FK_RelStress": stress_fk,
+        #             "Stress_FK": stress_fk,
+        #             "Config_FK": self.selected_config_pks.pop(),
+        #             "DateAdded": current_time,
+        #             "Station": self.filter_set.get('station'),
+        #             "SerialNumber": sn,
+        #             "StartTimestamp": current_time,
+        #             "StartTime": time_str,
+        #             "EndTimestamp": None,
+        #             "EndTime": None,
+        #             "WIP": self.filter_set.get("wip"),
+        #             "removed": 0,
+        #             "notes": self.filter_set.get("note")
+        #         }
+        #         self.__insert_to_table__("RelLog_T", **log)
+        #         self.__insert_to_table__("Config_SN_T", **log)
+
 
     def __get_col_names__(self, table_name):
         cols = []
@@ -674,7 +740,7 @@ class DBsqlite:
         cols_str = ",".join(col_to_add)
         values_tup = tuple(values)
         ques_mark = self.__construct_question_mark__(tablename)
-        sql = "INSERT INTO " + tablename + " (" + cols_str + ") VALUES " + ques_mark
+        sql = "INSERT OR REPLACE INTO " + tablename + " (" + cols_str + ") VALUES " + ques_mark
         try:
             self.cur.execute(sql, values_tup)
         except sqlite3.Error as e:
@@ -686,14 +752,15 @@ class DBsqlite:
     def __update_to_table__(self, tablename: str, condition: dict, **log):
         set_statement = []
         value_list = []
-        condition = self.sql_filter_str(condition)
+        condition = self.sql_filter_str(condition,strict=True)
         for key, value in log.items():
-            s = f" SET {key} = ? "
-            if value is not None or value != "":
+            if key in self.__get_col_names__(tablename):
+                s = f" {key} = ? "
                 set_statement.append(s)
                 value_list.append(value)
-        set_statements = ",".join(set_statement)
+        set_statements = " SET "+",".join(set_statement)
         sql = "UPDATE " + tablename + set_statements + condition
+        print(sql)
         try:
             self.cur.execute(sql, value_list)
         except sqlite3.Error as e:
@@ -703,16 +770,14 @@ class DBsqlite:
         self.con.commit()
 
     def __delete_from_table__(self, tablename: str, condition: dict):
-        condition = self.sql_filter_str(condition)
+        condition = self.sql_filter_str(condition,strict=True)
         sql = "DELETE FROM " + tablename + " " + condition
         try:
             self.cur.execute(sql)
         except sqlite3.Error as e:
             print(e)
             return False
-
         self.con.commit()
-
         return True
 
 
