@@ -27,6 +27,10 @@ class rel_tracker_app:
     def __init__(self):
         pass
 
+    # @property
+    # def station(self):
+    #     return self._station
+
     @staticmethod
     def apply_user_settings(window: sg.Window):
 
@@ -64,7 +68,6 @@ class rel_tracker_app:
         # save settings to jason file
         rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         rel_tracker_app.dbmodel.station = rel_tracker_app.station
-        print(rel_tracker_app.dbmodel.station)
         print("window reset")
 
 
@@ -110,7 +113,6 @@ class preference_vc:
     def close_window(self):
         rel_tracker_app.save_user_settings(self.window)
         rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
-        print("asdf",rel_tracker_app.station)
         if self.window["-station-type-"].get() == "RelLog Station":
             rel_tracker_app.view_list.append(rel_log_vc())
         elif self.window["-station-type-"].get() == "FailureMode Logging Station":
@@ -285,12 +287,11 @@ class rel_log_vc:
                     self.window["Update"].update(disabled=False)
                 else:
                     self.window["Update"].update(disabled=True)
-                ready_to_checkin = rel_tracker_app.dbmodel.ready_to_checkin
-                if ready_to_checkin:
+                if rel_tracker_app.dbmodel.ready_to_checkin:
                     self.window["CheckIn"].update(disabled=False)
                 else:
                     self.window["CheckIn"].update(disabled=True)
-                if not ready_to_checkin and len(values.get('-table_select-')) > 0:
+                if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-')) > 0:
                     self.window["Checkout"].update(disabled=False)
                 else:
                     self.window["Checkout"].update(disabled=True)

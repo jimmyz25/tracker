@@ -111,6 +111,72 @@ class DBsqlite:
             }
         )
 
+    @property
+    def station(self):
+        return self._station
+
+    @station.setter
+    def station(self, station_name: str = None):
+        if isinstance(station_name, str):
+            row_security_trigger = f"""
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_RELLOG;
+                
+                CREATE Trigger Row_Security_Trigger_UPDATE_RELLOG
+                BEFORE UPDATE ON RelLog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+                    
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_RELLOG;
+                CREATE Trigger Row_Security_Trigger_DELETE_RELLOG
+                BEFORE DELETE ON RelLog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+                    
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_FALLOG;
+                CREATE Trigger Row_Security_Trigger_UPDATE_FALLOG
+                BEFORE UPDATE ON FALog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+                
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_FALLOG;
+                CREATE Trigger Row_Security_Trigger_DELETE_FALLOG
+                BEFORE DELETE ON FALog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+                """
+            self.con.executescript(row_security_trigger)
+            self._station = station_name
+        else:
+            self._station = None
+
     def clean_up_sn_list(self, sn_list: str):
         if isinstance(sn_list, str):
             temp1 = re.split(',', re.sub('[^a-zA-Z0-9.]', ',', sn_list))
@@ -165,6 +231,7 @@ class DBsqlite:
 
     @property
     def ready_to_checkin(self):
+        # latest and Endtimestamp is not None
         if self.cur is None:
             return False
         if self.filter_set.get("selected_pks") is not None:
@@ -189,7 +256,31 @@ class DBsqlite:
 
     @property
     def ready_to_checkout(self):
-        return not self.ready_to_checkin
+        # latest and Endtimestamp is None
+        # TODO bug, logic is wrong. just need to check if this is the latest
+
+        if self.cur is None:
+            return False
+        if self.filter_set.get("selected_pks") is not None:
+            serial_number_list = []
+            for pk in self.filter_set.get("selected_pks", []):
+                sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber, " \
+                      f"Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
+                      "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                      " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+                      " WHERE RelLog_T.PK = ?"
+                result = self.cur.execute(sql, (pk,)).fetchone()
+                if result:
+                    sn = result["SerialNumber"]
+                    if sn in serial_number_list:
+                        return False
+                    serial_number_list.append(result["SerialNumber"])
+                    print (result["EndTimestamp"] )
+                    if result["EndTimestamp"] is not None:
+                        return False
+                else:
+                    return False
+            return True
 
     @property
     def config_str(self):
@@ -332,7 +423,6 @@ class DBsqlite:
 
     @property
     def rel_log_table_view_data(self):
-        print("asdfasdfasdfasdfadsf")
         if self.cur:
             sql = f'SELECT RelLog_T.PK,Config_T.Config, RelLog_T.WIP,RelLog_T.SerialNumber,' \
                   f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
@@ -836,9 +926,7 @@ class DBsqlite:
         # when value is none, it will not get updated, set to "" if need to update
         set_statement = []
         value_list = []
-        row_security = {"Station": self.station}
-        condition.update(row_security)
-        print(condition)
+
         for k in condition.keys():
             if k not in self.__get_col_names__(tablename):
                 condition.update({k: None})
@@ -860,8 +948,7 @@ class DBsqlite:
         return True
 
     def __delete_from_table__(self, tablename: str, condition: dict):
-        row_security = {"Station": self.station}
-        condition.update(row_security)
+
         for k in condition.keys():
             if k not in self.__get_col_names__(tablename):
                 condition.pop(k, None)
