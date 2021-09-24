@@ -36,9 +36,7 @@ class rel_tracker_view:
             [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
                     )],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
-            [sg.Txt("")],
-            [sg.Txt("Notes of selected row", key="-additional_info-")],
-            [sg.Multiline(size=(40, 8), expand_y=True, no_scrollbar=True, key="-note_show-", disabled=True)]
+            [sg.Txt("")]
         ]
         status_column = sg.Column(layout=layout_status_column, size=(200, 180), key="-status-column")
         return status_column
@@ -98,7 +96,7 @@ class rel_tracker_view:
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 180), enable_events=True, key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 160), enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -115,7 +113,7 @@ class rel_tracker_view:
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
 
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(200, 200))
+        button_column = sg.Column(layout=layout_button_column, size=(200, 180))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -124,7 +122,8 @@ class rel_tracker_view:
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              header_background_color="white",
+                              right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
@@ -134,6 +133,11 @@ class rel_tracker_view:
             [sg.Txt("Latest Checkpoint Only", size=20),
              sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [sg.Txt("Current Station Only", size=20),
+             sg.Rad("T", group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("F", group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
             [table_view],
             # [output_view]
         ]

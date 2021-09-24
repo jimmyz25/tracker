@@ -2,8 +2,8 @@
 import timeit
 
 # import PySimpleGUI as sg
-#TODO insert then update is a bit problematic, need to let insert return True then update and all return true then commit
-#TODO allow checkin only if latest is shown
+# TODO row security is buggy, if a row is from a station, even
+#  it's blocking updating rel_log, it's not preventing it updating Config_SN_T
 
 
 import PySimpleGUI
@@ -16,11 +16,13 @@ class rel_tracker_app:
     sg.user_settings_filename(path='.')
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
+    print (settings)
+    station = settings.get("-Station_Name-")
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(40, 1),
                   auto_size_buttons=True, input_elements_background_color="#f7f7f7")
-    dbmodel = DBsqlite(address)
+    dbmodel = DBsqlite(RMD, station=station)
 
     def __init__(self):
         pass
@@ -32,10 +34,11 @@ class rel_tracker_app:
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                     window[key].update(value=rel_tracker_app.settings.get(key))
-        station_name = str(rel_tracker_app.settings.get('-Station_Name-'))
+        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+        rel_tracker_app.dbmodel.station = rel_tracker_app.station
         if "-station_name-" in window.key_dict.keys():
-            window["-station_name-"].update(value=station_name)
-        rel_tracker_app.dbmodel.filter_set = rel_tracker_app.settings["filter_set"]
+            window["-station_name-"].update(value=rel_tracker_app.station)
+        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         print("USER SETTINGS APPLIED")
 
     @staticmethod
@@ -44,34 +47,24 @@ class rel_tracker_app:
             if isinstance(key, str) and isinstance(window[key], sg.PySimpleGUI.Input) \
                     or isinstance(window[key], sg.PySimpleGUI.Combo):
                 rel_tracker_app.settings[key] = window[key].get()
-        rel_tracker_app.settings["filter_set"] = rel_tracker_app.dbmodel.filter_set
         sg.user_settings_save()
-        rel_tracker_app.address = rel_tracker_app.settings.get("-Local_Database-")
-        rel_tracker_app.dbmodel = DBsqlite(rel_tracker_app.address)
         # print()
         print("user setting saved")
 
-    @classmethod
-    def reset_window_inputs(cls, window: sg.Window):
-        latest = cls.dbmodel.filter_set.get("show_latest")
+    @staticmethod
+    def reset_window_inputs(window: sg.Window):
         # clear all input in window
         for key in window.key_dict.keys():
             if isinstance(window[key], sg.PySimpleGUI.Input) or \
-                    isinstance(window[key], sg.PySimpleGUI.Combo) or\
+                    isinstance(window[key], sg.PySimpleGUI.Combo) or \
                     isinstance(window[key], PySimpleGUI.PySimpleGUI.Multiline):
                 window[key].update(value="")
         # clear filterset
-        cls.dbmodel.filter_set.clear()
-        cls.dbmodel.filter_set.update(
-            {
-                "update_mode": False,
-                "show_latest": latest,
-                "station": str(rel_tracker_app.settings.get('-Station_Name-')),
-                "station_filter": None
-            }
-        )
+        rel_tracker_app.dbmodel.filter_set.clear()
         # save settings to jason file
-        cls.save_user_settings(window)
+        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+        rel_tracker_app.dbmodel.station = rel_tracker_app.station
+        print(rel_tracker_app.dbmodel.station)
         print("window reset")
 
 
@@ -115,8 +108,9 @@ class preference_vc:
         self.close_window()
 
     def close_window(self):
-
         rel_tracker_app.save_user_settings(self.window)
+        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+        print("asdf",rel_tracker_app.station)
         if self.window["-station-type-"].get() == "RelLog Station":
             rel_tracker_app.view_list.append(rel_log_vc())
         elif self.window["-station-type-"].get() == "FailureMode Logging Station":
@@ -128,11 +122,10 @@ class rel_log_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.rel_lab_station_view()
-        # rel_tracker_app.apply_user_settings(self.window)
         rel_tracker_app.reset_window_inputs(self.window)
-        rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
         self.window['-table_select-'].update(values=self.table_data)
         self.complete_quit = True
+
 
     @property
     def table_data(self):
@@ -140,7 +133,7 @@ class rel_log_vc:
             # if in update mode, do not refresh table, update(values = None) means no update
             return None
         else:
-            if rel_tracker_app.dbmodel.filter_set.get("show_latest"):
+            if rel_tracker_app.dbmodel.display_setting.get("show_latest"):
                 datasource = rel_tracker_app.dbmodel.latest_sn_history
             else:
                 datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
@@ -150,7 +143,6 @@ class rel_log_vc:
             return data
 
     def show(self):
-        # TODO currently, when right click update, lastest info (not necessarly the row that user selected is added to the inputs, but the row to be updated will still be the row selected. this is a bug to be fixed
         while True:  # the event loop
             event, values = self.window.read()
             if not isinstance(event, str):
@@ -168,7 +160,7 @@ class rel_log_vc:
                 print("insert new sn to database")
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
-                        "station":rel_tracker_app.settings.get("-Station_Name-")
+                        "station": rel_tracker_app.settings.get("-Station_Name-")
                     }
                 )
                 rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
@@ -189,24 +181,27 @@ class rel_log_vc:
                     self.window['-table_select-'].update(values=self.table_data)
                 else:
                     print("not able to checkin")
+            elif event == "Checkout":
+                rel_tracker_app.dbmodel.checkout_current_checkpoint_rellog_table()
+                self.window['-table_select-'].update(values=self.table_data)
+            elif event == "Update":
+                rel_tracker_app.dbmodel.update_current_row_rellog_table()
+                rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
+
+                self.window['-table_select-'].update(values=self.table_data)
+
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):
-                    #check if exists or any duplicate in the list,clean up and return a string, on backend, filter set is updated
+                    # check if exists or any duplicate in the list,clean up and return a string, on backend,
+                    # filter set is updated
                     serial_number_list = rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
                     self.window["-New-SN_Input-"].update(
                         value=serial_number_list + "\n")
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-New-WIP_Input-"].get()})
                     self.window["-WIP_Input-"].update(self.window["-New-WIP_Input-"].get())
-
                 else:
                     rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
-                    # if rel_tracker_app.dbmodel.sn_exist(self.window["-SN_Input-"].get()):
-                    #     sn = SnModel(self.window["-SN_Input-"].get(), database=rel_tracker_app.dbmodel)
-                    #     self.window["-SN_Input-"].update(str(sn.serial_number))
-                    #     self.window["-Config_Input-"].update(str(sn.config))
-                    #     self.window["-Ckp_Input-"].update(str(sn.stress))
-                    #     self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-New-WIP_Input-"].update(self.window["-WIP_Input-"].get())
                 self.window['-table_select-'].update(values=self.table_data)
             elif event.endswith("-ConfigPop-"):
@@ -226,45 +221,46 @@ class rel_log_vc:
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "-table_select-":
                 count = len(values.get('-table_select-'))
-                if count > 0:
+                if count == 0:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
+                else:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
                     selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
-                    selected_sn = [row[3] for row in selected]
-                    selected_pk = [row[0] for row in selected]
-                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
-                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn})
-                    self.window["-note_show-"].update(value=str(selected[0][-1]))
-                    print(selected_sn, "in selection")
-                if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
-                    selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')][
-                        0]  # first one
-                    selected_pk = [selected[0]]
-                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk})
+                    selected_sn_list = [row[3] for row in selected]
+                    selected_pk_list = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
-                    rel_tracker_app.dbmodel.filter_set.update({
-                        "program": sn.config.program,
-                        "build": sn.config.build,
-                        "config": sn.config.config_name,
-                        "wip": sn.wip,
-                        "stress": sn.stress.rel_stress,
-                        "checkpoint": sn.stress.rel_checkpoint,
-                        "serial_number": sn.serial_number
-                    })
-                    self.window["-SN_Input-"].update(str(sn.serial_number))
-                    self.window["-Config_Input-"].update(str(sn.config))
-                    self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    self.window["-WIP_Input-"].update(str(sn.wip))
-            elif event == "update":
+                    print(selected_sn_list, "in selection", "Note: ",str(selected[0][-1]))
+                    if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
+                        sn = SnModel(selected[0][3], database=rel_tracker_app.dbmodel)
+                        rel_tracker_app.dbmodel.filter_set.update({
+                            "program": sn.config.program,
+                            "build": sn.config.build,
+                            "config": sn.config.config_name,
+                            "wip": sn.wip,
+                            "stress": selected[0][4],
+                            "checkpoint": selected[0][5],
+                            "serial_number": sn.serial_number
+                        })
+                        self.window["-SN_Input-"].update(str(sn.serial_number))
+                        self.window["-Config_Input-"].update(str(sn.config))
+                        self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
+                        self.window["-WIP_Input-"].update(str(sn.wip))
+            elif event == "Enter Update Mode":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
                 print("currently in UPDATE MODE, operating on previous record, proceed with CARE, filters stop working")
+            elif event == "Exit Update Mode":
+                rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
             elif event == "-show_latest0-":
-                rel_tracker_app.dbmodel.filter_set.update({"show_latest": False})
+                rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.table_data)
             elif event == "-show_latest1-":
-                rel_tracker_app.dbmodel.filter_set.update({"show_latest": True})
+                rel_tracker_app.dbmodel.display_setting.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.table_data)
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
@@ -279,12 +275,13 @@ class rel_log_vc:
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
-            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or event == "update":
+            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or \
+                    event == "Enter Update Mode":
                 if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
                     self.window["Add"].update(disabled=False)
                 else:
                     self.window["Add"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_update:
+                if rel_tracker_app.dbmodel.ready_to_update and len(values.get('-table_select-')) == 1:
                     self.window["Update"].update(disabled=False)
                 else:
                     self.window["Update"].update(disabled=True)
@@ -318,7 +315,6 @@ class fa_log_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.fa_log_view()
-        # rel_tracker_app.apply_user_settings(self.window)
         rel_tracker_app.reset_window_inputs(self.window)
         self.window['-table_select-'].update(values=self.rel_table_data)
         self.window["-fa_table_select-"].update(values=self.fa_table_data)
@@ -326,7 +322,7 @@ class fa_log_vc:
 
     @property
     def rel_table_data(self):
-        if rel_tracker_app.dbmodel.filter_set.get("show_latest"):
+        if rel_tracker_app.dbmodel.display_setting.get("show_latest"):
             datasource = rel_tracker_app.dbmodel.latest_sn_history
         else:
             datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
@@ -442,10 +438,10 @@ class fa_log_vc:
                     self.window["-table_select-"].update(values=self.rel_table_data)
 
             elif event == "-show_latest0-":
-                rel_tracker_app.dbmodel.filter_set.update({"show_latest": False})
+                rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.rel_table_data)
             elif event == "-show_latest1-":
-                rel_tracker_app.dbmodel.filter_set.update({"show_latest": True})
+                rel_tracker_app.dbmodel.display_setting.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.rel_table_data)
 
             if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
@@ -715,7 +711,7 @@ class failure_mode_config_vc:
                 if user_agreement == "OK":
                     rel_tracker_app.dbmodel.delete_from_failure_mode_table()
                 self.window["-failure_mode_list-"].update(values=list(rel_tracker_app.dbmodel.failure_mode_list))
-            if len(values.get("-failure_mode_list-"))>0:
+            if len(values.get("-failure_mode_list-")) > 0:
                 self.window["Group Failure Modes"].update(disabled=False)
                 self.window["Archive Failure Mode"].update(disabled=False)
             else:
