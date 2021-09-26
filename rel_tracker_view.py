@@ -101,6 +101,8 @@ class rel_tracker_view:
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Batch Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
             [sg.B("Reset", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
             [sg.B("Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -320,6 +322,11 @@ class rel_tracker_view:
             [sg.Txt("Last Checkpoint Only", size=20),
              sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [sg.Txt("Current Station Only", size=20),
+             sg.Rad("T", group_id="table_show_current_station", default=False, enable_events=True,
+                    key="-show_current1-"),
+             sg.Rad("F", group_id="table_show_current_station", default=True, enable_events=True,
+                    key="-show_current0-")],
             [table_view],
         ]
         status_column = sg.Column(layout=layout_status_column, size=(300, 150), key="-status-column")

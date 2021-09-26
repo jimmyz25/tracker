@@ -264,6 +264,12 @@ class rel_log_vc:
             elif event == "-show_latest1-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.table_data)
+            elif event == "-show_current1-":
+                rel_tracker_app.dbmodel.display_setting.update({"station_filter": rel_tracker_app.dbmodel.station})
+                self.window['-table_select-'].update(values=self.table_data)
+            elif event == "-show_current0-":
+                rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
+                self.window['-table_select-'].update(values=self.table_data)
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Register New Unit'].update(disabled=True)
@@ -283,6 +289,12 @@ class rel_log_vc:
                     self.window["Add"].update(disabled=False)
                 else:
                     self.window["Add"].update(disabled=True)
+
+                if rel_tracker_app.dbmodel.ready_to_batch_update and self.window["-Tab_Selection-"].get() == "Register New Unit":
+                    self.window["Batch Update"].update(disabled=False)
+                else:
+                    self.window["Batch Update"].update(disabled=True)
+
                 if rel_tracker_app.dbmodel.ready_to_update and len(values.get('-table_select-')) == 1:
                     self.window["Update"].update(disabled=False)
                 else:
@@ -368,12 +380,6 @@ class fa_log_vc:
                 rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Input-")})
-                # if rel_tracker_app.dbmodel.sn_exist(self.window["-SN_Input-"].get()):
-                #     sn = SnModel(self.window["-SN_Input-"].get(), database=rel_tracker_app.dbmodel)
-                #     self.window["-SN_Input-"].update(str(sn.serial_number))
-                #     self.window["-Config_Input-"].update(str(sn.config))
-                #     self.window["-Ckp_Input-"].update(str(sn.stress))
-                #     self.window["-WIP_Input-"].update(str(sn.wip))
 
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
@@ -410,10 +416,6 @@ class fa_log_vc:
                         "checkpoint": selected[3],
                         "serial_number": sn.serial_number
                     })
-                    # self.window["-SN_Input-"].update(str(sn.serial_number))
-                    # self.window["-Config_Input-"].update(str(sn.config))
-                    # self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    # self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
 
             elif event == "-fa_table_select-":
@@ -432,10 +434,6 @@ class fa_log_vc:
                         "checkpoint": selected[5],
                         "serial_number": sn.serial_number
                     })
-                    # self.window["-SN_Input-"].update(str(sn.serial_number))
-                    # self.window["-Config_Input-"].update(str(sn.config))
-                    # self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                    # self.window["-WIP_Input-"].update(str(sn.wip))
                     self.window["-table_select-"].update(values=self.rel_table_data)
 
             elif event == "-show_latest0-":
@@ -444,7 +442,14 @@ class fa_log_vc:
             elif event == "-show_latest1-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.rel_table_data)
-
+            elif event == "-show_current1-":
+                rel_tracker_app.dbmodel.display_setting.update({"station_filter": rel_tracker_app.dbmodel.station})
+                self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window['-table_select-'].update(values=self.rel_table_data)
+            elif event == "-show_current0-":
+                rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
+                self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window['-table_select-'].update(values=self.rel_table_data)
             if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
                 # self.window["Update Failure"].update(disabled=False)
                 self.window["Report Failure"].update(disabled=False)
