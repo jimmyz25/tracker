@@ -16,7 +16,7 @@ class rel_tracker_app:
     sg.user_settings_filename(path='.')
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
-    print (settings)
+    print(settings)
     station = settings.get("-Station_Name-")
     view_list = []
     sg.theme("LightGrey1")
@@ -128,7 +128,6 @@ class rel_log_vc:
         self.window['-table_select-'].update(values=self.table_data)
         self.complete_quit = True
 
-
     @property
     def table_data(self):
         if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
@@ -236,7 +235,7 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
                     rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    print(selected_sn_list, "in selection", "Note: ",str(selected[0][-1]))
+                    print(selected_sn_list, "in selection", "Note: ", str(selected[0][-1]))
                     if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                         sn = SnModel(selected[0][3], database=rel_tracker_app.dbmodel)
                         rel_tracker_app.dbmodel.filter_set.update({
@@ -270,6 +269,16 @@ class rel_log_vc:
             elif event == "-show_current0-":
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window['-table_select-'].update(values=self.table_data)
+            elif event == "Assign WIP":
+                wip = sg.popup_get_text("Please Provide New WIP, this will change current checkpoint's WIP")
+                if wip is not None:
+                    rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
+                    self.window['-table_select-'].update(values=self.table_data)
+                    self.window["-New-SN_Input-"].update(value="")
+                    rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+            elif event == "Delete":
+                rel_tracker_app.dbmodel.delete_from_rellog_table()
+                self.window['-table_select-'].update(values=self.table_data)
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Register New Unit'].update(disabled=True)
@@ -290,10 +299,11 @@ class rel_log_vc:
                 else:
                     self.window["Add"].update(disabled=True)
 
-                if rel_tracker_app.dbmodel.ready_to_batch_update and self.window["-Tab_Selection-"].get() == "Register New Unit":
-                    self.window["Batch Update"].update(disabled=False)
+                if rel_tracker_app.dbmodel\
+                        .ready_to_batch_update and self.window["-Tab_Selection-"].get() == "Register New Unit":
+                    self.window["Assign WIP"].update(disabled=False)
                 else:
-                    self.window["Batch Update"].update(disabled=True)
+                    self.window["Assign WIP"].update(disabled=True)
 
                 if rel_tracker_app.dbmodel.ready_to_update and len(values.get('-table_select-')) == 1:
                     self.window["Update"].update(disabled=False)
@@ -338,7 +348,7 @@ class fa_log_vc:
         if rel_tracker_app.dbmodel.display_setting.get("show_latest"):
             datasource = rel_tracker_app.dbmodel.latest_sn_history
         else:
-            datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
+            datasource = rel_tracker_app.dbmodel.all_station_rel_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),
                  row.get("RelCheckpoint")] for row in
                 datasource]
@@ -545,16 +555,12 @@ class stress_select_vc:
                                                 values=list(
                                                     filter(lambda x: x.startswith(self.window["RelStress"].get()),
                                                            rel_tracker_app.dbmodel.program_list)))
-            elif event in ("RelStress", "RelCheckpoint"):
-                if event == "RelCheckpoint":
-                    temp_ckp_selection = self.window["RelCheckpoint"].get()
-                else:
-                    temp_ckp_selection = None
+            elif event == "RelStress":
                 rel_tracker_app.dbmodel.filter_set.update({"stress": self.window["RelStress"].get()})
-                rel_tracker_app.dbmodel.filter_set.update({"checkpoint": self.window["RelCheckpoint"].get()})
-                self.window["RelCheckpoint"].update(value=temp_ckp_selection,
+                self.window["RelCheckpoint"].update(value="",
                                                     values=list(rel_tracker_app.dbmodel.ckp_list_to_select))
             elif event == "-Save-":
+                rel_tracker_app.dbmodel.filter_set.update({"checkpoint": self.window["RelCheckpoint"].get()})
                 self.close_window()
             elif event == "-Clear-":
                 rel_tracker_app.dbmodel.filter_set.update({"stress": None})
@@ -564,7 +570,6 @@ class stress_select_vc:
         self.close_window()
 
     def close_window(self):
-        sg.user_settings_save()
         self.window.close()
 
 

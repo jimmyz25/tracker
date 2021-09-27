@@ -118,66 +118,65 @@ class DBsqlite:
 
     @station.setter
     def station(self, station_name: str = None):
-        pass
-        # if isinstance(station_name, str):
-        #     row_security_trigger = f"""
-        #         DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_RELLOG;
-        #
-        #         CREATE Trigger Row_Security_Trigger_UPDATE_RELLOG
-        #         BEFORE UPDATE ON RelLog_T
-        #         FOR EACH ROW
-        #         WHEN old.Station <> \"{station_name}\"
-        #         BEGIN
-        #             SELECT
-        #                 CASE
-        #                     WHEN TRUE THEN
-        #                         RAISE (ABORT,'Not Your Data, Read Only')
-        #                 END;
-        #         END;
-        #
-        #         DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_RELLOG;
-        #         CREATE Trigger Row_Security_Trigger_DELETE_RELLOG
-        #         BEFORE DELETE ON RelLog_T
-        #         FOR EACH ROW
-        #         WHEN old.Station <> \"{station_name}\"
-        #         BEGIN
-        #             SELECT
-        #                 CASE
-        #                     WHEN TRUE THEN
-        #                         RAISE (ABORT,'Not Your Data, Read Only')
-        #                 END;
-        #         END;
-        #
-        #         DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_FALLOG;
-        #         CREATE Trigger Row_Security_Trigger_UPDATE_FALLOG
-        #         BEFORE UPDATE ON FALog_T
-        #         FOR EACH ROW
-        #         WHEN old.Station <> \"{station_name}\"
-        #         BEGIN
-        #             SELECT
-        #                 CASE
-        #                     WHEN TRUE THEN
-        #                         RAISE (ABORT,'Not Your Data, Read Only')
-        #                 END;
-        #         END;
-        #
-        #         DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_FALLOG;
-        #         CREATE Trigger Row_Security_Trigger_DELETE_FALLOG
-        #         BEFORE DELETE ON FALog_T
-        #         FOR EACH ROW
-        #         WHEN old.Station <> \"{station_name}\"
-        #         BEGIN
-        #             SELECT
-        #                 CASE
-        #                     WHEN TRUE THEN
-        #                         RAISE (ABORT,'Not Your Data, Read Only')
-        #                 END;
-        #         END;
-        #         """
-        #     self.con.executescript(row_security_trigger)
-        #     self._station = station_name
-        # else:
-        #     self._station = None
+        if isinstance(station_name, str):
+            row_security_trigger = f"""
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_RELLOG;
+
+                CREATE Trigger Row_Security_Trigger_UPDATE_RELLOG
+                BEFORE UPDATE ON RelLog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_RELLOG;
+                CREATE Trigger Row_Security_Trigger_DELETE_RELLOG
+                BEFORE DELETE ON RelLog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_FALLOG;
+                CREATE Trigger Row_Security_Trigger_UPDATE_FALLOG
+                BEFORE UPDATE ON FALog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+
+                DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_FALLOG;
+                CREATE Trigger Row_Security_Trigger_DELETE_FALLOG
+                BEFORE DELETE ON FALog_T
+                FOR EACH ROW
+                WHEN old.Station <> \"{station_name}\"
+                BEGIN
+                    SELECT
+                        CASE
+                            WHEN TRUE THEN
+                                RAISE (ABORT,'Not Your Data, Read Only')
+                        END;
+                END;
+                """
+            self.con.executescript(row_security_trigger)
+            self._station = station_name
+        else:
+            self._station = None
 
     def clean_up_sn_list(self, sn_list: str):
         if isinstance(sn_list, str):
@@ -198,7 +197,7 @@ class DBsqlite:
         a = 0
         b = 0
         c = 0
-        unknown_sn= []
+        unknown_sn = []
         existed_sn = []
         if self.filter_set.get("serial_number_list") is None:
             return False
@@ -227,7 +226,7 @@ class DBsqlite:
                 existed_sn.append(sn)
             else:
                 unknown_sn.append(sn)
-        if len(existed_sn) >0 and len(unknown_sn) == 0:
+        if len(existed_sn) > 0 and len(unknown_sn) == 0:
             c = 1
         return c == 1
 
@@ -293,7 +292,6 @@ class DBsqlite:
                     if sn in serial_number_list:
                         return False
                     serial_number_list.append(result["SerialNumber"])
-                    print(result["EndTimestamp"])
                     if result["EndTimestamp"] is not None:
                         return False
                 else:
@@ -394,31 +392,34 @@ class DBsqlite:
 
     @property
     def failure_mode_group_list(self):
-        sql = "SELECT Distinct FailureGroup FROM FailureMode_T "
+        sql = "SELECT Distinct FailureGroup FROM FailureMode_T WHERE removed = 0 "
         results = self.cur.execute(sql).fetchall()
         return set(result["FailureGroup"] for result in results)
 
     @property
     def failure_mode_list_to_add_to_sn(self):
         if self.cur:
-            sql = "SELECT FailureMode FROM FailureMode_T  " + \
-                  self.sql_filter_str(({"FailureGroup": self.filter_set.get("failure_group")}))
-            results = self.cur.execute(sql).fetchall()
+            # sql = "SELECT FailureMode FROM FailureMode_T  " + \
+            #       self.sql_filter_str(({"FailureGroup": self.filter_set.get("failure_group")}))
+            # results = self.cur.execute(sql).fetchall()
             sql = "SELECT FailureMode From FALog_T " + self.sql_filter_str({
                 "SerialNumber": self.filter_set.get("serial_number"),
                 "FK_RelStress": self.selected_stress_pks
             })
             result_existing = self.cur.execute(sql).fetchall()
-            all_failure_mode = set(result["FailureMode"] for result in results)
+            # all_failure_mode = set(result["FailureMode"] for result in results)
             existing = set(result["FailureMode"] for result in result_existing)
-            return all_failure_mode - existing
+            return self.failure_mode_list - existing
         return {None}
 
     @property
     def failure_mode_list(self):
         if self.cur:
             sql = "SELECT FailureMode FROM FailureMode_T  " + \
-                  self.sql_filter_str(({"FailureGroup": self.filter_set.get("failure_group")}))
+                  self.sql_filter_str(({
+                      "FailureGroup": self.filter_set.get("failure_group"),
+                      "removed": 0
+                  }))
             results = self.cur.execute(sql).fetchall()
             all_failure_mode = set(result["FailureMode"] for result in results)
             return all_failure_mode
@@ -426,26 +427,39 @@ class DBsqlite:
             return {None}
 
     @property
-    def filtered_record(self):
-        table = self.current_table
-        sql = f'SELECT SerialNumber,Station,WIP,StartTime,EndTime, RelStress_T.RelStress, RelStress_T.RelCheckpoint ' \
-              f'FROM {table} ' \
-              f'Inner Join RelStress_T ON {table}.FK_RelStress = RelStress_T.PK ' + \
-              self.sql_filter_str({"WIP": self.filter_set.get("wip"),
-                                   "SerialNumber": self.filter_set.get("serial_number"),
-                                   "Config_FK": self.selected_config_pks,
-                                   "FK_RelStress": self.selected_stress_pks}) + \
-              ' LIMIT 50'
-        results = self.cur.execute(sql).fetchall()
-        return results
-
-    @property
     def rel_log_table_view_data(self):
         condition = {"RelLog_T.WIP": self.filter_set.get("wip"),
                      "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
                      "Config_FK": self.selected_config_pks,
                      "FK_RelStress": self.selected_stress_pks,
-                     "Station": self.display_setting.get("station_filter")
+                     "Station": self.display_setting.get("station_filter"),
+                     "RelLog_T.removed": 0
+                     }
+        if self.cur:
+            sql = f'SELECT RelLog_T.PK,Config_T.Config, RelLog_T.WIP,RelLog_T.SerialNumber,' \
+                  f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
+                  f'RelStress_T.RelCheckpoint ' \
+                  f'FROM RelLog_T ' \
+                  f'  left Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
+                  f'  left Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
+                  f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+                  self.sql_filter_str(condition) + \
+                  ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 100'
+            results = self.cur.execute(sql).fetchall()
+            if results is None:
+                return [dict()]
+            else:
+                return [dict(result) for result in results]
+        else:
+            return [dict()]
+
+    @property
+    def all_station_rel_log_table_view_data(self):
+        condition = {"RelLog_T.WIP": self.filter_set.get("wip"),
+                     "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
+                     "Config_FK": self.selected_config_pks,
+                     "FK_RelStress": self.selected_stress_pks,
+                     "RelLog_T.removed": 0
                      }
         if self.cur:
             sql = f'SELECT RelLog_T.PK,Config_T.Config, RelLog_T.WIP,RelLog_T.SerialNumber,' \
@@ -467,21 +481,25 @@ class DBsqlite:
 
     @property
     def fa_log_table_view_data(self):
+        condition = {
+            "FALog_T.WIP": self.filter_set.get("wip"),
+            "FALog_T.SerialNumber": self.filter_set.get("serial_number"),
+            "Config_FK": self.selected_config_pks,
+            "FailureMode": self.filter_set.get("failure_mode"),
+            "FK_RelStress": self.selected_stress_pks,
+            "Station": self.display_setting.get("station_filter"),
+            "FALog_T.removed": 0
+        }
         if self.cur:
             sql = f'SELECT FALog_T.PK,Config_T.Config,FALog_T.SerialNumber,' \
                   f'FALog_T.Station,FALog_T.StartTime,RelStress_T.RelStress,' \
                   f' FALog_T.FailureMode,FALog_T.FailureGroup,' \
                   f'RelStress_T.RelCheckpoint, FALog_T.FA_Details' \
                   f' FROM FALog_T ' \
-                  f' Left Join RelStress_T ON FALog_T.FK_RelStress = RelStress_T.PK ' + \
-                  f' Left Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
-                  f' Left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
-                  self.sql_filter_str({"FALog_T.WIP": self.filter_set.get("wip"),
-                                       "FALog_T.SerialNumber": self.filter_set.get("serial_number"),
-                                       "Config_FK": self.selected_config_pks,
-                                       "FailureMode": self.filter_set.get("failure_mode"),
-                                       "FK_RelStress": self.selected_stress_pks,
-                                       "Station": self.display_setting.get("station_filter")}) + \
+                  f' inner Join RelStress_T ON FALog_T.FK_RelStress = RelStress_T.PK ' + \
+                  f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
+                  f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+                  self.sql_filter_str(condition) + \
                   '  ORDER BY FALog_T.StartTimestamp DESC LIMIT 100'
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -493,19 +511,23 @@ class DBsqlite:
 
     @property
     def latest_sn_history(self):
+        condition = {
+            "Config_SN_T.WIP": self.filter_set.get("wip"),
+            "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
+            "Config_FK": self.selected_config_pks,
+            "FK_RelStress": self.selected_stress_pks,
+            "Station": self.display_setting.get("station_filter"),
+            "RelLog_T.removed": 0
+        }
         if self.cur:
             sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.DateAdded,Config_SN_T.WIP," \
                   f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
                   " RelLog_T.Notes,RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
-                  "left join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                  "inner join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-                  "left join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
-                  "left join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
-                  self.sql_filter_str({"Config_SN_T.WIP": self.filter_set.get("wip"),
-                                       "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
-                                       "Config_FK": self.selected_config_pks,
-                                       "FK_RelStress": self.selected_stress_pks,
-                                       "Station": self.display_setting.get("station_filter")}) + \
+                  "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
+                  "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
+                  self.sql_filter_str(condition) + \
                   ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 50'
 
             results = self.cur.execute(sql).fetchall()
@@ -585,7 +607,7 @@ class DBsqlite:
         """
         if not isinstance(wip, str):
             raise TypeError
-        result = self.db_memory.execute(f'SELECT WIP FROM WIP_Status_T WHERE WIP =? LIMIT 1', (wip,)).fetchone()
+        result = self.cur.execute(f'SELECT WIP FROM WIP_Status_T WHERE WIP =? LIMIT 1', (wip,)).fetchone()
         return result is not None
         # return wip.upper() in self.cache_wip_table.records.keys()
 
@@ -691,7 +713,9 @@ class DBsqlite:
         time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if isinstance(self.filter_set.get("failure_mode"), list):
             for failure_mode in self.filter_set.get("failure_mode"):
+                uuid_str = str(uuid.uuid1())
                 log = {
+                    "PK": uuid_str,
                     "FK_RelStress": self.selected_stress_pks.pop(),
                     "Station": self.filter_set.get('station'),
                     "SerialNumber": self.filter_set.get("serial_number"),
@@ -708,8 +732,8 @@ class DBsqlite:
     def delete_from_failure_log_table(self):
         if isinstance(self.filter_set.get("selected_pks"), list):
             for pk in self.filter_set.get("selected_pks"):
-                sql = f"DELETE FROM FALog_T WHERE PK = {pk}"
-                self.cur.execute(sql)
+                sql = f"DELETE FROM FALog_T WHERE PK = ?"
+                self.cur.execute(sql, (pk,))
             self.con.commit()
 
     def update_failure_log_table(self, **log):
@@ -725,8 +749,10 @@ class DBsqlite:
         # time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if isinstance(failure_mode, str):
             log = {
+                "PK": str(uuid.uuid1()),
                 "FailureGroup": "Default",
                 "FailureMode": failure_mode,
+                "removed": 0
             }
             self.__insert_to_table__("FailureMode_T", **log)
             self.con.commit()
@@ -772,13 +798,14 @@ class DBsqlite:
                         "SerialNumber": sn,
                         "StartTimestamp": current_time,
                         "StartTime": time_str,
-                        "EndTimestamp": current_time,
-                        "EndTime": time_str,
+                        "EndTimestamp": None,
+                        "EndTime": None,
                         "WIP": self.filter_set.get("wip"),
                         "removed": 0,
                         "notes": self.filter_set.get("note")
                     }
                     if self.__insert_to_table__("Config_SN_T", **log):
+                        log.update({"PK": str(uuid.uuid1())})
                         if self.__insert_to_table__("RelLog_T", **log):
                             self.con.commit()
                         else:
@@ -787,7 +814,6 @@ class DBsqlite:
                         self.con.rollback()
 
     def checkin_to_new_checkpoint_rellog_table(self):
-        # TODO need to fix this
         current_time = dt.datetime.now().timestamp()
         time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         new_stress_pk = self.selected_stress_pks
@@ -797,7 +823,9 @@ class DBsqlite:
             return
         for pk in self.filter_set.get("selected_pks"):
             result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?", (pk,)).fetchone()
+            uuid_str = str(uuid.uuid1())
             log1 = {
+                "PK": uuid_str,
                 "FK_RelStress": stress_pk,
                 "Stress_FK": stress_pk,
                 "DateAdded": current_time,
@@ -872,12 +900,6 @@ class DBsqlite:
                 "WIP": self.filter_set.get("wip"),
                 "notes": None
             }
-            condition3 = {
-                "SerialNumber": result["SerialNumber"],
-            }
-            log3 = {
-                "SerialNumber": self.filter_set.get("serial_number"),
-            }
             condition2 = {
                 "SerialNumber": result["SerialNumber"],
             }
@@ -893,13 +915,41 @@ class DBsqlite:
                 "DateChanged": current_time,
                 "WIP": wip,
             }
-            if self.__update_to_table__("RelLog_T", condition1, **log1) and \
-                    self.__update_to_table__("RelLog_T", condition3, **log3) and \
-                    self.__update_to_table__("Config_SN_T", condition2, **log2):
-                self.con.commit()
+            if self.__update_to_table__("Config_SN_T", condition2, **log2):
+                if self.__update_to_table__("RelLog_T", condition1, **log1):
+                    self.con.commit()
+                else:
+                    self.con.rollback()
             else:
                 self.con.rollback()
                 print("error updating ?, no insert".format(result["SerialNumber"]))
+
+    def assign_wip_row_rellog_table(self, wip: str = None):
+        current_time = dt.datetime.now().timestamp()
+        if isinstance(self.filter_set.get("serial_number_list"), list):
+            for sn in self.filter_set.get("serial_number_list"):
+                if self.sn_exist(sn):
+                    log = {
+                        "DateChanged": current_time,
+                        "WIP": wip,
+                    }
+                    condition = {
+                        "SerialNumber": sn
+                    }
+
+                    if self.__update_to_table__("Config_SN_T", condition, **log):
+
+                        condition = {
+                            "PK": SnModel(sn, self).last_rel_log_row_pk
+                        }
+                        print(log)
+                        if self.__update_to_table__("RelLog_T", condition, **log):
+                            print("copmmited")
+                            self.con.commit()
+                        else:
+                            self.con.rollback()
+                    else:
+                        self.con.rollback()
 
     def delete_from_rellog_table(self):
         for pk in self.filter_set.get("selected_pks"):
@@ -908,17 +958,19 @@ class DBsqlite:
                 if self.__delete_from_table__("RelLog_T", {"PK": pk}):
                     sn = result["SerialNumber"]
                     result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
-                                               "SerialNumber = ?", (sn,)).fetchone()
+                                               "SerialNumber = ? and removed = 0", (sn,)).fetchone()
                     condition = {"SerialNumber": sn}
                     if result2:
                         timestamp = result2["Timestamp"]
                         log = {"DateAdded": timestamp, "DateChanged": timestamp}
                         if self.__update_to_table__("Config_SN_T", condition, **log):
                             self.con.commit()
-                        elif self.__delete_from_table__("Config_SN_T", condition):
-                            self.con.commit()
                         else:
                             self.con.rollback()
+                    else:
+                        self.con.rollback()
+                else:
+                    self.con.rollback()
 
     def __get_col_names__(self, table_name):
         cols = []
@@ -977,18 +1029,10 @@ class DBsqlite:
         return True
 
     def __delete_from_table__(self, tablename: str, condition: dict):
-
-        for k in condition.keys():
-            if k not in self.__get_col_names__(tablename):
-                condition.pop(k, None)
-        condition_str = self.sql_filter_str(condition, strict=True)
-        sql = "DELETE FROM " + tablename + " " + condition_str
-        try:
-            self.cur.execute(sql)
-        except sqlite3.Error as e:
-            print(e)
-            return False
-        return True
+        log = {
+            "removed": 1
+        }
+        return self.__update_to_table__(tablename, condition, **log)
 
 
 class ConfigModel:
@@ -1090,12 +1134,13 @@ class SnModel:
             if self.database:
                 if self.database.sn_exist(sn):
                     sql = f'SELECT SerialNumber,Config_FK, ' \
-                          f'WIP, Stress_FK From Config_SN_T WHERE SerialNumber like "{sn}%" '
+                          f'WIP, Stress_FK,DateAdded From Config_SN_T WHERE SerialNumber like "{sn}%" '
                     result = self.database.cur.execute(sql).fetchone()
                     self._serial_number = result["SerialNumber"]
                     self._config = ConfigModel(result["Config_FK"], self.database)
                     self._stress = StressModel(result["Stress_FK"], self.database)
                     self._wip = result["WIP"]
+                    self._date_last_record = result["DateAdded"]
 
     @property
     def config(self):
@@ -1108,3 +1153,10 @@ class SnModel:
     @property
     def wip(self):
         return self._wip
+
+    @property
+    def last_rel_log_row_pk(self):
+        sql = f'SELECT PK FROM RelLog_T where SerialNumber = ? and StartTimestamp = ?'
+        result = self.database.cur.execute(sql, (self.serial_number, self._date_last_record)).fetchone()
+        if result:
+            return result["PK"]
