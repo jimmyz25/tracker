@@ -27,10 +27,6 @@ class rel_tracker_app:
     def __init__(self):
         pass
 
-    # @property
-    # def station(self):
-    #     return self._station
-
     @staticmethod
     def apply_user_settings(window: sg.Window):
 
