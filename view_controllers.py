@@ -132,8 +132,10 @@ class preference_vc:
         rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         if self.window["-station-type-"].get() == "RelLog Station":
             rel_tracker_app.view_list.append(rel_log_vc())
+            rel_tracker_app.settings.update({"-first_view-": "RelLog Station"})
         elif self.window["-station-type-"].get() == "FailureMode Logging Station":
             rel_tracker_app.view_list.append(fa_log_vc())
+            rel_tracker_app.settings.update({"-first_view-": "FailureMode Logging Station"})
         self.window.close()
 
 
