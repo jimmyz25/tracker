@@ -28,7 +28,8 @@ class rel_tracker_view:
         column1 = sg.Column(layout=[[facebook_text]], size=(600, 40))
 
         return [
-            [column1, sg.Stretch(), sg.Txt("FRL project only", font='Heletica 10', text_color='#4267B2', size=(15, 1))]]
+            [column1, sg.Stretch(),
+             sg.Txt("FRL project only", font='Helvetica 10', text_color='#4267B2', size=(15, 1))]]
 
     @staticmethod
     def __status__():
@@ -55,24 +56,28 @@ class rel_tracker_view:
             [sg.Txt("Station Name", size=15),
              sg.InputText(size=30,
                           key="-Station_Name-", tooltip="maximum character: 18"), sg.Stretch(),
-             sg.B("Initialize", size=10,tooltip="all local data will be moved")],
+             sg.B("Initialize", size=10, tooltip="all local data will be moved")],
             [sg.Txt("Station Type", size=15),
              sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-", enable_events=True),
              sg.Stretch(),
-            ],
+             ],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True, key="-Input_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), tooltip="Input folder where data will be saved before tagging",
                              target=(sg.ThisRow, -2))],
-            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True, key="-Output_Folder-"), sg.Stretch(),
+            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True, key="-Output_Folder-"),
+             sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.HorizontalSeparator()],
-            [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True, key="-Golden_Database-"), sg.Stretch(),
+            [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True, key="-Golden_Database-"),
+             sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
-            [sg.Txt("Local Database", size=15), sg.InputText(size=30, readonly=True, key="-Local_Database-"), sg.Stretch(),
+            [sg.Txt("Local Database", size=15), sg.InputText(size=30, readonly=True, key="-Local_Database-"),
+             sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync", default=True),
              sg.Rad("OFF", group_id="auto_sync")],
+            [sg.Btn("Configs Setup", size=15), sg.Btn("Stress Setup", size=15)],
             [sg.Btn("Save Preference", size=15), ]
         ]
 
@@ -88,7 +93,7 @@ class rel_tracker_view:
             [sg.Txt("Notes", size=(15, 1)), sg.In(key="-New-Note-", enable_events=False)],
             [sg.Txt("SerialNumber (0)", size=(15, 3), expand_y=True, key="-Multi_SN-"),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
-                          tooltip="multiple SN seperate by comma, enter to count\n Note:duplicates will be removed ")]
+                          tooltip="multiple SN separate by comma, enter to count\n Note:duplicates will be removed ")]
         ]
         tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
 
@@ -121,14 +126,16 @@ class rel_tracker_view:
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
             [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
 
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(150, 220))
+        button_column = sg.Column(layout=layout_button_column, size=(150, 240))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
         show_heading = [False, True, True, True, True, True, True, True, True]
-        table_value = [[str(row) for row in range(9)] for col in range(1)]
+        table_value = [[str(row) for row in range(9)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
@@ -218,7 +225,7 @@ class rel_tracker_view:
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
         table_col = ['PK', 'failure mode set', 'failure mode', 'detail']
         show_heading = [False, True, True, True]
-        table_value = [[str(row) for row in range(4)] for col in range(1)]
+        table_value = [[str(row) for row in range(4)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, size=(40, 10),
                               expand_x=True, num_rows=12, font="Helvetica 12", header_font="Helvetica 12 bold",
@@ -257,7 +264,7 @@ class rel_tracker_view:
                       key="-failure_mode_set-", size=(20, 1))],
             [sg.Txt("Failure Mode", size=(15, 1)),
              sg.Listbox(values=["failure mode 1", "failure mode 2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                        size=(20, 10),key="-failure_mode_list-",enable_events=True)],
+                        size=(20, 10), key="-failure_mode_list-", enable_events=True)],
         ]
 
         filter_column = sg.Column(layout=layout_filter_column)
@@ -284,7 +291,7 @@ class rel_tracker_view:
     def fa_log_view(self):
         table_col = ['PK', 'SerialNumber', 'Stress', 'Checkpoint']
         show_heading = [False, True, True, True]
-        table_value = [[str(row) for row in range(4)] for col in range(1)]
+        table_value = [[str(row) for row in range(4)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=4, font="Helvetica 12", header_font="Helvetica 12 bold",
@@ -299,7 +306,7 @@ class rel_tracker_view:
             [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp"),
              sg.In("", disabled=True, key="-Ckp_Input-")],
             [sg.Txt("Failure Mode", size=(15, 1)),
-             sg.In("", disabled=False, key="-Failure_Mode_Input-",enable_events=True)],
+             sg.In("", disabled=False, key="-Failure_Mode_Input-", enable_events=True)],
         ]
 
         filter_column = sg.Column(layout=layout_filter_column, size=(300, 150), )
@@ -335,7 +342,7 @@ class rel_tracker_view:
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
                      "Detail"]
         show_heading = [False, True, True, True, True, True, True, True]
-        table_value2 = [[str(row) for row in range(8)] for col in range(1)]
+        table_value2 = [[str(row) for row in range(8)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
@@ -356,4 +363,38 @@ class rel_tracker_view:
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 
+        return window
+
+    @staticmethod
+    def popup_stress_setup():
+        layout_filter_column = [
+            [sg.Txt("RelStress", size=(15, 1)),
+             sg.Combo(["dummyStress1", "dummyStress2"], disabled=False, enable_events=True,
+                      key="-rel_stress-", size=(20, 1))],
+            [sg.Txt("Checkpoint", size=(15, 1)),
+             sg.Listbox(values=["dummyCheckpoint1", "dummyCheckpoint2"], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        size=(20, 10), key="-checkpoint_list-", enable_events=True)],
+        ]
+
+        filter_column = sg.Column(layout=layout_filter_column)
+
+        layout_button_column = [
+            [sg.B("Rename Stress", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  tooltip="each failure mode can only belongs to one group")],
+            [sg.B("Create New Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Archive Checkpoints", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Rename Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+        ]
+        button_column = sg.Column(layout=layout_button_column, expand_y=True)
+
+        layout = [
+            [filter_column, button_column],
+        ]
+
+        window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False)
         return window

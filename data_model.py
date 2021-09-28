@@ -4,6 +4,9 @@ import sqlite3
 import sys
 import re
 import uuid
+# import random
+import string
+import secrets
 
 golden = 'temp.db'
 RMD = "ReliabilityManagementDB.db"
@@ -42,6 +45,11 @@ class DBsqlite:
      on timestamp.
      station can be treated as user. station can read all but only have write access to row with same statio
     """
+
+    def generate_random_sn(self):
+        a_lot_of_sn = [str("".join(secrets.choice(string.ascii_letters + string.digits) for x in range(10)))
+                       for y in range(10000)]
+        self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
         row = []
@@ -386,7 +394,10 @@ class DBsqlite:
     @property
     def ckp_list_to_select(self):
         sql = "SELECT RelCheckpoint FROM RelStress_T " + \
-              self.sql_filter_str({"RelStress": self.filter_set.get("stress")})
+              self.sql_filter_str({
+                  "RelStress": self.filter_set.get("stress"),
+                  "removed": 0
+              })
         results = self.cur.execute(sql).fetchall()
         return set(result["RelCheckpoint"] for result in results)
 
@@ -444,7 +455,7 @@ class DBsqlite:
                   f'  left Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 100'
+                  ' LIMIT 100'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -470,7 +481,7 @@ class DBsqlite:
                   f'  left Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 100'
+                  '  LIMIT 100'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -519,16 +530,17 @@ class DBsqlite:
             "Station": self.display_setting.get("station_filter"),
             "RelLog_T.removed": 0
         }
+        # Config_SN_T.DateAdded,
         if self.cur:
-            sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.DateAdded,Config_SN_T.WIP," \
+            sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.WIP," \
                   f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
-                  " RelLog_T.Notes,RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
+                  " RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
                   "inner join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                   "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
                   self.sql_filter_str(condition) + \
-                  ' ORDER BY RelLog_T.StartTimestamp DESC LIMIT 50'
+                  ' LIMIT 30'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -558,7 +570,7 @@ class DBsqlite:
     @property
     def stress_list(self):
         if self.cur:
-            sql = "SELECT Distinct RelStress FROM RelStress_T "
+            sql = "SELECT Distinct RelStress FROM RelStress_T WHERE removed = 0"
             results = self.cur.execute(sql).fetchall()
             return set(result["RelStress"] for result in results)
         else:
@@ -786,32 +798,35 @@ class DBsqlite:
             for sn in self.filter_set.get("serial_number_list"):
                 if not self.sn_exist(sn):
                     uuid_str = str(uuid.uuid1())
-                    stress_fk = self.selected_stress_pks.pop()
-                    log = {
-                        "PK": uuid_str,
-                        "FK_RelStress": stress_fk,
-                        "Stress_FK": stress_fk,
-                        "Config_FK": self.selected_config_pks.pop(),
-                        "DateAdded": current_time,
-                        "DateChanged": current_time,
-                        "Station": self.filter_set.get('station'),
-                        "SerialNumber": sn,
-                        "StartTimestamp": current_time,
-                        "StartTime": time_str,
-                        "EndTimestamp": None,
-                        "EndTime": None,
-                        "WIP": self.filter_set.get("wip"),
-                        "removed": 0,
-                        "notes": self.filter_set.get("note")
-                    }
-                    if self.__insert_to_table__("Config_SN_T", **log):
-                        log.update({"PK": str(uuid.uuid1())})
-                        if self.__insert_to_table__("RelLog_T", **log):
-                            self.con.commit()
+                    if self.selected_stress_pks:
+                        if len(self.selected_stress_pks) == 0:
+                            return False
+                        stress_fk = self.selected_stress_pks.pop()
+                        log = {
+                            "PK": uuid_str,
+                            "FK_RelStress": stress_fk,
+                            "Stress_FK": stress_fk,
+                            "Config_FK": self.selected_config_pks.pop(),
+                            "DateAdded": current_time,
+                            "DateChanged": current_time,
+                            "Station": self.filter_set.get('station'),
+                            "SerialNumber": sn,
+                            "StartTimestamp": current_time,
+                            "StartTime": time_str,
+                            "EndTimestamp": None,
+                            "EndTime": None,
+                            "WIP": self.filter_set.get("wip"),
+                            "removed": 0,
+                            "notes": self.filter_set.get("note")
+                        }
+                        if self.__insert_to_table__("Config_SN_T", **log):
+                            log.update({"PK": str(uuid.uuid1())})
+                            if self.__insert_to_table__("RelLog_T", **log):
+                                self.con.commit()
+                            else:
+                                self.con.rollback()
                         else:
                             self.con.rollback()
-                    else:
-                        self.con.rollback()
 
     def checkin_to_new_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
@@ -963,6 +978,7 @@ class DBsqlite:
                     if result2:
                         timestamp = result2["Timestamp"]
                         log = {"DateAdded": timestamp, "DateChanged": timestamp}
+                        print(log)
                         if self.__update_to_table__("Config_SN_T", condition, **log):
                             self.con.commit()
                         else:
@@ -971,6 +987,42 @@ class DBsqlite:
                         self.con.rollback()
                 else:
                     self.con.rollback()
+
+    def insert_to_stress_table(self, rel_checkpoint: str = None):
+        # current_time = dt.datetime.now().timestamp()
+        # time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(rel_checkpoint, str):
+            log = {
+                "PK": str(uuid.uuid1()),
+                "RelStress": self.filter_set.get("stress"),
+                "RelCheckpoint": rel_checkpoint,
+                "removed": 0
+            }
+            self.__insert_to_table__("RelStress_T", **log)
+            self.con.commit()
+
+    def update_stress_table(self, stress_name, checkpoints: list = None):
+        # this will not only update in failure_mode table but also update FA_Log
+        if isinstance(stress_name, str):
+            condition = {
+                "RelStress": self.filter_set.get("stress"),
+                "RelCheckpoint": checkpoints
+            }
+            log = {
+                "RelStress": stress_name
+            }
+            if self.__update_to_table__("RelStress_T", condition=condition, **log):
+                self.con.commit()
+
+    def delete_from_stress_table(self, stress: str = None, checkpoints: list = None):
+        condition = {
+            "RelStress": self.filter_set.get("stress"),
+            "RelCheckpoint": checkpoints
+        }
+        if self.__delete_from_table__("RelStress_T", condition):
+            self.con.commit()
+        else:
+            self.con.rollback()
 
     def __get_col_names__(self, table_name):
         cols = []
@@ -1018,6 +1070,8 @@ class DBsqlite:
                     s = f" {key} = ? "
                     set_statement.append(s)
                     value_list.append(value)
+        if len(set_statement) == 0:
+            return True
         set_statements = " SET " + ",".join(set_statement)
         sql = "UPDATE " + tablename + set_statements + condition_str
         print(sql)
@@ -1032,6 +1086,8 @@ class DBsqlite:
         log = {
             "removed": 1
         }
+        if None in condition.values():
+            return False
         return self.__update_to_table__(tablename, condition, **log)
 
 
