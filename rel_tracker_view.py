@@ -32,23 +32,10 @@ class rel_tracker_view:
              sg.Txt("FRL project only", font='Helvetica 10', text_color='#4267B2', size=(15, 1))]]
 
     @staticmethod
-    def __status__():
-        layout_status_column = [
-            [sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
-                    )],
-            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
-            [sg.Txt("Latest Checkpoint Only", size=20),
-             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
-            [sg.Txt("Current Station Only", size=20),
-             sg.Rad("T", group_id="table_show_current_station",
-                    default=False, enable_events=True, key="-show_current1-"),
-             sg.Rad("F", group_id="table_show_current_station",
-                    default=True, enable_events=True, key="-show_current0-")],
-            [sg.Txt("")]
-        ]
-        status_column = sg.Column(layout=layout_status_column, size=(240, 220), key="-status-column")
-        return status_column
+    def __station_name__():
+        text = sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+               )
+        return text
 
     @staticmethod
     def preference_view():
@@ -72,7 +59,8 @@ class rel_tracker_view:
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30, readonly=True, key="-Golden_Database-"),
              sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
-            [sg.Txt("Local Database", size=15), sg.InputText(size=30, readonly=True, key="-Local_Database-"),
+            [sg.Txt("Local Database", size=15), sg.InputText(size=30, readonly=True, key="-Local_Database-",
+                                                             enable_events=True),
              sg.Stretch(),
              sg.FileBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
             [sg.Txt("Auto Sync", size=15), sg.Rad("ON", group_id="auto_sync", default=True),
@@ -143,10 +131,23 @@ class rel_tracker_view:
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
-
+        layout_status_column = [
+            [self.__station_name__()],
+            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
+            [sg.Txt("Latest Checkpoint Only", size=20),
+             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
+             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [sg.Txt("Current Station Only", size=20),
+             sg.Rad("T", group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("F", group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
+            [sg.Txt("")]
+        ]
+        status_column = sg.Column(layout=layout_status_column, size=(240, 220), key="-status-column")
         layout = [
             [self.__facebook__()],
-            [tab_group, button_column, self.__status__(), sg.Stretch()],
+            [tab_group, button_column, status_column, sg.Stretch()],
 
             [table_view],
             # [output_view]
@@ -395,6 +396,43 @@ class rel_tracker_view:
             [filter_column, button_column],
         ]
 
-        window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Setup Stress', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False)
+        return window
+
+    @staticmethod
+    def popup_config_setup():
+        layout_filter_column = [
+            [sg.Txt("Program", size=(15, 1)),
+             sg.Combo(["program1", "program2"], disabled=False, enable_events=True,
+                      key="-program-", size=(20, 1))],
+            [sg.Txt("Build", size=(15, 1)),
+             sg.Combo(["Build1", "Build2"], disabled=False, enable_events=True,
+                      key="-build-", size=(20, 1))],
+            [sg.Txt("Config", size=(15, 1)),
+             sg.Listbox(values=["dummyCheckpoint1", "dummyCheckpoint2"], select_mode=sg.LISTBOX_SELECT_MODE_SINGLE,
+                        size=(20, 10), key="-config-", enable_events=True)],
+        ]
+
+        filter_column = sg.Column(layout=layout_filter_column)
+
+        layout_button_column = [
+            [sg.B("Rename Program", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  tooltip="type in program to be renamed then click rename program")],
+            [sg.B("Rename Build", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+            [sg.B("Create Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+            [sg.B("Rename Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+        ]
+        button_column = sg.Column(layout=layout_button_column, expand_y=True)
+
+        layout = [
+            [filter_column, button_column],
+        ]
+
+        window = sg.Window('Setup Config', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False)
         return window

@@ -9,20 +9,28 @@ class rel_tracker_app:
     sg.user_settings_filename(path='.')
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
-    print(settings)
     station = settings.get("-Station_Name-")
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(40, 1),
                   auto_size_buttons=True, input_elements_background_color="#f7f7f7")
-    dbmodel = DBsqlite(RMD, station=station)
+    while True:
+        if DBsqlite.ok2use(address):
+            dbmodel = DBsqlite(address, station=station)
+            settings.update({"-Local_Database-": address})
+            break
+        else:
+            address = sg.popup_get_file("please select database file")
 
     def __init__(self):
         pass
 
     @staticmethod
-    def apply_user_settings(window: sg.Window):
+    def set_address(address):
+        rel_tracker_app.dbmodel.__address__ = address
 
+    @staticmethod
+    def apply_user_settings(window: sg.Window):
         for key in rel_tracker_app.settings.keys():
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
@@ -41,6 +49,8 @@ class rel_tracker_app:
                     or isinstance(window[key], sg.PySimpleGUI.Combo):
                 rel_tracker_app.settings[key] = window[key].get()
         sg.user_settings_save()
+        rel_tracker_app.set_address(rel_tracker_app.settings.get("-Local_Database-"))
+
         # print()
         print("user setting saved")
 
@@ -99,6 +109,22 @@ class preference_vc:
             elif event == "Stress Setup":
                 stress_setup_popup = stress_setup_vc(self.window)
                 stress_setup_popup.show()
+            elif event == "Configs Setup":
+                config_setup_popup = config_setup_vc(self.window)
+                config_setup_popup.show()
+            elif event == "-Local_Database-":
+                address = values.get("-Local_Database-")
+                while True:
+                    if DBsqlite.ok2use(address):
+                        rel_tracker_app.dbmodel = DBsqlite(address,
+                                                           station=rel_tracker_app.station)
+                        rel_tracker_app.settings.update({"-Local_Database-": address})
+                        sg.popup_ok("Great, this database is ok2use. please double \n"
+                                    "confirm this is the latest local copy "
+                                    "before continuing")
+                        break
+                    else:
+                        address = sg.popup_get_file("please select database file")
 
         self.close_window()
 
@@ -347,8 +373,7 @@ class fa_log_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.fa_log_view()
         rel_tracker_app.reset_window_inputs(self.window)
-        self.window['-table_select-'].update(values=self.rel_table_data)
-        self.window["-fa_table_select-"].update(values=self.fa_table_data)
+
         self.complete_quit = True
 
     @property
@@ -373,8 +398,9 @@ class fa_log_vc:
         return data
 
     def show(self):
+        self.window['-table_select-'].update(values=self.rel_table_data)
+        self.window["-fa_table_select-"].update(values=self.fa_table_data)
         while True:  # the event loop
-
             event, values = self.window.read()
             if not isinstance(event, str):
                 continue
@@ -754,14 +780,15 @@ class stress_setup_vc:
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         rel_tracker_app.dbmodel.filter_set.update({
-            "stress": "Default"
+            "stress": None,
+            "checkpoint": None
         })
+
+    def show(self):
         self.window["-rel_stress-"].update(value="Default",
                                            values=list(rel_tracker_app.dbmodel.stress_list))
 
-        self.window["-checkpoint_list-"].update(values=list(rel_tracker_app.dbmodel.ckp_list_to_select))
-
-    def show(self):
+        self.window["-checkpoint_list-"].update(values=[])
         while True:  # the event loop
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
@@ -803,6 +830,64 @@ class stress_setup_vc:
                 self.window["Archive Checkpoints"].update(disabled=False)
             else:
                 self.window["Archive Checkpoints"].update(disabled=True)
+
+            print(event, values)
+        self.close_window()
+
+    def close_window(self):
+        sg.user_settings_save()
+        self.window.close()
+
+
+class config_setup_vc:
+    def __init__(self, master: sg.Window = None):
+        view = rel_tracker_view(rel_tracker_app.settings)
+        self.window = view.popup_config_setup()
+        self.master = master
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        rel_tracker_app.dbmodel.filter_set.update({
+            "program": None,
+            "build": None,
+            "config": None
+        })
+
+    def show(self):
+        self.window["-program-"].update(value=None,
+                                        values=list(rel_tracker_app.dbmodel.program_list))
+        self.window["-build-"].update(value=None,
+                                      values=list(rel_tracker_app.dbmodel.build_list))
+        self.window["-config-"].update(values=[])
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            elif event == "Create Config":
+                rel_tracker_app.dbmodel.filter_set.update({"program": self.window["-program-"].get()})
+                rel_tracker_app.dbmodel.filter_set.update({"build": self.window["-build-"].get()})
+                config_name = sg.popup_get_text("Please Provide Config Name")
+                rel_tracker_app.dbmodel.insert_to_config_table(config_name)
+                self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            elif event == "-program-":
+                rel_tracker_app.dbmodel.filter_set.update({"program": self.window["-program-"].get()})
+                self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            elif event == "-build-":
+                rel_tracker_app.dbmodel.filter_set.update({"build": self.window["-build-"].get()})
+                self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            elif event == "-config-":
+                rel_tracker_app.dbmodel.filter_set.update({"config": self.window["-config-"].get()})
+            elif event == "Rename Config":
+                config_name = sg.popup_get_text(f"Please provide new name to replace {values.get('-config-')[0]}")
+                rel_tracker_app.dbmodel.update_config_table(config_name)
+                self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
+            if rel_tracker_app.dbmodel.filter_set.get("program") and rel_tracker_app.dbmodel.filter_set.get("build"):
+                self.window["Create Config"].update(disabled=False)
+            else:
+                self.window["Create Config"].update(disabled=True)
+            if len(self.window["-config-"].get()) == 1:
+                self.window["Rename Config"].update(disabled=False)
+            else:
+                self.window["Rename Config"].update(disabled=True)
 
             print(event, values)
         self.close_window()

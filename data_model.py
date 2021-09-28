@@ -47,22 +47,28 @@ class DBsqlite:
     """
 
     def generate_random_sn(self):
-        a_lot_of_sn = [str("".join(secrets.choice(string.ascii_letters + string.digits) for x in range(10)))
-                       for y in range(10000)]
+        a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
+                       for _ in range(10000)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
         row = []
         for key, value in kwp.items():
             if isinstance(value, str):
-                value.strip().strip("%")
-                if value != "":
-                    if strict:
-                        row.append(f' {key} = \"{value}\"')
-                    else:
-                        row.append(f' {key} LIKE \"{value}%\"')
+                if value.lower() == "none":
+                    row.append(f'{key} is Null ')
+                else:
+                    value.strip().strip("%")
+                    if value != "":
+                        if strict:
+                            row.append(f' {key} = \"{value}\"')
+                        else:
+                            row.append(f' {key} LIKE \"{value}%\"')
             elif isinstance(value, int):
-                row.append(f'{key} = {value}')
+                if value == -999:
+                    row.append(f'{key} is Null')
+                else:
+                    row.append(f'{key} = {value}')
             elif isinstance(value, set) or isinstance(value, list):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
@@ -88,37 +94,52 @@ class DBsqlite:
         return sql
 
     def __init__(self, address, station=None):
-        self.__address__ = address
-        self.__connect__()
-        self.station = station
-        self.db_memory = sqlite3.connect(':memory:')
-        # self.con.backup(self.db_memory)
-        self.current_table = "RelLog_T"
-        self.filter_set = dict(
-            {
-                "config": None,
-                "build": None,
-                "program": None,
-                "stress": None,
-                "checkpoint": None,
-                "serial_number": None,
-                "serial_number_list": None,
-                "wip": None,
-                "failure_group": None,
-                "failure_mode": None,
-                "selected_row": None,
-                "selected_pks": None,
-                "station": None,
-                "note": None
-            }
-        )
-        self.display_setting = dict(
-            {
-                "update_mode": None,
-                "show_latest": None,
-                "station_filter": None,
-            }
-        )
+        print(address)
+        if DBsqlite.ok2use(address):
+            print("asdf")
+            self.__address__ = address
+            self.__connect__()
+            self.station = station
+            self.db_memory = sqlite3.connect(':memory:')
+            # self.con.backup(self.db_memory)
+            self.current_table = "RelLog_T"
+            self.filter_set = dict(
+                {
+                    "config": None,
+                    "build": None,
+                    "program": None,
+                    "stress": None,
+                    "checkpoint": None,
+                    "serial_number": None,
+                    "serial_number_list": None,
+                    "wip": None,
+                    "failure_group": None,
+                    "failure_mode": None,
+                    "selected_row": None,
+                    "selected_pks": None,
+                    "station": None,
+                    "note": None
+                }
+            )
+            self.display_setting = dict(
+                {
+                    "update_mode": None,
+                    "show_latest": None,
+                    "station_filter": None,
+                }
+            )
+
+    @classmethod
+    def ok2use(cls, address):
+        try:
+            con = sqlite3.connect(address)
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            cur.execute("SELECT * FROM RelLog_T LIMIT1")
+            con.close()
+            return True
+        except sqlite3.Error:
+            return False
 
     @property
     def station(self):
@@ -282,7 +303,6 @@ class DBsqlite:
     @property
     def ready_to_checkout(self):
         # latest and Endtimestamp is None
-        # TODO bug, logic is wrong. just need to check if this is the latest
 
         if self.cur is None:
             return False
@@ -451,9 +471,9 @@ class DBsqlite:
                   f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
                   f'RelStress_T.RelCheckpoint ' \
                   f'FROM RelLog_T ' \
-                  f'  left Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
-                  f'  left Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
-                  f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+                  f'  inner Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
+                  f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
+                  f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
                   ' LIMIT 100'
             results = self.cur.execute(sql).fetchall()
@@ -477,9 +497,9 @@ class DBsqlite:
                   f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
                   f'RelStress_T.RelCheckpoint ' \
                   f'FROM RelLog_T ' \
-                  f'  left Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
-                  f'  left Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
-                  f'  left Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+                  f'  inner Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
+                  f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
+                  f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
                   '  LIMIT 100'
             results = self.cur.execute(sql).fetchall()
@@ -523,8 +543,8 @@ class DBsqlite:
     @property
     def latest_sn_history(self):
         condition = {
-            "Config_SN_T.WIP": self.filter_set.get("wip"),
-            "Config_SN_T.SerialNumber": self.filter_set.get("serial_number"),
+            "RelLog_T.WIP": self.filter_set.get("wip"),
+            "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
             "Config_FK": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
             "Station": self.display_setting.get("station_filter"),
@@ -532,10 +552,30 @@ class DBsqlite:
         }
         # Config_SN_T.DateAdded,
         if self.cur:
-            sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.WIP," \
+            # sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.WIP," \
+            #       f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
+            #       " RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
+            #       "inner join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+            #       " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+            #       "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
+            #       "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
+            #       self.sql_filter_str(condition) + \
+            #       ' LIMIT 30'
+
+            # sql = f"SELECT RelLog_T.PK,A.SerialNumber,A.WIP," \
+            #       f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
+            #       " RelStress_T.RelStress,RelStress_T.RelCheckpoint from " \
+            #       "( SELECT Stress_FK, Config_FK, SerialNumber, DateAdded, WIP FROM Config_SN_T "\
+            #       + self.sql_filter_str(condition) + " LIMIT 30 ) as A " \
+            #       "inner join RelLog_T ON A.DateAdded = RelLog_T.StartTimestamp and " \
+            #       " A.SerialNumber = RelLog_T.SerialNumber " \
+            #       "inner join Config_T ON Config_T.PK = A.Config_FK " \
+            #       "inner join RelStress_T ON RelStress_T.PK = A.Stress_FK"
+
+            sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP," \
                   f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
-                  " RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
-                  "inner join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                  " RelStress_T.RelStress,RelStress_T.RelCheckpoint from RelLog_T  " \
+                  "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                   "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
@@ -577,13 +617,9 @@ class DBsqlite:
             return {None}
 
     def __connect__(self):
-        if self.__address__:
-            self.con = sqlite3.connect(self.__address__)
-            self.con.row_factory = sqlite3.Row
-            self.cur = self.con.cursor()
-        else:
-            self.con = None
-            self.cur = self.cur = None
+        self.con = sqlite3.connect(self.__address__)
+        self.con.row_factory = sqlite3.Row
+        self.cur = self.con.cursor()
 
     def __disconnect__(self):
         self.con.close()
@@ -989,8 +1025,6 @@ class DBsqlite:
                     self.con.rollback()
 
     def insert_to_stress_table(self, rel_checkpoint: str = None):
-        # current_time = dt.datetime.now().timestamp()
-        # time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if isinstance(rel_checkpoint, str):
             log = {
                 "PK": str(uuid.uuid1()),
@@ -1014,7 +1048,7 @@ class DBsqlite:
             if self.__update_to_table__("RelStress_T", condition=condition, **log):
                 self.con.commit()
 
-    def delete_from_stress_table(self, stress: str = None, checkpoints: list = None):
+    def delete_from_stress_table(self, checkpoints: list = None):
         condition = {
             "RelStress": self.filter_set.get("stress"),
             "RelCheckpoint": checkpoints
@@ -1023,6 +1057,32 @@ class DBsqlite:
             self.con.commit()
         else:
             self.con.rollback()
+
+    def insert_to_config_table(self, config_name: str = None):
+        if isinstance(config_name, str):
+            log = {
+                "PK": str(uuid.uuid1()),
+                "Program": self.filter_set.get("program"),
+                "Build": self.filter_set.get("build"),
+                "Config": config_name,
+                "removed": 0
+            }
+            self.__insert_to_table__("Config_T", **log)
+            self.con.commit()
+
+    def update_config_table(self, config_name: str = None):
+        # this will not only update in failure_mode table but also update FA_Log
+        if isinstance(config_name, str):
+            condition = {
+                "Program": self.filter_set.get("program"),
+                "Build": self.filter_set.get("build"),
+                "Config": self.filter_set.get("config")
+            }
+            log = {
+                "Config": config_name
+            }
+            if self.__update_to_table__("Config_T", condition=condition, **log):
+                self.con.commit()
 
     def __get_col_names__(self, table_name):
         cols = []
