@@ -37,9 +37,6 @@ class rel_tracker_app:
                     window[key].update(value=rel_tracker_app.settings.get(key))
         rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         rel_tracker_app.dbmodel.station = rel_tracker_app.station
-        if "-station_name-" in window.key_dict.keys():
-            window["-station_name-"].update(value=rel_tracker_app.station)
-        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         print("USER SETTINGS APPLIED")
 
     @staticmethod
@@ -67,6 +64,8 @@ class rel_tracker_app:
         # save settings to jason file
         rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         rel_tracker_app.dbmodel.station = rel_tracker_app.station
+        if "-station_name-" in window.key_dict.keys():
+            window["-station_name-"].update(value=rel_tracker_app.station)
         print("window reset")
 
 
@@ -142,7 +141,6 @@ class rel_log_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.rel_lab_station_view()
-        rel_tracker_app.reset_window_inputs(self.window)
 
         self.complete_quit = True
 
@@ -163,6 +161,7 @@ class rel_log_vc:
             return data
 
     def show(self):
+        rel_tracker_app.reset_window_inputs(self.window)
         self.window['-table_select-'].update(values=self.table_data)
         while True:  # the event loop
             event, values = self.window.read()
@@ -267,7 +266,8 @@ class rel_log_vc:
                     selected_sn_list = [row[3] for row in selected]
                     selected_pk_list = [row[0] for row in selected]
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
-                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
+                    rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     print(selected_sn_list, "in selection", "Note: ", str(selected[0][-1]))
                     if rel_tracker_app.dbmodel.filter_set.get("update_mode"):

@@ -96,7 +96,6 @@ class DBsqlite:
     def __init__(self, address, station=None):
         print(address)
         if DBsqlite.ok2use(address):
-            print("asdf")
             self.__address__ = address
             self.__connect__()
             self.station = station
@@ -475,7 +474,7 @@ class DBsqlite:
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  ' LIMIT 100'
+                  '  LIMIT 50'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -531,7 +530,7 @@ class DBsqlite:
                   f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '  ORDER BY FALog_T.StartTimestamp DESC LIMIT 100'
+                  '   LIMIT 100'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -580,7 +579,7 @@ class DBsqlite:
                   "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
                   self.sql_filter_str(condition) + \
-                  ' LIMIT 30'
+                  '  LIMIT 30'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:

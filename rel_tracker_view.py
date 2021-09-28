@@ -97,28 +97,30 @@ class rel_tracker_view:
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(400, 220), enable_events=True, key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(300, 150), enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
-            [sg.B("Add", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+            [sg.B("Add", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+             sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)
+             ],
+            [sg.B("Reset", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False),
+             sg.B("Update", size=(20, 1), pad=(5, 2),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Assign WIP", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Reset", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-            [sg.B("Update", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Checkout", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
-            [sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
-
+            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+             sg.B("Checkout", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)
+             ],
+            [sg.B("Delete", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+             sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)
+             ]
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(150, 240))
+        button_column = sg.Column(layout=layout_button_column, size=(330, 150))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -144,7 +146,7 @@ class rel_tracker_view:
                     default=True, enable_events=True, key="-show_current0-")],
             [sg.Txt("")]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(240, 220), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(240, 150), key="-status-column")
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
