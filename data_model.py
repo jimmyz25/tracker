@@ -8,25 +8,25 @@ import uuid
 import string
 import secrets
 
-golden = 'temp.db'
-RMD = "ReliabilityManagementDB.db"
-ini_file = "CONFIG.ini"
-golden_output = "golden.db"
-create_db_sql = "create_db_sql.sql"
+# golden = 'temp.db'
+# RMD = "ReliabilityManagementDB.db"
+# ini_file = "CONFIG.ini"
+# golden_output = "golden.db"
+# create_db_sql = "create_db_sql.sql"
 
-# determine if application is a script file or frozen exe
-if getattr(sys, 'frozen', False):
-    application_path = os.path.dirname(sys.executable)
-elif __file__:
-    application_path = os.path.dirname(__file__)
-else:
-    application_path = os.path.dirname(__file__)
-
-golden = os.path.join(application_path, golden)
-RMD = os.path.join(application_path, RMD)
-ini_file = os.path.join(application_path, ini_file)
-golden_output = os.path.join(application_path, golden_output)
-create_db_sql = os.path.join(application_path, create_db_sql)
+# # determine if application is a script file or frozen exe
+# if getattr(sys, 'frozen', False):
+#     application_path = os.path.dirname(sys.executable)
+# elif __file__:
+#     application_path = os.path.dirname(__file__)
+# else:
+#     application_path = os.path.dirname(__file__)
+#
+# golden = os.path.join(application_path, golden)
+# RMD = os.path.join(application_path, RMD)
+# ini_file = os.path.join(application_path, ini_file)
+# golden_output = os.path.join(application_path, golden_output)
+# create_db_sql = os.path.join(application_path, create_db_sql)
 
 
 class RecordsDb:
@@ -127,6 +127,10 @@ class DBsqlite:
                     "station_filter": None,
                 }
             )
+            print(sqlite3.version_info)
+            print(sqlite3.version)
+            print(sqlite3.sqlite_version)
+            # self.cur.execute("UPDATE RelLog_T SET removed = a  WHERE  PK = \"aa\"")
 
     @classmethod
     def ok2use(cls, address):
@@ -1016,10 +1020,15 @@ class DBsqlite:
 
     def delete_from_rellog_table(self):
         for pk in self.filter_set.get("selected_pks"):
+
             result = self.cur.execute("SELECT SerialNumber from RelLog_T Where Pk = ?  ", (pk,)).fetchone()
+
             if result:
+                print("as11df")
                 if self.__delete_from_table__("RelLog_T", {"PK": pk}):
+                    print("asdf")
                     sn = result["SerialNumber"]
+
                     result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
                                                "SerialNumber = ? and removed = 0", (sn,)).fetchone()
                     condition = {"SerialNumber": sn}
@@ -1181,14 +1190,18 @@ class DBsqlite:
                     s = f" {key} = ? "
                     set_statement.append(s)
                     value_list.append(value)
+        value_list = tuple(value_list)
+        #TODO, value 1 is treated as TRUE...
         if len(set_statement) == 0:
             return True
         set_statements = " SET " + ",".join(set_statement)
         sql = "UPDATE " + tablename + set_statements + condition_str
-        print(sql)
+        print(sql, value_list)
         try:
             self.cur.execute(sql, value_list)
+            print("this is done")
         except sqlite3.Error as e:
+            print("asdfasdf")
             print(e)
             return False
         return True
@@ -1197,8 +1210,10 @@ class DBsqlite:
         log = {
             "removed": 1
         }
+
         if None in condition.values():
             return False
+
         return self.__update_to_table__(tablename, condition, **log)
 
 

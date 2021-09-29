@@ -15,7 +15,7 @@ class rel_tracker_view:
             [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
-        column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 200))
+        column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 250))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
@@ -25,7 +25,7 @@ class rel_tracker_view:
     def __facebook__():
         facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font='Helvetica 30 bold',
                                justification='center', pad=5, key="-Home-", enable_events=True)
-        column1 = sg.Column(layout=[[facebook_text]], size=(600, 40))
+        column1 = sg.Column(layout=[[facebook_text]], size=(600, 50))
 
         return [
             [column1, sg.Stretch(),
@@ -33,7 +33,7 @@ class rel_tracker_view:
 
     @staticmethod
     def __station_name__():
-        text = sg.Txt("Station", text_color="Black", font='Helvetica 20 bold', key="-station_name-"
+        text = sg.Txt("Station", text_color="Black", font='Helvetica 15 bold', key="-station_name-"
                       )
         return text
 
@@ -97,33 +97,33 @@ class rel_tracker_view:
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(300, 150), enable_events=True, key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(350, 180), enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                  disabled=True),
              sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)
+                  disabled=True)
              ],
             [sg.B("Reset", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False),
+                  disabled=False),
              sg.B("Update", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
             [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                  disabled=True),
              sg.B("Checkout", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)
+                  disabled=True)
              ],
             [sg.B("Delete", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                  disabled=True),
              sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)
+                  disabled=False)
              ],
             [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                  disabled=True),
              ]
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(330, 150))
+        button_column = sg.Column(layout=layout_button_column, size=(380, 180))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -131,7 +131,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(9)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
-                              expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
@@ -149,7 +149,7 @@ class rel_tracker_view:
                     default=True, enable_events=True, key="-show_current0-")],
             [sg.Txt("")]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(240, 150), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
@@ -224,9 +224,9 @@ class rel_tracker_view:
         layout_button_column = [
             [sg.Sizer(10, 50)],
             [sg.B("Add >>>", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True, key="-Add-")],
+                  disabled=True, key="-Add-")],
             [sg.B("Remove <<<", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True, key="-Remove-")],
+                  disabled=True, key="-Remove-")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
         table_col = ['PK', 'failure mode set', 'failure mode', 'detail']
@@ -234,7 +234,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(4)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, size=(40, 10),
-                              expand_x=True, num_rows=12, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=12, font="Helvetica 9", header_font="Helvetica 10 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
 
@@ -253,7 +253,7 @@ class rel_tracker_view:
              sg.In("", disabled=True, key="-Ckp_Input-", size=(20, 1))],
             [filter_column, button_column, done_column],
             [sg.B("Add details", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
             [sg.Multiline(default_text="", size=(40, 15), expand_x=True, key="-fa-detail-")]
         ]
 
@@ -277,12 +277,12 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Group Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True,
+                  disabled=True,
                   tooltip="each failure mode can only belongs to one group")],
             [sg.B("Create New Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+                  disabled=False)],
             [sg.B("Archive Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -300,7 +300,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(6)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=11, font="Helvetica 9", header_font="Helvetica 10 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
@@ -323,32 +323,15 @@ class rel_tracker_view:
              sg.In("", disabled=False, key="-Failure_Mode_Input-", enable_events=True)],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column, size=(300, 200), )
+        filter_column = sg.Column(layout=layout_filter_column, size=(330, 250), )
 
         layout_button_row = [
-            sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                 disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False),
+            sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"), disabled=False),
             sg.B("Configure Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                 disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False),
+                 disabled=False),
             sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                 disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
-            # [sg.B("Update Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-            #       disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                 disabled=True),
         ]
-        # button_column = sg.Column(layout=layout_button_column, size=(200, 200), expand_y=True)
-
-        # layout_status_column = [
-        #     [sg.Txt("Last Checkpoint Only", size=20),
-        #      sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
-        #      sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
-        #     [sg.Txt("Current Station Only", size=20),
-        #      sg.Rad("T", group_id="table_show_current_station", default=False, enable_events=True,
-        #             key="-show_current1-"),
-        #      sg.Rad("F", group_id="table_show_current_station", default=True, enable_events=True,
-        #             key="-show_current0-")],
-        #     [table_view],
-        # ]
-        # status_column = sg.Column(layout=layout_status_column, size=(300, 150), key="-status-column")
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
                      "Detail"]
@@ -356,7 +339,7 @@ class rel_tracker_view:
         table_value2 = [[str(row) for row in range(8)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col,
-                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
+                               expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
                                header_background_color="white",
                                enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
@@ -392,14 +375,14 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Rename Stress", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  disabled=False,
                   tooltip="each failure mode can only belongs to one group")],
             [sg.B("Create New Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+                  disabled=False)],
             [sg.B("Archive Checkpoints", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
             [sg.B("Rename Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -430,14 +413,14 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Rename Program", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False,
+                  disabled=False,
                   tooltip="type in program to be renamed then click rename program")],
             [sg.B("Rename Build", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)],
+                  disabled=False)],
             [sg.B("Create Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
             [sg.B("Rename Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True)],
+                  disabled=True)],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -452,12 +435,13 @@ class rel_tracker_view:
         return window
 
     def data_log_view(self):
-        table_col = ['PK', '   SerialNumber   ', '   Stress   ', '   Checkpoint   ', "  WIP  ", "   Config   ", "   EndTime   "]
-        show_heading = [False, True, True, True, True, True,True]
+        table_col = ['PK', '   SerialNumber   ', '   Stress   ', '   Checkpoint   ', "  WIP  ", "   Config   ",
+                     "   EndTime   "]
+        show_heading = [False, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(7)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=11, font="Helvetica 9", header_font="Helvetica 10 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
@@ -481,13 +465,13 @@ class rel_tracker_view:
         filter_column = sg.Column(layout=layout_filter_column, size=(300, 180), )
 
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False),
+                           disabled=False),
                       sg.B("Start Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                           disabled=True),
                       sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                           disabled=True),
                       sg.B("Correct Mistake", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
+                           disabled=True),
 
                       ]
 
@@ -497,7 +481,7 @@ class rel_tracker_view:
         table_value2 = [[str(row) for row in range(9)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
-                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
+                               expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
