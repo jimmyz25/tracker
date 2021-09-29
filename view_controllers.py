@@ -184,6 +184,7 @@ class rel_log_vc:
                 wip = "FA"
                 if wip is not None:
                     rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
+                    self.filter_set.update({"wip": "FA"})
                     self.window['-table_select-'].update(values=self.table_data)
                     self.window["-New-SN_Input-"].update(value="")
                     # self.window["-WIP_Input-"].update(value="FA")
@@ -339,7 +340,7 @@ class rel_log_vc:
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
             if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or \
-                    event == "Enter Update Mode":
+                    event == "Enter Update Mode" or event == "Reset":
                 if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
                     self.window["Add"].update(disabled=False)
                 else:
@@ -461,6 +462,7 @@ class fa_log_vc:
             elif event == "-table_select-":
                 # selecting SerialNumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
+                print (count)
                 if count > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
@@ -491,13 +493,13 @@ class fa_log_vc:
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
                 self.window['-table_select-'].update(values=self.rel_table_data)
-            if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
-                # self.window["Update Failure"].update(disabled=False)
+            # if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
+            if rel_tracker_app.dbmodel.filter_set.get("selected_row"):
                 self.window["Report Failure"].update(disabled=False)
             else:
-                # self.window["Update Failure"].update(disabled=True)
-                self.window["Report Failure"].update(disabled=True)
 
+                self.window["Report Failure"].update(disabled=True)
+            print(event, values)
         self.close_window()
 
     def close_window(self):

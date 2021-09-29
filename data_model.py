@@ -1,7 +1,7 @@
 import datetime as dt
-import os
+# import os
 import sqlite3
-import sys
+# import sys
 import re
 import uuid
 # import random
@@ -1012,7 +1012,7 @@ class DBsqlite:
                         if self.__update_to_table__("RelLog_T", condition, **log):
                             print("copmmited")
                             self.con.commit()
-                            self.filter_set.update({"wip": "FA"})
+
                         else:
                             self.con.rollback()
                     else:
@@ -1191,7 +1191,6 @@ class DBsqlite:
                     set_statement.append(s)
                     value_list.append(value)
         value_list = tuple(value_list)
-        #TODO, value 1 is treated as TRUE...
         if len(set_statement) == 0:
             return True
         set_statements = " SET " + ",".join(set_statement)

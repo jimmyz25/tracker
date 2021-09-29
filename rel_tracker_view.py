@@ -43,7 +43,7 @@ class rel_tracker_view:
             [sg.Txt("Station Name", size=15),
              sg.InputText(size=30,
                           key="-Station_Name-", tooltip="maximum character: 18"), sg.Stretch(),
-             sg.B("Initialize", size=10, tooltip="all local data will be moved")],
+             ],
             [sg.Txt("Station Type", size=15),
              sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-", enable_events=True),
              sg.Stretch(),
@@ -174,7 +174,7 @@ class rel_tracker_view:
         layout1 = [
             [sg.Txt("Program", size=15),
              sg.InputCombo(size=30, values=[], key="Program", enable_events=True), sg.Stretch(),
-             sg.B("Clear", size=10)],
+             ],
             [sg.Txt("Build", size=15), sg.InputCombo(values=[], size=30, readonly=True,
                                                      key="Build", enable_events=True), sg.Stretch()],
             [sg.Txt("Config", size=15), sg.InputCombo(values=[], size=30, readonly=True,
