@@ -1,8 +1,8 @@
 # this is a collection of view controllers. each view controller works on a view
 
-import PySimpleGUI as selection_own_get
 from rel_tracker_view import *
 from data_model import *
+import sys
 
 
 class rel_tracker_app:
@@ -13,7 +13,7 @@ class rel_tracker_app:
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font='Arial 10', element_padding=(2, 2), element_size=(35, 1),
-                  auto_size_buttons=False, input_elements_background_color="#f7f7f7",auto_size_text=True)
+                  auto_size_buttons=False, input_elements_background_color="#f7f7f7", auto_size_text=True)
     while True:
         if DBsqlite.ok2use(address):
             dbmodel = DBsqlite(address, station=station)
@@ -184,7 +184,7 @@ class rel_log_vc:
                 wip = "FA"
                 if wip is not None:
                     rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
-                    self.filter_set.update({"wip": "FA"})
+                    rel_tracker_app.dbmodel.filter_set.update({"wip": "FA"})
                     self.window['-table_select-'].update(values=self.table_data)
                     self.window["-New-SN_Input-"].update(value="")
                     # self.window["-WIP_Input-"].update(value="FA")
@@ -394,7 +394,7 @@ class fa_log_vc:
     @property
     def rel_table_data(self):
         if rel_tracker_app.dbmodel.display_setting.get("show_latest"):
-            datasource = rel_tracker_app.dbmodel.latest_sn_history
+            datasource = rel_tracker_app.dbmodel.all_station_latest_sn_history
         else:
             datasource = rel_tracker_app.dbmodel.all_station_rel_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),
@@ -462,7 +462,6 @@ class fa_log_vc:
             elif event == "-table_select-":
                 # selecting SerialNumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
-                print (count)
                 if count > 0:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
@@ -488,11 +487,11 @@ class fa_log_vc:
             elif event == "-show_current1-":
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": rel_tracker_app.dbmodel.station})
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
-                self.window['-table_select-'].update(values=self.rel_table_data)
+                # self.window['-table_select-'].update(values=self.rel_table_data)
             elif event == "-show_current0-":
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
-                self.window['-table_select-'].update(values=self.rel_table_data)
+                # self.window['-table_select-'].update(values=self.rel_table_data)
             # if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
             if rel_tracker_app.dbmodel.filter_set.get("selected_row"):
                 self.window["Report Failure"].update(disabled=False)

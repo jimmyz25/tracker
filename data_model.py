@@ -577,6 +577,35 @@ class DBsqlite:
             return [dict()]
 
     @property
+    def all_station_latest_sn_history(self):
+        condition = {
+            "RelLog_T.WIP": self.filter_set.get("wip"),
+            "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
+            "Config_FK": self.selected_config_pks,
+            "FK_RelStress": self.selected_stress_pks,
+            "RelLog_T.removed": 0
+        }
+        # Config_SN_T.DateAdded,
+        if self.cur:
+            sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP," \
+                  f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
+                  " RelStress_T.RelStress,RelStress_T.RelCheckpoint from RelLog_T  " \
+                  "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
+                  " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+                  "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
+                  "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
+                  self.sql_filter_str(condition) + \
+                  '  LIMIT 200'
+
+            results = self.cur.execute(sql).fetchall()
+            if results is None:
+                return [dict()]
+            else:
+                return [dict(result) for result in results]
+        else:
+            return [dict()]
+
+    @property
     def latest_sn_history(self):
         condition = {
             "RelLog_T.WIP": self.filter_set.get("wip"),

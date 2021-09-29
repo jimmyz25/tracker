@@ -323,7 +323,7 @@ class rel_tracker_view:
              sg.In("", disabled=False, key="-Failure_Mode_Input-", enable_events=True)],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column, size=(330, 250), )
+        filter_column = sg.Column(layout=layout_filter_column, size=(330, 220), )
 
         layout_button_row = [
             sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"), disabled=False),
