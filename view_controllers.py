@@ -181,6 +181,14 @@ class rel_log_vc:
                 preference = preference_vc()
                 rel_tracker_app.view_list.append(preference)
                 break
+            elif event == "Remove for FA":
+                wip = "FA"
+                if wip is not None:
+                    rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
+                    self.window['-table_select-'].update(values=self.table_data)
+                    self.window["-New-SN_Input-"].update(value="")
+                    # self.window["-WIP_Input-"].update(value="FA")
+                    rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
             elif event == "Add":
                 print("insert new sn to database")
                 rel_tracker_app.dbmodel.filter_set.update(
@@ -358,8 +366,10 @@ class rel_log_vc:
                     self.window["Checkout"].update(disabled=True)
                 if rel_tracker_app.dbmodel.filter_set.get("selected_row"):
                     self.window["Delete"].update(disabled=False)
+                    self.window["Remove for FA"].update(disabled=False)
                 else:
                     self.window["Delete"].update(disabled=True)
+                    self.window["Remove for FA"].update(disabled=True)
                 if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                     total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                     self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')

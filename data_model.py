@@ -1000,16 +1000,15 @@ class DBsqlite:
                     condition = {
                         "SerialNumber": sn
                     }
-
                     if self.__update_to_table__("Config_SN_T", condition, **log):
 
                         condition = {
                             "PK": SnModel(sn, self).last_rel_log_row_pk
                         }
-                        print(log)
                         if self.__update_to_table__("RelLog_T", condition, **log):
                             print("copmmited")
                             self.con.commit()
+                            self.filter_set.update({"wip": "FA"})
                         else:
                             self.con.rollback()
                     else:

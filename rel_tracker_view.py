@@ -118,6 +118,9 @@ class rel_tracker_view:
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
              sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
                   disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=False)
+             ],
+            [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
+                  disabled_button_color=("#e9f4fa", "#a8d8eb"), disabled=True),
              ]
         ]
         button_column = sg.Column(layout=layout_button_column, size=(330, 150))
