@@ -1,5 +1,3 @@
-import PySimpleGUI as sg
-from rel_tracker_view import *
 from view_controllers import *
 
 if __name__ == '__main__':
@@ -11,8 +9,11 @@ if __name__ == '__main__':
             rel_tracker_app.view_list.append(rel_log_vc())
         elif first_view_setting == "FailureMode Logging Station":
             rel_tracker_app.view_list.append(fa_log_vc())
-    # initial = fa_log_vc()
-    # app.view_list.append(initial)
+        elif first_view_setting == "Data Tagging":
+            rel_tracker_app.view_list.append(data_log_vc())
+        else:
+            rel_tracker_app.view_list.append(rel_log_vc())
+
     while True:
         if len(app.view_list) == 0:
             break

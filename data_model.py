@@ -48,7 +48,7 @@ class DBsqlite:
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
-                       for _ in range(10000)]
+                       for _ in range(500)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
@@ -134,7 +134,7 @@ class DBsqlite:
             con = sqlite3.connect(address)
             con.row_factory = sqlite3.Row
             cur = con.cursor()
-            cur.execute("SELECT * FROM RelLog_T LIMIT1")
+            cur.execute("SELECT * FROM RelLog_T LIMIT 1")
             con.close()
             return True
         except sqlite3.Error:
@@ -219,6 +219,11 @@ class DBsqlite:
             return result
         else:
             return ""
+
+    @property
+    def ready_to_data_tagging(self):
+        result = self.cur.execute("SELECT PK FROM Tagger_Log_T WHERE EndTimestamp is Null").fetchone()
+        return result is None
 
     @property
     def ready_to_add(self):
@@ -474,7 +479,7 @@ class DBsqlite:
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '  LIMIT 50'
+                  '  LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -500,7 +505,7 @@ class DBsqlite:
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '  LIMIT 100'
+                  '  LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -530,7 +535,35 @@ class DBsqlite:
                   f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '   LIMIT 100'
+                  '   LIMIT 200'
+            results = self.cur.execute(sql).fetchall()
+            if results is None:
+                return [dict()]
+            else:
+                return [dict(result) for result in results]
+        else:
+            return [dict()]
+
+    @property
+    def tagger_log_table_view_data(self):
+        condition = {
+            "Tagger_Log_T.WIP": self.filter_set.get("wip"),
+            "Tagger_Log_T.SerialNumber": self.filter_set.get("serial_number"),
+            "FK_Config": self.selected_config_pks,
+            "FK_RelStress": self.selected_stress_pks,
+            "Station": self.display_setting.get("station_filter"),
+            "Tagger_Log_T.removed": 0
+        }
+        if self.cur:
+            sql = f'SELECT Tagger_Log_T.PK,Tagger_Log_T.WIP, Config_T.Config,Tagger_Log_T.SerialNumber,' \
+                  f'Tagger_Log_T.Station,Tagger_Log_T.StartTime,RelStress_T.RelStress,' \
+                  f' Tagger_Log_T.EndTime,Tagger_Log_T.FolderGroup,Tagger_Log_T.Notes,' \
+                  f'RelStress_T.RelCheckpoint' \
+                  f' FROM Tagger_Log_T ' \
+                  f' inner Join RelStress_T ON Tagger_Log_T.FK_RelStress = RelStress_T.PK ' + \
+                  f' inner Join Config_T ON Tagger_Log_T.FK_Config = Config_T.PK ' + \
+                  self.sql_filter_str(condition) + \
+                  '   LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -551,26 +584,6 @@ class DBsqlite:
         }
         # Config_SN_T.DateAdded,
         if self.cur:
-            # sql = f"SELECT RelLog_T.PK,Config_SN_T.SerialNumber,Config_SN_T.WIP," \
-            #       f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
-            #       " RelStress_T.RelStress,RelStress_T.RelCheckpoint from Config_SN_T  " \
-            #       "inner join RelLog_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
-            #       " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-            #       "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
-            #       "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
-            #       self.sql_filter_str(condition) + \
-            #       ' LIMIT 30'
-
-            # sql = f"SELECT RelLog_T.PK,A.SerialNumber,A.WIP," \
-            #       f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
-            #       " RelStress_T.RelStress,RelStress_T.RelCheckpoint from " \
-            #       "( SELECT Stress_FK, Config_FK, SerialNumber, DateAdded, WIP FROM Config_SN_T "\
-            #       + self.sql_filter_str(condition) + " LIMIT 30 ) as A " \
-            #       "inner join RelLog_T ON A.DateAdded = RelLog_T.StartTimestamp and " \
-            #       " A.SerialNumber = RelLog_T.SerialNumber " \
-            #       "inner join Config_T ON Config_T.PK = A.Config_FK " \
-            #       "inner join RelStress_T ON RelStress_T.PK = A.Stress_FK"
-
             sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP," \
                   f"Config_T.Config, RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.Notes," \
                   " RelStress_T.RelStress,RelStress_T.RelCheckpoint from RelLog_T  " \
@@ -579,7 +592,7 @@ class DBsqlite:
                   "inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   "inner join RelStress_T ON RelStress_T.PK = Config_SN_T.Stress_FK " + \
                   self.sql_filter_str(condition) + \
-                  '  LIMIT 30'
+                  '  LIMIT 200'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -663,8 +676,8 @@ class DBsqlite:
         :param idx: "int"
         :return: bool
         """
-        if not isinstance(idx, int):
-            raise TypeError
+        # if not isinstance(idx, str):
+        #     raise TypeError
         # return idx in self.cache_config_table.records.keys()
         result = self.con.execute(f'SELECT PK FROM Config_T WHERE PK =?', (idx,)).fetchone()
         return result is not None
@@ -674,8 +687,9 @@ class DBsqlite:
         :param idx: "int"
         :return: bool
         """
-        if not isinstance(idx, int):
-            raise TypeError
+        # print (idx)
+        # if not isinstance(idx, str):
+        #     raise TypeError
         # return idx in self.cache_stress_table.records.keys()
         result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
         return result is not None
@@ -1083,6 +1097,45 @@ class DBsqlite:
             if self.__update_to_table__("Config_T", condition=condition, **log):
                 self.con.commit()
 
+    def start_timer_data_table(self):
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        uuid_str = str(uuid.uuid1())
+        log = {
+            "PK": uuid_str,
+            "FK_RelStress": self.selected_stress_pks.pop(),
+            "FK_Config": self.selected_config_pks.pop(),
+            "Station": self.filter_set.get('station'),
+            "SerialNumber": self.filter_set.get("serial_number"),
+            "StartTimestamp": current_time,
+            "StartTime": time_str,
+            "WIP": self.filter_set.get("wip"),
+            "removed": 0
+        }
+        self.__insert_to_table__("Tagger_Log_T", **log)
+        self.con.commit()
+
+    def end_timer_data_table(self, pk: str = None):
+        if pk:
+            print(pk)
+            current_time = dt.datetime.now().timestamp()
+            time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            result = self.cur.execute("SELECT EndTimestamp from Tagger_Log_T WHERE PK = ? ", (pk,)).fetchone()
+            if result["EndTimestamp"] is None:
+                log = {
+                    "EndTimestamp": current_time,
+                    "EndTime": time_str,
+                    "removed": 0
+                }
+                condition = {
+                    "PK": pk
+                }
+                if self.__update_to_table__("Tagger_Log_T", condition, **log):
+                    self.con.commit()
+                    print("timer stopped")
+                else:
+                    self.con.rollback()
+
     def __get_col_names__(self, table_name):
         cols = []
         pragma = self.cur.execute("PRAGMA table_info({})".format(table_name)).fetchall()
@@ -1165,10 +1218,10 @@ class ConfigModel:
         self._config_name = None
         self._build = None
         self._program = None
-        sql = f'SELECT Config, Program, Build From Config_T WHERE PK = {idx}'
+        sql = f'SELECT Config, Program, Build From Config_T WHERE PK = ?'
         if self.database:
             if self.database.config_exist(idx):
-                result = self.database.cur.execute(sql).fetchone()
+                result = self.database.cur.execute(sql, (idx,)).fetchone()
                 self._id = idx
                 self._config_name = result["Config"]
                 self._build = result["Build"]
@@ -1210,10 +1263,10 @@ class StressModel:
         self._id = None
         self._rel_stress = None
         self._rel_checkpoint = None
-        sql = f'SELECT RelStress, RelCheckpoint From RelStress_T WHERE PK = {idx}'
+        sql = f'SELECT RelStress, RelCheckpoint From RelStress_T WHERE PK = ?'
         if self.database:
             if self.database.stress_exist(idx):
-                result = self.database.cur.execute(sql).fetchone()
+                result = self.database.cur.execute(sql, (idx,)).fetchone()
                 self._id = idx
                 self._rel_stress = result["RelStress"]
                 self._rel_checkpoint = result["RelCheckpoint"]
