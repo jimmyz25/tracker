@@ -25,7 +25,7 @@ class rel_tracker_view:
     def __facebook__():
         facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font='Helvetica 30 bold',
                                justification='center', pad=5, key="-Home-", enable_events=True)
-        column1 = sg.Column(layout=[[facebook_text]], size=(600, 50))
+        column1 = sg.Column(layout=[[facebook_text]], size=(600, 40))
 
         return [
             [column1, sg.Stretch(),
@@ -131,7 +131,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(9)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
-                              expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
+                              expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
@@ -234,7 +234,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(4)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, size=(40, 10),
-                              expand_x=True, num_rows=12, font="Helvetica 9", header_font="Helvetica 10 bold",
+                              expand_x=True, num_rows=12, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
 
@@ -300,7 +300,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(6)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=11, font="Helvetica 9", header_font="Helvetica 10 bold",
+                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
@@ -339,7 +339,7 @@ class rel_tracker_view:
         table_value2 = [[str(row) for row in range(8)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col,
-                               expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
+                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                                header_background_color="white",
                                enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
@@ -441,7 +441,7 @@ class rel_tracker_view:
         table_value = [[str(row) for row in range(7)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=11, font="Helvetica 9", header_font="Helvetica 10 bold",
+                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
@@ -481,7 +481,7 @@ class rel_tracker_view:
         table_value2 = [[str(row) for row in range(9)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
-                               expand_x=True, num_rows=15, font="Helvetica 9", header_font="Helvetica 10 bold",
+                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 10 bold",
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 

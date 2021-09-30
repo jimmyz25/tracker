@@ -12,7 +12,7 @@ class rel_tracker_app:
     station = settings.get("-Station_Name-")
     view_list = []
     sg.theme("LightGrey1")
-    sg.SetOptions(font='Arial 10', element_padding=(2, 2), element_size=(35, 1),
+    sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(35, 1),
                   auto_size_buttons=False, input_elements_background_color="#f7f7f7", auto_size_text=True)
     while True:
         if DBsqlite.ok2use(address):
