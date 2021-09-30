@@ -15,7 +15,7 @@ class rel_tracker_view:
             [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
-        column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 250))
+        column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 200))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
@@ -101,26 +101,26 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Add", size=(20, 1), pad=(5, 2),
-                  disabled=True),
+                  disabled=True, disabled_button_color="#ababab"),
              sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
-                  disabled=True)
+                  disabled=True, disabled_button_color="#ababab")
              ],
             [sg.B("Reset", size=(20, 1), pad=(5, 2),
-                  disabled=False),
+                  disabled=False, disabled_button_color="#ababab"),
              sg.B("Update", size=(20, 1), pad=(5, 2),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
             [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
-                  disabled=True),
+                  disabled=True, disabled_button_color="#ababab"),
              sg.B("Checkout", size=(20, 1), pad=(5, 2),
-                  disabled=True)
+                  disabled=True, disabled_button_color="#ababab")
              ],
             [sg.B("Delete", size=(20, 1), pad=(5, 2),
-                  disabled=True),
+                  disabled=True, disabled_button_color="#ababab"),
              sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
-                  disabled=False)
+                  disabled=False, disabled_button_color="#ababab")
              ],
             [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
-                  disabled=True),
+                  disabled=True, disabled_button_color="#ababab"),
              ]
         ]
         button_column = sg.Column(layout=layout_button_column, size=(380, 180))
@@ -224,9 +224,9 @@ class rel_tracker_view:
         layout_button_column = [
             [sg.Sizer(10, 50)],
             [sg.B("Add >>>", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True, key="-Add-")],
+                  disabled=True, key="-Add-", disabled_button_color="#ababab")],
             [sg.B("Remove <<<", size=(10, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True, key="-Remove-")],
+                  disabled=True, key="-Remove-", disabled_button_color="#ababab")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
         table_col = ['PK', 'failure mode set', 'failure mode', 'detail']
@@ -253,7 +253,7 @@ class rel_tracker_view:
              sg.In("", disabled=True, key="-Ckp_Input-", size=(20, 1))],
             [filter_column, button_column, done_column],
             [sg.B("Add details", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
             [sg.Multiline(default_text="", size=(40, 15), expand_x=True, key="-fa-detail-")]
         ]
 
@@ -277,12 +277,12 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Group Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True,
+                  disabled=True, disabled_button_color="#ababab",
                   tooltip="each failure mode can only belongs to one group")],
             [sg.B("Create New Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=False)],
+                  disabled=False, disabled_button_color="#ababab")],
             [sg.B("Archive Failure Mode", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -326,11 +326,12 @@ class rel_tracker_view:
         filter_column = sg.Column(layout=layout_filter_column, size=(330, 220), )
 
         layout_button_row = [
-            sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"), disabled=False),
+            sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                 disabled=False, disabled_button_color="#ababab"),
             sg.B("Configure Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                 disabled=False),
+                 disabled=False, disabled_button_color="#ababab"),
             sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                 disabled=True),
+                 disabled=True, disabled_button_color="#ababab"),
         ]
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
@@ -375,14 +376,14 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Rename Stress", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=False,
+                  disabled=False, disabled_button_color="#ababab",
                   tooltip="each failure mode can only belongs to one group")],
             [sg.B("Create New Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=False)],
+                  disabled=False, disabled_button_color="#ababab")],
             [sg.B("Archive Checkpoints", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
             [sg.B("Rename Checkpoint", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -413,14 +414,14 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Rename Program", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=False,
+                  disabled=False, disabled_button_color="#ababab",
                   tooltip="type in program to be renamed then click rename program")],
             [sg.B("Rename Build", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=False)],
+                  disabled=False, disabled_button_color="#ababab")],
             [sg.B("Create Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
             [sg.B("Rename Config", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                  disabled=True)],
+                  disabled=True, disabled_button_color="#ababab")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
 
@@ -465,13 +466,13 @@ class rel_tracker_view:
         filter_column = sg.Column(layout=layout_filter_column, size=(300, 180), )
 
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=False),
+                           disabled=False, disabled_button_color="#ababab"),
                       sg.B("Start Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True),
+                           disabled=True, disabled_button_color="#ababab"),
                       sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True),
+                           disabled=True, disabled_button_color="#ababab"),
                       sg.B("Correct Mistake", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True),
+                           disabled=True, disabled_button_color="#ababab"),
 
                       ]
 
