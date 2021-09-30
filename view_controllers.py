@@ -644,7 +644,7 @@ class data_log_vc:
                     self.window["Start Timer"].update(disabled=True)
                 self.window["End Timer"].update(disabled=True)
             else:
-                if len(values.get('-data_table_select-')) ==1:
+                if len(values.get('-data_table_select-')) == 1:
                     self.window["End Timer"].update(disabled=False)
                 else:
                     self.window["End Timer"].update(disabled=True)
@@ -1014,7 +1014,7 @@ class config_setup_vc:
                 config_name = sg.popup_get_text("Please Provide Config Name")
                 rel_tracker_app.dbmodel.insert_to_config_table(config_name)
                 self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
-            elif event in ("-program-", "-program-key") :
+            elif event in ("-program-", "-program-key"):
                 rel_tracker_app.dbmodel.filter_set.update({"program": self.window["-program-"].get()})
                 self.window["-config-"].update(values=list(rel_tracker_app.dbmodel.config_list_to_select))
             elif event in ("-build-", "-build-key"):
