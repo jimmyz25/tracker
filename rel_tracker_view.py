@@ -9,11 +9,11 @@ def get_scale():
     # widget.pack()
     # height = (tkf.Font(font=widget['font']).metrics('linespace'))
     # scale = int(height / 16)
-    return 1.3
+    return 1
 
 
 class rel_tracker_view:
-    scale = get_scale()
+    scale = 1
 
     def __init__(self, settings: sg.user_settings):
         self.default_settings = settings
@@ -24,7 +24,7 @@ class rel_tracker_view:
             [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
-                    auto_size_text=False)],
+                    auto_size_text=False,key="-version-")],
             [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
@@ -33,6 +33,8 @@ class rel_tracker_view:
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
+        print(window["-version-"].get_size())
+        rel_tracker_view.scale = window["-version-"].get_size()[0]/249
         return window
 
     @staticmethod
