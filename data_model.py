@@ -8,35 +8,6 @@ import uuid
 import string
 import secrets
 
-# golden = 'temp.db'
-# RMD = "ReliabilityManagementDB.db"
-# ini_file = "CONFIG.ini"
-# golden_output = "golden.db"
-# create_db_sql = "create_db_sql.sql"
-
-# # determine if application is a script file or frozen exe
-# if getattr(sys, 'frozen', False):
-#     application_path = os.path.dirname(sys.executable)
-# elif __file__:
-#     application_path = os.path.dirname(__file__)
-# else:
-#     application_path = os.path.dirname(__file__)
-#
-# golden = os.path.join(application_path, golden)
-# RMD = os.path.join(application_path, RMD)
-# ini_file = os.path.join(application_path, ini_file)
-# golden_output = os.path.join(application_path, golden_output)
-# create_db_sql = os.path.join(application_path, create_db_sql)
-
-
-class RecordsDb:
-    def __init__(self, records: list):
-        """
-        :param records: a list of dict
-        """
-        self.records = records
-        self.value_list = []
-
 
 # noinspection SpellCheckingInspection
 class DBsqlite:
