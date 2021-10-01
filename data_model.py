@@ -1053,9 +1053,7 @@ class DBsqlite:
             result = self.cur.execute("SELECT SerialNumber from RelLog_T Where Pk = ?  ", (pk,)).fetchone()
 
             if result:
-                print("as11df")
                 if self.__delete_from_table__("RelLog_T", {"PK": pk}):
-                    print("asdf")
                     sn = result["SerialNumber"]
 
                     result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
@@ -1227,9 +1225,7 @@ class DBsqlite:
         print(sql, value_list)
         try:
             self.cur.execute(sql, value_list)
-            print("this is done")
         except sqlite3.Error as e:
-            print("asdfasdf")
             print(e)
             return False
         return True

@@ -147,6 +147,7 @@ class rel_log_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.rel_lab_station_view()
         self.complete_quit = True
+        self.row_selection = None
 
     @property
     def table_data(self):
@@ -186,6 +187,7 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
                     rel_tracker_app.dbmodel.filter_set.update({"wip": "FA"})
                     self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
                     self.window["-New-SN_Input-"].update(value="")
                     # self.window["-WIP_Input-"].update(value="FA")
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
@@ -198,6 +200,7 @@ class rel_log_vc:
                 )
                 rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
                 self.window["-New-SN_Input-"].update(value="")
                 rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
 
@@ -211,6 +214,7 @@ class rel_log_vc:
                 )
                 rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
                 self.window["-New-SN_Input-"].update(value="")
                 rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
 
@@ -226,16 +230,18 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
                 else:
                     print("not able to checkin")
             elif event == "Checkout":
                 rel_tracker_app.dbmodel.checkout_current_checkpoint_rellog_table()
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "Update":
                 rel_tracker_app.dbmodel.update_current_row_rellog_table()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
-
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
 
             elif event.endswith("_Input-") or event.endswith("_count-"):
                 if event.startswith("-New-"):
@@ -251,21 +257,25 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
                     self.window["-New-WIP_Input-"].update(self.window["-WIP_Input-"].get())
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event.endswith("-ConfigPop-"):
                 config_popup = config_select_vc(self.window)
                 config_popup.show()
                 self.window["-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
                 self.window["-New-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event.endswith("-CkpPop-"):
                 stress_popup = stress_select_vc(self.window)
                 stress_popup.show()
                 self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window["-New-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "Reset":
                 rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "-table_select-":
                 count = len(values.get('-table_select-'))
                 if count == 0:
@@ -273,6 +283,7 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
                 else:
+                    self.row_selection = values.get('-table_select-')
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
                     selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
@@ -307,25 +318,31 @@ class rel_log_vc:
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "-show_latest1-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": True})
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "-show_current1-":
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": rel_tracker_app.dbmodel.station})
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "-show_current0-":
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             elif event == "Assign WIP":
                 wip = sg.popup_get_text("Please Provide New WIP, this will change current checkpoint's WIP")
                 if wip is not None:
                     rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
                     self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
                     self.window["-New-SN_Input-"].update(value="")
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
             elif event == "Delete":
                 rel_tracker_app.dbmodel.delete_from_rellog_table()
                 self.window['-table_select-'].update(values=self.table_data)
+                self.row_selection = None
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Register New Unit'].update(disabled=True)
@@ -352,7 +369,7 @@ class rel_log_vc:
                 else:
                     self.window["Assign WIP"].update(disabled=True)
 
-                if rel_tracker_app.dbmodel.ready_to_update and len(values.get('-table_select-')) == 1:
+                if rel_tracker_app.dbmodel.ready_to_update and self.row_selection == 1:
                     self.window["Update"].update(disabled=False)
                 else:
                     self.window["Update"].update(disabled=True)
@@ -360,11 +377,11 @@ class rel_log_vc:
                     self.window["CheckIn"].update(disabled=False)
                 else:
                     self.window["CheckIn"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_checkout and len(values.get('-table_select-')) > 0:
+                if rel_tracker_app.dbmodel.ready_to_checkout and self.row_selection:
                     self.window["Checkout"].update(disabled=False)
                 else:
                     self.window["Checkout"].update(disabled=True)
-                if rel_tracker_app.dbmodel.filter_set.get("selected_row"):
+                if self.row_selection:
                     self.window["Delete"].update(disabled=False)
                     self.window["Remove for FA"].update(disabled=False)
                 else:
@@ -388,7 +405,8 @@ class fa_log_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.fa_log_view()
         rel_tracker_app.reset_window_inputs(self.window)
-
+        self.rel_selected_row = None
+        self.fa_selected_row = None
         self.complete_quit = True
 
     @property
@@ -433,6 +451,7 @@ class fa_log_vc:
                     "failure_mode": None
                 })
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
             elif event == "Configure Failure Modes":
                 failure_mode_config_popup = failure_mode_config_vc(self.window)
                 failure_mode_config_popup.show()
@@ -443,27 +462,36 @@ class fa_log_vc:
 
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
+                self.rel_selected_row = None
             elif event.endswith("-ConfigPop-"):
                 config_popup = config_select_vc(self.window)
                 config_popup.show()
                 self.window["-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
+                self.rel_selected_row = None
             elif event.endswith("-CkpPop-"):
                 stress_popup = stress_select_vc(self.window)
                 stress_popup.show()
                 self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
+                self.rel_selected_row = None
             elif event == "Reset Filter":
                 rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
+                self.rel_selected_row = None
             elif event == "-table_select-":
                 # selecting SerialNumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
                 if count > 0:
-                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
+                    self.rel_selected_row = values.get('-table_select-')
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": self.rel_selected_row})
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
@@ -476,7 +504,9 @@ class fa_log_vc:
                         "checkpoint": selected[3],
                         "serial_number": sn.serial_number
                     })
+
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                    self.fa_selected_row = None
 
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
@@ -493,10 +523,9 @@ class fa_log_vc:
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
                 # self.window['-table_select-'].update(values=self.rel_table_data)
             # if len(values.get("-fa_table_select-")) > 0 or len(values.get("-table_select-")) > 0:
-            if rel_tracker_app.dbmodel.filter_set.get("selected_row"):
+            if self.rel_selected_row:
                 self.window["Report Failure"].update(disabled=False)
             else:
-
                 self.window["Report Failure"].update(disabled=True)
             print(event, values)
         self.close_window()
@@ -516,6 +545,8 @@ class data_log_vc:
         rel_tracker_app.reset_window_inputs(self.window)
         self.selected_tagger_pk = None
         self.complete_quit = True
+        self.selected_endtime = None
+        self.timer_started = False
 
     @property
     def rel_table_data(self):
@@ -531,6 +562,8 @@ class data_log_vc:
 
     @property
     def tagger_table_data(self):
+        if self.timer_started:
+            return None
         datasource = rel_tracker_app.dbmodel.tagger_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("WIP"),
                  row.get("RelStress"), row.get("RelCheckpoint"),
@@ -558,8 +591,10 @@ class data_log_vc:
                     rel_tracker_app.dbmodel.filter_set.update({"serial_number": "Multiple"})
                 rel_tracker_app.dbmodel.start_timer_data_table()
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
+                self.timer_started = True
             elif event == "End Timer":
                 rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
+                self.timer_started = False
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 print("stop timer")
             elif event.endswith("_Input-"):
@@ -606,21 +641,7 @@ class data_log_vc:
                 if count > 0:
                     row = self.window["-data_table_select-"].get()[values.get('-data_table_select-')[0]]
                     self.selected_tagger_pk = row[0]
-                    # rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
-                    # selected = self.window['-data_table_select-'].get()[
-                    #     values.get('-data_table_select-')[0]]  # first one
-                    # rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
-                    # sn = SnModel(selected[3], database=rel_tracker_app.dbmodel)
-                    # rel_tracker_app.dbmodel.filter_set.update({
-                    #     "program": sn.config.program,
-                    #     "build": sn.config.build,
-                    #     "config": sn.config.config_name,
-                    #     "wip": sn.wip,
-                    #     "stress": selected[4],
-                    #     "checkpoint": selected[5],
-                    #     "serial_number": sn.serial_number
-                    # })
-                    # self.window["-table_select-"].update(values=self.rel_table_data)
+                    self.selected_endtime = row[8]
 
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
@@ -644,7 +665,7 @@ class data_log_vc:
                     self.window["Start Timer"].update(disabled=True)
                 self.window["End Timer"].update(disabled=True)
             else:
-                if len(values.get('-data_table_select-')) == 1:
+                if len(values.get('-data_table_select-')) == 1 and self.selected_endtime is None:
                     self.window["End Timer"].update(disabled=False)
                 else:
                     self.window["End Timer"].update(disabled=True)

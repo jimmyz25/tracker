@@ -1,7 +1,20 @@
 import PySimpleGUI as sg
+import tkinter.font as tkf
+import tkinter as tk
+
+
+def get_scale():
+    root = tk.Tk()
+    widget = tk.Label(root, text="My String")
+    widget.pack()
+    height = (tkf.Font(font=widget['font']).metrics('linespace'))
+    scale = int(height / 16)
+    return scale
 
 
 class rel_tracker_view:
+    scale = get_scale()
+
     def __init__(self, settings: sg.user_settings):
         self.default_settings = settings
 
@@ -15,7 +28,8 @@ class rel_tracker_view:
             [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
-        column1 = sg.Column(layout1, background_color="#4267B2", size=(500, 200))
+        column1 = sg.Column(layout1, background_color="#4267B2",
+                            size=(500 * rel_tracker_view.scale, 200 * rel_tracker_view.scale))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
@@ -25,7 +39,7 @@ class rel_tracker_view:
     def __facebook__():
         facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font='Helvetica 30 bold',
                                justification='center', pad=5, key="-Home-", enable_events=True)
-        column1 = sg.Column(layout=[[facebook_text]], size=(600, 40))
+        column1 = sg.Column(layout=[[facebook_text]], size=(600 * rel_tracker_view.scale, 40 * rel_tracker_view.scale))
 
         return [
             [column1, sg.Stretch(),
@@ -97,33 +111,36 @@ class rel_tracker_view:
 
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]], size=(350, 180), enable_events=True, key="-Tab_Selection-")
+        tab_group = sg.TabGroup(layout=[[tab1, tab2]],
+                                size=(350 * rel_tracker_view.scale, 180 * rel_tracker_view.scale),
+                                enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
-            [sg.B("Add", size=(20, 1), pad=(5, 2),
+            [sg.B("Add", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
+             sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab")
              ],
-            [sg.B("Reset", size=(20, 1), pad=(5, 2),
+            [sg.B("Reset", size=(15, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab"),
-             sg.B("Update", size=(20, 1), pad=(5, 2),
+             sg.B("Update", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab")],
-            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
+            [sg.B("CheckIn", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Checkout", size=(20, 1), pad=(5, 2),
+             sg.B("Checkout", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab")
              ],
-            [sg.B("Delete", size=(20, 1), pad=(5, 2),
+            [sg.B("Delete", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
+             sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab")
              ],
-            [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
+            [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
              ]
         ]
-        button_column = sg.Column(layout=layout_button_column, size=(380, 180))
+        button_column = sg.Column(layout=layout_button_column,
+                                  size=(280 * rel_tracker_view.scale, 180 * rel_tracker_view.scale))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -135,7 +152,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(120 , 5), background_color="white",expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
@@ -149,7 +166,9 @@ class rel_tracker_view:
                     default=True, enable_events=True, key="-show_current0-")],
             [sg.Txt("")]
         ]
-        status_column = sg.Column(layout=layout_status_column, size=(300, 180), key="-status-column")
+        status_column = sg.Column(layout=layout_status_column,
+                                  size=(250 * rel_tracker_view.scale, 180 * rel_tracker_view.scale),
+                                  key="-status-column")
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
@@ -159,7 +178,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True, default_button_element_size=(5, 1))
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
@@ -323,7 +342,8 @@ class rel_tracker_view:
              sg.In("", disabled=False, key="-Failure_Mode_Input-", enable_events=True)],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column, size=(330, 220), )
+        filter_column = sg.Column(layout=layout_filter_column,
+                                  size=(330 * rel_tracker_view.scale, 220 * rel_tracker_view.scale), )
 
         layout_button_row = [
             sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -463,7 +483,8 @@ class rel_tracker_view:
                     key="-show_current0-")],
         ]
 
-        filter_column = sg.Column(layout=layout_filter_column, size=(300, 180), )
+        filter_column = sg.Column(layout=layout_filter_column,
+                                  size=(300 * rel_tracker_view.scale, 180 * rel_tracker_view.scale), )
 
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            disabled=False, disabled_button_color="#ababab"),
