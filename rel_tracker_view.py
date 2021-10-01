@@ -18,6 +18,7 @@ class rel_tracker_view:
     def __init__(self, settings: sg.user_settings):
         self.default_settings = settings
 
+
     @staticmethod
     def welcome_page():
         layout1 = [
