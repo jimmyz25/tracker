@@ -1,4 +1,6 @@
 import PySimpleGUI as sg
+
+
 # import tkinter.font as tkf
 # import tkinter as tk
 
@@ -18,14 +20,13 @@ class rel_tracker_view:
     def __init__(self, settings: sg.user_settings):
         self.default_settings = settings
 
-
     @staticmethod
     def welcome_page():
         layout1 = [
             [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
-                    auto_size_text=False,key="-version-")],
+                    auto_size_text=False, key="-version-")],
             [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
@@ -35,14 +36,15 @@ class rel_tracker_view:
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         print(window["-version-"].get_size())
-        rel_tracker_view.scale = window["-version-"].get_size()[0]/249
+        rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         return window
 
     @staticmethod
     def __facebook__():
         facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font='Helvetica 30 bold',
                                justification='center', pad=5, key="-Home-", enable_events=True)
-        column1 = sg.Column(layout=[[facebook_text]], size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
+        column1 = sg.Column(layout=[[facebook_text]],
+                            size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
 
         return [
             [column1, sg.Stretch(),
@@ -282,7 +284,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False,modal=True)
+                           finalize=True, enable_close_attempted_event=False, modal=True)
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         return window
 
