@@ -9,7 +9,7 @@ def get_scale():
     # widget.pack()
     # height = (tkf.Font(font=widget['font']).metrics('linespace'))
     # scale = int(height / 16)
-    return 1
+    return 1.3
 
 
 class rel_tracker_view:
@@ -29,7 +29,7 @@ class rel_tracker_view:
                     justification="left", auto_size_text=False)]
         ]
         column1 = sg.Column(layout1, background_color="#4267B2",
-                            size=(500 * rel_tracker_view.scale, 200 * rel_tracker_view.scale))
+                            size=(int(500 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
@@ -39,7 +39,7 @@ class rel_tracker_view:
     def __facebook__():
         facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font='Helvetica 30 bold',
                                justification='center', pad=5, key="-Home-", enable_events=True)
-        column1 = sg.Column(layout=[[facebook_text]], size=(600 * rel_tracker_view.scale, 40 * rel_tracker_view.scale))
+        column1 = sg.Column(layout=[[facebook_text]], size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
 
         return [
             [column1, sg.Stretch(),
@@ -114,7 +114,7 @@ class rel_tracker_view:
         tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
 
         tab_group = sg.TabGroup(layout=[[tab1, tab2]],
-                                size=(350 * rel_tracker_view.scale, 180 * rel_tracker_view.scale),
+                                size=(int(350 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
                                 enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
@@ -142,7 +142,7 @@ class rel_tracker_view:
              ]
         ]
         button_column = sg.Column(layout=layout_button_column,
-                                  size=(280 * rel_tracker_view.scale, 180 * rel_tracker_view.scale))
+                                  size=(int(280 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -169,7 +169,7 @@ class rel_tracker_view:
             [sg.Txt("")]
         ]
         status_column = sg.Column(layout=layout_status_column,
-                                  size=(250 * rel_tracker_view.scale, 180 * rel_tracker_view.scale),
+                                  size=(int(250 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
                                   key="-status-column")
         layout = [
             [self.__facebook__()],
@@ -207,7 +207,7 @@ class rel_tracker_view:
         window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, modal=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
-        window.TKroot.grab_set()
+        # window.TKroot.grab_set()
 
         return window
 
@@ -225,7 +225,7 @@ class rel_tracker_view:
         window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, modal=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
-        window.TKroot.grab_set()
+        # window.TKroot.grab_set()
         return window
 
     @staticmethod
@@ -345,7 +345,7 @@ class rel_tracker_view:
         ]
 
         filter_column = sg.Column(layout=layout_filter_column,
-                                  size=(330 * rel_tracker_view.scale, 220 * rel_tracker_view.scale), )
+                                  size=(int(330 * rel_tracker_view.scale), int(220 * rel_tracker_view.scale)), )
 
         layout_button_row = [
             sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
@@ -486,7 +486,7 @@ class rel_tracker_view:
         ]
 
         filter_column = sg.Column(layout=layout_filter_column,
-                                  size=(300 * rel_tracker_view.scale, 180 * rel_tracker_view.scale), )
+                                  size=(int(300 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)), )
 
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            disabled=False, disabled_button_color="#ababab"),

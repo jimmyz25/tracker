@@ -698,9 +698,8 @@ class config_select_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_config_select()
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
-        # program_list = rel_tracker_app.dbmodel.program_list
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         self.window["Program"].update(value=rel_tracker_app.dbmodel.filter_set.get("program"),
                                       values=list(rel_tracker_app.dbmodel.program_list))
         self.window["Build"].update(value=rel_tracker_app.dbmodel.filter_set.get("build"),
@@ -752,8 +751,8 @@ class stress_select_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_stress_select()
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         self.window["RelStress"].update(value=rel_tracker_app.dbmodel.filter_set.get("stress"),
                                         values=list(rel_tracker_app.dbmodel.stress_list))
         self.window["RelCheckpoint"].update(value=rel_tracker_app.dbmodel.filter_set.get("checkpoint"),
@@ -806,8 +805,8 @@ class failure_mode_vc:
         rel_tracker_app.dbmodel.filter_set.update({"failure_group": self.window["-failure_mode_set-"].get()})
         self.window["-failure_to_select-"].update(values=list(rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn))
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
 
     @property
     def existing_failure_mode_table_data(self):
@@ -891,8 +890,8 @@ class failure_mode_config_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_fm_config()
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         self.window["-failure_mode_set-"].update(value="Default",
                                                  values=list(rel_tracker_app.dbmodel.failure_mode_group_list))
         rel_tracker_app.dbmodel.filter_set.update({
@@ -957,8 +956,8 @@ class stress_setup_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_stress_setup()
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         rel_tracker_app.dbmodel.filter_set.update({
             "stress": None,
             "checkpoint": None
@@ -1022,8 +1021,8 @@ class config_setup_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_config_setup()
         self.master = master
-        # if master:
-        #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
         rel_tracker_app.dbmodel.filter_set.update({
             "program": None,
             "build": None,
