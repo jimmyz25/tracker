@@ -1,15 +1,15 @@
 import PySimpleGUI as sg
-import tkinter.font as tkf
-import tkinter as tk
+# import tkinter.font as tkf
+# import tkinter as tk
 
 
 def get_scale():
-    root = tk.Tk()
-    widget = tk.Label(root, text="My String")
-    widget.pack()
-    height = (tkf.Font(font=widget['font']).metrics('linespace'))
-    scale = int(height / 16)
-    return scale
+    # root = tk.Tk()
+    # widget = tk.Label(root, text="My String")
+    # widget.pack()
+    # height = (tkf.Font(font=widget['font']).metrics('linespace'))
+    # scale = int(height / 16)
+    return 1
 
 
 class rel_tracker_view:
@@ -204,7 +204,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Config Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, modal=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
         window.TKroot.grab_set()
@@ -222,7 +222,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Stress Selection', layout1, keep_on_top=True, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, modal=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
         window.TKroot.grab_set()
@@ -279,7 +279,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False)
+                           finalize=True, enable_close_attempted_event=False,modal=True)
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         return window
 
@@ -312,7 +312,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False)
+                           finalize=True, enable_close_attempted_event=False, modal=True)
         return window
 
     def fa_log_view(self):
@@ -377,7 +377,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True, modal=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 
@@ -414,7 +414,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Setup Stress', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False)
+                           finalize=True, enable_close_attempted_event=False, modal=True)
         window["-rel_stress-"].bind("<KeyPress>", "key")
         return window
 
@@ -452,7 +452,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Setup Config', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False)
+                           finalize=True, enable_close_attempted_event=False, modal=True)
         window["-program-"].bind("<KeyPress>", "key")
         window["-build-"].bind("<KeyPress>", "key")
         return window
@@ -528,7 +528,7 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=True)
+                           finalize=True, enable_close_attempted_event=True, modal=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 

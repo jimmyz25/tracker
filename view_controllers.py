@@ -754,7 +754,6 @@ class stress_select_vc:
         self.master = master
         # if master:
         #     self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
-        # program_list = rel_tracker_app.dbmodel.program_list
         self.window["RelStress"].update(value=rel_tracker_app.dbmodel.filter_set.get("stress"),
                                         values=list(rel_tracker_app.dbmodel.stress_list))
         self.window["RelCheckpoint"].update(value=rel_tracker_app.dbmodel.filter_set.get("checkpoint"),
