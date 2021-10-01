@@ -6,8 +6,10 @@ import random
 import string
 import pandas as pd
 
+RMD = "/Users/mingyuzhong/Documents/tracker/ReliabilityManagementDB.db"
 db = DBsqlite(RMD)
-gold = DBsqlite(golden)
+golden_address = "/Users/mingyuzhong/Documents/tracker/ReliabilityManagementDB copy.db"
+gold = DBsqlite(golden_address)
 
 
 def test_sn_exist():
@@ -97,7 +99,7 @@ def test_selected_config_pks():
     # print(timeit.timeit(lambda: db.selected_config_pks, number=1000))
     print(db.selected_config_pks)
     a = db.selected_config_pks
-    assert a == {"1","2","3"}
+    assert a == {"1", "2", "3"}
 
 
 def test_config_list_to_select():
@@ -121,7 +123,6 @@ def test_selected_ckp_pks():
     assert a.pop() == "1"
 
 
-
 # def test_record_filter():
 #     def func(x):
 #         return x.get("SerialNumber") in {"32ANN3Q31MRB", "dfasdf"}
@@ -142,7 +143,6 @@ def test_selected_ckp_pks():
 
 
 def test_sql_filter_str():
-
     kwp = {
         'PK': [3],
         "CONFIG_FK": "sd",
@@ -174,9 +174,9 @@ def test_stress_list():
     assert a == {'HTHH(6590)', 'RelStress1'}
 
 
-# def test_sync_rel_log_table():
-#     gold.sync_rel_log_table(db.cache_rel_log_table)
-#     assert True == True
+def test_sync_rel_log_table():
+    db.sync_rel_log_table(golden_address, station="RelStation#1")
+    assert True == True
 
 
 def test_latest_sn_history():
@@ -186,7 +186,7 @@ def test_latest_sn_history():
     db.filter_set.update({"filter_table": "RelLog_T"})
     print(timeit.timeit(lambda: db.latest_sn_history, number=1000))
 
-    assert 1==1
+    assert 1 == 1
 
 
 def test_unit_count():
@@ -237,7 +237,7 @@ def test_failure_mode_group_list():
 
 def test_failure_mode_list_to_select():
     db.filter_set.clear()
-    db.filter_set.update({"failure_group":"Default"})
+    db.filter_set.update({"failure_group": "Default"})
     print(timeit.timeit(lambda: db.failure_mode_list_to_add_to_sn, number=1000))
     print(db.failure_mode_list_to_add_to_sn)
     assert True == True

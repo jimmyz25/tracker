@@ -31,7 +31,7 @@ class rel_tracker_view:
                     justification="left", auto_size_text=False)]
         ]
         column1 = sg.Column(layout1, background_color="#4267B2",
-                            size=(int(500 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)))
+                            size=(int(600 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')

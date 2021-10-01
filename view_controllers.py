@@ -130,12 +130,13 @@ class preference_vc:
                 address = values.get("-Golden_Database-")
                 if DBsqlite.ok2use(address):
                     self.window["-Golden_Database-"].update(value=address)
-                    # rel_tracker_app.dbmodel = DBsqlite(address,
-                    #                                    station=rel_tracker_app.station)
-                    # rel_tracker_app.settings.update({"-Local_Database-": address})
-                    # sg.popup_ok("Great, this database is ok2use. please double \n"
-                    #             "confirm this is the latest local copy "
-                    #             "before continuing")
+                    rel_tracker_app.settings.update({"-Golden_Database-": address})
+                else:
+                    self.window["-Golden_Database-"].update(value="")
+                    rel_tracker_app.settings.update({"-Golden_Database-": None})
+            if self.window["-Golden_Database-"].get() ==  self.window["-Local_Database-"].get():
+                sg.popup_error("local database cannot be the same as golden database")
+                self.window["-Golden_Database-"].update(value="")
 
         self.close_window()
 
@@ -380,8 +381,7 @@ class rel_log_vc:
                     self.window["Assign WIP"].update(disabled=False)
                 else:
                     self.window["Assign WIP"].update(disabled=True)
-
-                if rel_tracker_app.dbmodel.ready_to_update and self.row_selection == 1:
+                if rel_tracker_app.dbmodel.ready_to_update:
                     self.window["Update"].update(disabled=False)
                 else:
                     self.window["Update"].update(disabled=True)
