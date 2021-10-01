@@ -102,6 +102,7 @@ class preference_vc:
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
+            print(event, values)
             if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Save Preference":
@@ -125,6 +126,17 @@ class preference_vc:
                         break
                     else:
                         address = sg.popup_get_file("please select database file")
+            elif event == "-Golden_Database-":
+                address = values.get("-Golden_Database-")
+                if DBsqlite.ok2use(address):
+                    self.window["-Golden_Database-"].update(value=address)
+                    # rel_tracker_app.dbmodel = DBsqlite(address,
+                    #                                    station=rel_tracker_app.station)
+                    # rel_tracker_app.settings.update({"-Local_Database-": address})
+                    # sg.popup_ok("Great, this database is ok2use. please double \n"
+                    #             "confirm this is the latest local copy "
+                    #             "before continuing")
+
         self.close_window()
 
     def close_window(self):
