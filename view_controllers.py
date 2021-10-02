@@ -47,8 +47,6 @@ class rel_tracker_app:
                 rel_tracker_app.settings[key] = window[key].get()
         sg.user_settings_save()
         rel_tracker_app.set_address(rel_tracker_app.settings.get("-Local_Database-"))
-
-        # print()
         print("user setting saved")
 
     @staticmethod
@@ -175,7 +173,7 @@ class rel_log_vc:
             data = [[row.get("PK"), row.get("Config"), row.get("WIP"), row.get("SerialNumber"), row.get("RelStress"),
                      row.get("RelCheckpoint"), row.get("StartTime"), row.get("EndTime"), row.get("Note")] for row in
                     datasource]
-            data.sort(key=lambda x: x[3])
+            # data.sort(key=lambda x: x[3])
             return data
 
     def show(self):
@@ -539,7 +537,6 @@ class fa_log_vc:
                 self.window["Report Failure"].update(disabled=False)
             else:
                 self.window["Report Failure"].update(disabled=True)
-            print(event, values)
         self.close_window()
 
     def close_window(self):
@@ -841,7 +838,6 @@ class failure_mode_vc:
                 rel_tracker_app.dbmodel.delete_from_failure_log_table()
                 self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
                 self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
-                print("remove something")
             elif event == "-highlighted_failures-":
                 rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-highlighted_failures-')})
                 selected = [self.window['-highlighted_failures-']
@@ -1066,7 +1062,6 @@ class config_setup_vc:
             else:
                 self.window["Rename Config"].update(disabled=True)
 
-            print(event, values)
         self.close_window()
 
     def close_window(self):

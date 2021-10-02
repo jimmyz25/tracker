@@ -207,7 +207,13 @@ def test_rel_log_table_view_data():
 
 def test_ready_to_checkin():
     db.filter_set.update({"selected_pks": [1, 2, 1]})
-    print(timeit.timeit(lambda: db.ready_to_checkin, number=1000))
+    print(timeit.timeit(lambda: db.ready_to_checkin, number=1))
+    assert db.ready_to_checkin == False
+
+
+def test_ready_to_checkout():
+    db.filter_set.update({"selected_pks": ["aa"]})
+    print(timeit.timeit(lambda: db.ready_to_checkout, number=1))
     assert db.ready_to_checkin == False
 
 

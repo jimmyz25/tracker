@@ -19,7 +19,7 @@ class DBsqlite:
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
-                       for _ in range(500)]
+                       for _ in range(1000)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
@@ -252,7 +252,6 @@ class DBsqlite:
             c = 1
         if self.selected_stress_pks is not None:
             b = len(self.selected_stress_pks)
-        print (a,b,c,d)
         return a == 1 and b == 1 and c == 1 and d == 1
 
     @property
@@ -263,12 +262,19 @@ class DBsqlite:
         if self.filter_set.get("selected_pks") is not None:
             serial_number_list = []
             for pk in self.filter_set.get("selected_pks", []):
-                sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber, " \
-                      f"Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
-                      "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
-                      " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-                      " WHERE RelLog_T.PK = ?"
+                sql = " SELECT SerialNumber FROM RelLog_T WHERE PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
+                if result is None:
+                    return False
+                sn = result["SerialNumber"]
+                sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
+                      " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
+                      " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
+                      " GROUP BY SerialNumber ) as A " \
+                      " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
+                      " WHERE RelLog_T.PK = ?" \
+                      " LIMIT 1"
+                result = self.cur.execute(sql, (sn, pk)).fetchone()
                 if result:
                     sn = result["SerialNumber"]
                     if sn in serial_number_list:
@@ -283,18 +289,24 @@ class DBsqlite:
     @property
     def ready_to_checkout(self):
         # latest and Endtimestamp is None
-
         if self.cur is None:
             return False
         if self.filter_set.get("selected_pks") is not None:
             serial_number_list = []
             for pk in self.filter_set.get("selected_pks", []):
-                sql = f"SELECT RelLog_T.PK,RelLog_T.SerialNumber, " \
-                      f"Config_SN_T.DateAdded,RelLog_T.EndTimestamp from RelLog_T  " \
-                      "inner join Config_SN_T ON Config_SN_T.DateAdded = RelLog_T.StartTimestamp and " \
-                      " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
-                      " WHERE RelLog_T.PK = ?"
+                sql = " SELECT SerialNumber FROM RelLog_T WHERE PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
+                if result is None:
+                    return False
+                sn = result["SerialNumber"]
+                sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
+                      " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
+                      " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
+                      " GROUP BY SerialNumber ) as A " \
+                      " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
+                      " WHERE RelLog_T.PK = ?" \
+                      " LIMIT 1"
+                result = self.cur.execute(sql, (sn, pk)).fetchone()
                 if result:
                     sn = result["SerialNumber"]
                     if sn in serial_number_list:
@@ -455,7 +467,7 @@ class DBsqlite:
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '  LIMIT 200'
+                  ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -481,7 +493,7 @@ class DBsqlite:
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '  LIMIT 200'
+                  ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -553,23 +565,26 @@ class DBsqlite:
         condition = {
             "RelLog_T.WIP": self.filter_set.get("wip"),
             "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
-            "Config_SN_T.Config_FK": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
             "RelLog_T.removed": 0
+        }
+        condition2 = {
+            "Config_SN_T.Config_FK": self.selected_config_pks,
         }
         if self.cur:
             sql = "SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP,Config_T.Config, RelLog_T.StartTime, " \
                   " RelLog_T.EndTime, RelLog_T.Notes, RelStress_T.RelStress,RelStress_T.RelCheckpoint " \
                   " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
                   " StartTimestamp,SerialNumber from RelLog_T  " \
+                  + self.sql_filter_str(condition) + \
                   " GROUP BY SerialNumber) as A " \
                   " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
                   " inner join Config_SN_T ON " \
                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                   " inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
-                  " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress "\
-                   + self.sql_filter_str(condition) + \
-                  '  LIMIT 200'
+                  " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress " \
+                  + self.sql_filter_str(condition2) + \
+                  ' LIMIT 200'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -581,27 +596,31 @@ class DBsqlite:
 
     @property
     def latest_sn_history(self):
+
         condition = {
             "RelLog_T.WIP": self.filter_set.get("wip"),
             "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
-            "Config_T.PK": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
+            "RelLog_T.removed": 0,
             "Station": self.display_setting.get("station_filter"),
-            "RelLog_T.removed": 0
+        }
+        condition2 = {
+            "Config_SN_T.Config_FK": self.selected_config_pks,
         }
         if self.cur:
             sql = "SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP,Config_T.Config, RelLog_T.StartTime, " \
                   " RelLog_T.EndTime, RelLog_T.Notes, RelStress_T.RelStress,RelStress_T.RelCheckpoint " \
                   " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
                   " StartTimestamp,SerialNumber from RelLog_T  " \
-                  " GROUP BY SerialNumber) as A " \
+                  + self.sql_filter_str(condition) + \
+                  " GROUP BY SerialNumber LIMIT 200) as A " \
                   " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
                   " inner join Config_SN_T ON " \
                   " Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
                   " inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
-                  " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress "  \
-                  + self.sql_filter_str(condition) + \
-                  '  LIMIT 200'
+                  " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress " \
+                  + self.sql_filter_str(condition2) + \
+                  ' LIMIT 200 '
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -786,7 +805,7 @@ class DBsqlite:
 
     def insert_to_failure_log_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
         if isinstance(self.filter_set.get("failure_mode"), list):
             for failure_mode in self.filter_set.get("failure_mode"):
                 uuid_str = str(uuid.uuid1())
@@ -978,7 +997,8 @@ class DBsqlite:
             log1 = {
                 "FK_RelStress": stress_pk,
                 "WIP": self.filter_set.get("wip"),
-                "notes": None
+                "notes": None,
+                "ModiTimestamp": current_time
             }
             condition2 = {
                 "SerialNumber": result["SerialNumber"],
@@ -989,10 +1009,9 @@ class DBsqlite:
             # else:
             #     wip = self.filter_set.get("wip")
             log2 = {
-                "Stress_FK": stress_pk,
                 "Config_FK": config_pk,
                 "SerialNumber": self.filter_set.get("serial_number"),
-                "DateChanged": current_time,
+                "DateChanged": current_time, #depricated
                 # "WIP": wip,
             }
             if self.__update_to_table__("Config_SN_T", condition2, **log2):
@@ -1010,50 +1029,44 @@ class DBsqlite:
             for sn in self.filter_set.get("serial_number_list"):
                 if self.sn_exist(sn):
                     log = {
-                        "DateChanged": current_time,
                         "WIP": wip,
+                        "ModiTimestamp":current_time
                     }
+                    # condition = {
+                    #     "SerialNumber": sn
+                    # }
+                    # if self.__update_to_table__("Config_SN_T", condition, **log):
                     condition = {
-                        "SerialNumber": sn
+                        "PK": SnModel(sn, self).last_rel_log_row_pk
                     }
-                    if self.__update_to_table__("Config_SN_T", condition, **log):
-
-                        condition = {
-                            "PK": SnModel(sn, self).last_rel_log_row_pk
-                        }
-                        if self.__update_to_table__("RelLog_T", condition, **log):
-                            print("copmmited")
-                            self.con.commit()
-
-                        else:
-                            self.con.rollback()
+                    if self.__update_to_table__("RelLog_T", condition, **log):
+                        self.con.commit()
                     else:
                         self.con.rollback()
 
     def delete_from_rellog_table(self):
         for pk in self.filter_set.get("selected_pks"):
-
-            result = self.cur.execute("SELECT SerialNumber from RelLog_T Where Pk = ?  ", (pk,)).fetchone()
-
-            if result:
-                if self.__delete_from_table__("RelLog_T", {"PK": pk}):
-                    sn = result["SerialNumber"]
-
-                    result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
-                                               "SerialNumber = ? and removed = 0", (sn,)).fetchone()
-                    condition = {"SerialNumber": sn}
-                    if result2:
-                        timestamp = result2["Timestamp"]
-                        log = {"DateAdded": timestamp, "DateChanged": timestamp}
-                        print(log)
-                        if self.__update_to_table__("Config_SN_T", condition, **log):
-                            self.con.commit()
-                        else:
-                            self.con.rollback()
-                    else:
-                        self.con.rollback()
-                else:
-                    self.con.rollback()
+            # result = self.cur.execute("SELECT SerialNumber from RelLog_T Where PK = ?  ", (pk,)).fetchone()
+            #
+            # if result:
+            if self.__delete_from_table__("RelLog_T", {"PK": pk}):
+                self.con.commit()
+                # sn = result["SerialNumber"]
+                #
+                # result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
+                #                            "SerialNumber = ? and removed = 0", (sn,)).fetchone()
+                # condition = {"SerialNumber": sn}
+                # if result2:
+                #     timestamp = result2["Timestamp"]
+                #     log = {"DateAdded": timestamp, "DateChanged": timestamp}
+                #     if self.__update_to_table__("Config_SN_T", condition, **log):
+                #         self.con.commit()
+                #     else:
+                #         self.con.rollback()
+                # else:
+                #     self.con.rollback()
+            else:
+                self.con.rollback()
 
     def insert_to_stress_table(self, rel_checkpoint: str = None):
         if isinstance(rel_checkpoint, str):
@@ -1117,7 +1130,7 @@ class DBsqlite:
 
     def start_timer_data_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
         uuid_str = str(uuid.uuid1())
         log = {
             "PK": uuid_str,
@@ -1135,9 +1148,8 @@ class DBsqlite:
 
     def end_timer_data_table(self, pk: str = None):
         if pk:
-            print(pk)
             current_time = dt.datetime.now().timestamp()
-            time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
             result = self.cur.execute("SELECT EndTimestamp from Tagger_Log_T WHERE PK = ? ", (pk,)).fetchone()
             if result["EndTimestamp"] is None:
                 log = {
@@ -1323,12 +1335,11 @@ class SnModel:
             if self.database:
                 if self.database.sn_exist(sn):
                     sql = f'SELECT SerialNumber,Config_FK, ' \
-                          f'WIP,DateAdded From Config_SN_T WHERE SerialNumber like "{sn}%" '
+                          f'DateAdded From Config_SN_T WHERE SerialNumber like "{sn}%" '
                     result = self.database.cur.execute(sql).fetchone()
                     self._serial_number = result["SerialNumber"]
                     self._config = ConfigModel(result["Config_FK"], self.database)
                     # self._stress = StressModel(result["Stress_FK"], self.database)
-                    self._wip = result["WIP"]
                     self._date_last_record = result["DateAdded"]
 
     @property

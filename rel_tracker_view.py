@@ -205,7 +205,8 @@ class rel_tracker_view:
                                                      key="Build", enable_events=True), sg.Stretch()],
             [sg.Txt("Config", size=15), sg.InputCombo(values=[], size=30, readonly=True,
                                                       key="Config", enable_events=True), sg.Stretch()],
-            [sg.B("Save and Close", enable_events=True, key="-Save-"), sg.B("Clear", enable_events=True, key="-Clear-")]
+            [sg.B("Save and Close", enable_events=True, key="-Save-", size=(25, 1)),
+             sg.B("Clear", enable_events=True, key="-Clear-")]
 
         ]
 
@@ -223,7 +224,7 @@ class rel_tracker_view:
              sg.InputCombo(size=30, values=[], key="RelStress", enable_events=True), sg.Stretch()],
             [sg.Txt("RelCheckpoint", size=15), sg.InputCombo(values=[], size=30, readonly=True,
                                                              key="RelCheckpoint", enable_events=True), sg.Stretch()],
-            [sg.B("Save and Close", enable_events=True, key="-Save-"), sg.B("Clear", enable_events=True, key="-Clear-")]
+            [sg.B("Save and Close", enable_events=True, key="-Save-", size=(25, 1)), sg.B("Clear", enable_events=True, key="-Clear-")]
 
         ]
 
