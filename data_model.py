@@ -786,22 +786,12 @@ class DBsqlite:
                f'SELECT Config_SN_T.* FROM main.Config_SN_T INNER JOIN main.RelLog_T ' \
                f'ON main.Config_SN_T.SerialNumber = main.RelLog_T.SerialNumber ' \
                f'WHERE RelLog_T.removed = 0 and Station = ?'
+        sql3 = f'INSERT OR REPLACE INTO main.RelLog_T SELECT * FROM GOLD.RelLog_T WHERE removed = 0 and Station <> ?'
 
         self.cur.execute(sql2, (station,))
         self.cur.execute(sql, (station,))
+        self.cur.execute(sql3, (station,))
         self.con.commit()
-
-        # for row in rows:
-        #     sql = f'INSERT or IGNORE INTO RelLog_T (SerialNumber,Station,WIP,StartTimestamp,' \
-        #           f'EndTimestamp,StartTime,EndTime,Notes,removed,FK_Tagger,FK_RelStress)' \
-        #           f' Values (?,?,?,?,?,?,?,?,?,?,?)'
-        #     self.cur.execute(sql,
-        #                      (row["SerialNumber"], row["Station"], row["WIP"], row["StartTimestamp"],
-        #                       row["EndTimestamp"], row["StartTime"], row["EndTime"], row["Notes"],
-        #                       row["removed"], row["FK_Tagger"], row["FK_RelStress"]))
-        # self.con.commit()
-        # return True
-        # pass
 
     def insert_to_failure_log_table(self):
         current_time = dt.datetime.now().timestamp()
