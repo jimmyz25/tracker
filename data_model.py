@@ -775,7 +775,16 @@ class DBsqlite:
         self.con.commit()
         return True
 
-    def sync_rel_log_table(self, golden_db_address: str = None, station: str = None):
+    def sync_rel_log_table(self, golden_db_address: str = None, station: str = None, cutoff_time: float = 0.0):
+        """
+        this will upload data from a specific station to gold and download from gold data that doesn't below to
+        this station
+        :param cutoff_time: cut off time should be saved as user setting, if get nonthing form user setting,
+        then use default 0
+        :param golden_db_address: database address
+        :param station: station name
+        :return: bool
+        """
         if not isinstance(golden_db_address, str):
             return False
         if not isinstance(station, str):
