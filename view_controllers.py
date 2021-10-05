@@ -1,4 +1,5 @@
 # this is a collection of view controllers. each view controller works on a view
+# import PySimpleGUI
 
 from rel_tracker_view import *
 from data_model import *
@@ -132,7 +133,7 @@ class preference_vc:
                 else:
                     self.window["-Golden_Database-"].update(value="")
                     rel_tracker_app.settings.update({"-Golden_Database-": None})
-            if self.window["-Golden_Database-"].get() ==  self.window["-Local_Database-"].get():
+            if self.window["-Golden_Database-"].get() == self.window["-Local_Database-"].get():
                 sg.popup_error("local database cannot be the same as golden database")
                 self.window["-Golden_Database-"].update(value="")
 
@@ -185,8 +186,12 @@ class rel_log_vc:
                 continue
             if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
-            elif event == "Save Preference":
-                rel_tracker_app.settings['-station-'] = values['-Station_Name-']
+            elif event == "Show Summary":
+                summary_popup = summary_table_vc(self.window)
+                summary_popup.show()
+
+            # elif event == "Save Preference":
+            #     rel_tracker_app.settings['-station-'] = values['-Station_Name-']
             elif event == "-Home-":
                 self.complete_quit = False
                 preference = preference_vc()
@@ -304,7 +309,10 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
                     # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    print(selected_sn_list, "in selection", "Note: ", str(selected[0][-1]))
+                    if len(selected_sn_list) == 1:
+                        print(selected_sn_list, "in selection", "Note: ", str(selected[0][-1]))
+                    elif len(selected_sn_list) > 1:
+                        print(len(selected_sn_list), "units selected")
                     if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                         sn = SnModel(selected[0][3], database=rel_tracker_app.dbmodel)
                         rel_tracker_app.dbmodel.filter_set.update({
@@ -490,6 +498,9 @@ class fa_log_vc:
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
+            elif event == "Show Summary":
+                failure_mode_selector_popup = failure_mode_summary_vc(self.window)
+                failure_mode_selector_popup.show()
             elif event == "Reset Filter":
                 rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.rel_table_data)
@@ -514,10 +525,22 @@ class fa_log_vc:
                         "checkpoint": selected[3],
                         "serial_number": sn.serial_number
                     })
-
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
                     self.fa_selected_row = None
-
+            elif event == "-report_failure-":
+                self.fa_selected_row = values.get('-fa_table_select-')[0]
+                rel_tracker_app.dbmodel.filter_set.update({
+                    "serial_number": self.window["-fa_table_select-"].get()[self.fa_selected_row][3],
+                    "stress": self.window["-fa_table_select-"].get()[self.fa_selected_row][4],
+                    "checkpoint": self.window["-fa_table_select-"].get()[self.fa_selected_row][5]
+                })
+                failure_mode_popup = failure_mode_vc(self.window)
+                failure_mode_popup.show()
+                rel_tracker_app.dbmodel.filter_set.update({
+                    "failure_mode": None
+                })
+                self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.fa_selected_row = None
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.rel_table_data)
@@ -1066,4 +1089,125 @@ class config_setup_vc:
 
     def close_window(self):
         sg.user_settings_save()
+        self.window.close()
+
+
+class summary_table_vc:
+
+    def __init__(self, master: sg.Window = None):
+        self.master = master
+        self.all_failure_modes = list(rel_tracker_app.dbmodel.failure_mode_list)
+        self.summary = StatusSummary(db=rel_tracker_app.dbmodel)
+        self.configs = self.summary.get_config_obj_list()
+        self.stresses = self.summary.get_stress_obj_list()
+        self.stress_group = self.summary.group_by_stress()
+        self.window = self.generate_tree_view()
+
+    @staticmethod
+    def all_are_empty(a: list = None):
+        if a:
+            if len(list(filter(lambda b: b != "", a))):
+                return True
+            else:
+                return False
+        return False
+
+    @property
+    def tree_data(self):
+        data = sg.TreeData()
+        for stress_str, ckp_list in self.stress_group.items():
+            stress_pks = [checkpoint.id for checkpoint in ckp_list]
+            row = [self.summary.aggregated_cell_display(stress_pks, config.id) for config in self.configs]
+            if self.all_are_empty(row):
+                data.insert(parent='', text=stress_str, key=stress_str, values=row)
+        for stress in self.stresses:
+            row = [self.summary.cell_display(stress.id, config.id) for config in self.configs]
+            if self.all_are_empty(row):
+                data.insert(parent=stress.rel_stress, text=stress.rel_checkpoint, key=stress.id, values=row)
+        return data
+
+    def generate_tree_view(self):
+        config_col = [config.config_name for config in self.configs]
+        max_config_count = min(len(config_col), 8)
+        tree_col_layout = [
+            [sg.Tree(data=self.tree_data,
+                     headings=config_col,
+                     visible_column_map=[True for _ in range(max_config_count)],
+                     auto_size_columns=False,
+                     justification='center',
+                     row_height=int(rel_tracker_view.scale * 20),
+                     num_rows=15,
+                     col0_width=18,
+                     show_expanded=False,
+                     expand_x=True,
+                     expand_y=True,
+                     enable_events=True,
+                     key="-Tree-",
+                     tooltip="note that display may not be accurate without sync with golden database,maximum 8 "
+                             "configs are displayed",
+                     ),
+             ],
+        ]
+        tree_row_col = sg.Column(layout=tree_col_layout, scrollable=False, expand_y=True, expand_x=True,
+                                 size=(int(900 * rel_tracker_view.scale), int(600 * rel_tracker_view.scale)))
+        layout = [[sg.Text('Current Status, fail/total (on-going)')],
+                  [tree_row_col],
+                  [sg.CloseButton("Quit")]]
+        window = sg.Window('Quick Summary', layout, finalize=True, modal=True)
+        if self.master:
+            window.TKroot.transient(master=self.master.TKroot.winfo_toplevel())
+        return window
+
+    def show(self):
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            # elif event == "-Failure_Mode_Search-":
+            #     keyword = values.get("-Failure_Mode_Search-")
+            #     if keyword:
+            #         filtered_failure_mode = list (filter(lambda x: keyword in x, self.all_failure_modes ))
+            #         self.window["-Failure_Mode_Selection-"].update(values=filtered_failure_mode)
+            #     else:
+            #         self.window["-Failure_Mode_Selection-"].update(values=self.all_failure_modes)
+            # elif event == "-Failure_Mode_Selection-":
+            #     rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Selection-")})
+            #     self.window["-Tree-"].
+            print(event, values)
+
+    def close_window(self):
+        self.window.close()
+
+
+class failure_mode_summary_vc:
+    def __init__(self, master: sg.Window = None):
+        view = rel_tracker_view(rel_tracker_app.settings)
+        self.all_failure_modes = list(rel_tracker_app.dbmodel.failure_mode_list)
+        self.window = view.failure_mode_summary()
+        self.window["-Failure_Mode_Selection-"].update(values=self.all_failure_modes)
+        self.master = master
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+
+    def show(self):
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            elif event == "-Failure_Mode_Search-":
+                keyword = values.get("-Failure_Mode_Search-")
+                if keyword:
+                    filtered_failure_mode = list(filter(lambda x: keyword in x, self.all_failure_modes))
+                    self.window["-Failure_Mode_Selection-"].update(values=filtered_failure_mode)
+                else:
+                    self.window["-Failure_Mode_Selection-"].update(values=self.all_failure_modes)
+            elif event == "-Failure_Mode_Selection-":
+                rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Selection-")})
+                pass
+            elif event == "Generate Summary":
+                summary_popup = summary_table_vc(self.window)
+                summary_popup.show()
+            print(event, values)
+
+    def close_window(self):
         self.window.close()

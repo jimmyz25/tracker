@@ -5,13 +5,13 @@ import PySimpleGUI as sg
 # import tkinter as tk
 
 
-def get_scale():
-    # root = tk.Tk()
-    # widget = tk.Label(root, text="My String")
-    # widget.pack()
-    # height = (tkf.Font(font=widget['font']).metrics('linespace'))
-    # scale = int(height / 16)
-    return 1
+# def get_scale():
+#     # root = tk.Tk()
+#     # widget = tk.Label(root, text="My String")
+#     # widget.pack()
+#     # height = (tkf.Font(font=widget['font']).metrics('linespace'))
+#     # scale = int(height / 16)
+#     return 1
 
 
 class rel_tracker_view:
@@ -144,6 +144,8 @@ class rel_tracker_view:
              ],
             [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
+             sg.B("Show Summary", size=(15, 1), pad=(5, 2),
+                  disabled=False, disabled_button_color="#ababab")
              ]
         ]
         button_column = sg.Column(layout=layout_button_column,
@@ -262,7 +264,7 @@ class rel_tracker_view:
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, size=(40, 10),
                               expand_x=True, num_rows=12, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              header_background_color="white",
                               enable_events=True, key="-highlighted_failures-", pad=(5, 10), hide_vertical_scroll=True)
 
         layout_done_column = [
@@ -328,7 +330,7 @@ class rel_tracker_view:
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              header_background_color="white",
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
         layout_filter_column = [
@@ -360,6 +362,8 @@ class rel_tracker_view:
                  disabled=False, disabled_button_color="#ababab"),
             sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                  disabled=True, disabled_button_color="#ababab"),
+            sg.B("Show Summary", size=(20, 1), pad=(5, 2),
+                 disabled=False, disabled_button_color="#ababab")
         ]
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
@@ -367,10 +371,11 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True, True]
         table_value2 = [[str(row) for row in range(8)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
-                               headings=table_col,
+                               headings=table_col,select_mode=sg.TABLE_SELECT_MODE_BROWSE,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                                header_background_color="white",
-                               enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True)
+                               enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
+                               right_click_menu=['&right_click', ["-report_failure-"]])
 
         # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
@@ -386,6 +391,7 @@ class rel_tracker_view:
                            finalize=True, enable_close_attempted_event=True, modal=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        window["-fa_table_select-"].bind("<Return>", "return-")
 
         return window
 
@@ -471,7 +477,7 @@ class rel_tracker_view:
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white", right_click_menu=['&right_click', ["update", "remove"]],
+                              header_background_color="white",
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
         layout_filter_column = [
@@ -539,3 +545,19 @@ class rel_tracker_view:
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 
         return window
+
+    @staticmethod
+    def failure_mode_summary():
+        layout = [
+            [sg.Txt("Failure Mode", size=(15, 1)),
+             sg.InputText(key="-Failure_Mode_Search-", enable_events=True, size=(30, 1))],
+            [sg.Listbox(key="-Failure_Mode_Selection-", values=[],
+                        size=(45, 5), enable_events=True,select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)],
+            [sg.B("Generate Summary", enable_events=True, size=(15, 1))]
+        ]
+        window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False, modal=True)
+        return window
+
+
+

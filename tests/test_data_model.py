@@ -247,3 +247,15 @@ def test_failure_mode_list_to_select():
     print(timeit.timeit(lambda: db.failure_mode_list_to_add_to_sn, number=1000))
     print(db.failure_mode_list_to_add_to_sn)
     assert True == True
+
+
+def test_get_total_in_cell_display():
+    a = status_summary(db)
+    b = a.get_total_in_cell_display("90e52e7a-20e6-11ec-a422-1e00d9211e69", "94695890-20e7-11ec-ba51-1e00d9211e69")
+    assert True == True
+
+
+def test_tree_to_display():
+    a = status_summary(db)
+    b = a.tree_to_display()
+    assert True == True

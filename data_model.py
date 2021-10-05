@@ -10,6 +10,7 @@ import secrets
 
 
 # noinspection SpellCheckingInspection
+
 class DBsqlite:
     """
     this is a database model to handle all database related operations, silver station will sync with gold station based
@@ -19,7 +20,7 @@ class DBsqlite:
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
-                       for _ in range(1000)]
+                       for _ in range(200)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
@@ -28,6 +29,8 @@ class DBsqlite:
             if isinstance(value, str):
                 if value.lower() == "none":
                     row.append(f'{key} is Null ')
+                elif value.lower() == "not none":
+                    row.append(f'{key} is not Null ')
                 else:
                     value.strip().strip("%")
                     if value != "":
@@ -384,6 +387,12 @@ class DBsqlite:
             return set(result["PK"] for result in results)
 
     @property
+    def all_config_pks(self):
+        sql = "SELECT PK FROM Config_T"
+        results = self.cur.execute(sql).fetchall()
+        return set(result["PK"] for result in results)
+
+    @property
     def selected_stress_pks(self):
         if self.filter_set.get("stress") is None and self.filter_set.get("checkpoint") is None:
             return None
@@ -393,6 +402,12 @@ class DBsqlite:
                                                                            "checkpoint")})
             results = self.cur.execute(sql).fetchall()
             return set(result["PK"] for result in results)
+
+    @property
+    def all_stress_pks(self):
+        sql = "SELECT PK FROM RelStress_T"
+        results = self.cur.execute(sql).fetchall()
+        return set(result["PK"] for result in results)
 
     @property
     def config_list_to_select(self):
@@ -422,15 +437,11 @@ class DBsqlite:
     @property
     def failure_mode_list_to_add_to_sn(self):
         if self.cur:
-            # sql = "SELECT FailureMode FROM FailureMode_T  " + \
-            #       self.sql_filter_str(({"FailureGroup": self.filter_set.get("failure_group")}))
-            # results = self.cur.execute(sql).fetchall()
             sql = "SELECT FailureMode From FALog_T " + self.sql_filter_str({
                 "SerialNumber": self.filter_set.get("serial_number"),
                 "FK_RelStress": self.selected_stress_pks
             })
             result_existing = self.cur.execute(sql).fetchall()
-            # all_failure_mode = set(result["FailureMode"] for result in results)
             existing = set(result["FailureMode"] for result in result_existing)
             return self.failure_mode_list - existing
         return {None}
@@ -628,6 +639,71 @@ class DBsqlite:
                 return [dict(result) for result in results]
         else:
             return [dict()]
+
+    @property
+    def completed_rel_summary_data(self):
+        condition = {
+            "FK_RelStress": self.selected_stress_pks,
+            "RelLog_T.removed": 0,
+            "RelLog_T.EndTimestamp": "not none",
+            "Config_SN_T.Config_FK": self.selected_config_pks,
+        }
+        sql = "SELECT  COUNT (DISTINCT RelLog_T.SerialNumber) as SN_Count, " \
+              "RelLog_T.FK_RelStress, Config_SN_T.Config_FK" \
+              " from RelLog_T" \
+              " inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber" \
+              + self.sql_filter_str(condition) + \
+              " Group by FK_RelStress,Config_SN_T.Config_FK "
+        result = self.cur.execute(sql).fetchall()
+        if result is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in result]
+
+    @property
+    def ongoing_rel_summary_data(self):
+        """
+        aggregation over relstress and config, on-going unit only
+        :return: a list of dict, key: SN_Count, FK_RelStress, Config_FK
+        """
+        condition = {
+            "FK_RelStress": self.selected_stress_pks,
+            "RelLog_T.removed": 0,
+            "RelLog_T.EndTimestamp": "none",
+            "Config_SN_T.Config_FK": self.selected_config_pks,
+        }
+        sql = " SELECT  COUNT (DISTINCT RelLog_T.SerialNumber) as SN_Count, " \
+              " RelLog_T.FK_RelStress, Config_SN_T.Config_FK" \
+              " from RelLog_T" \
+              " inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber" \
+              + self.sql_filter_str(condition) + \
+              " Group by FK_RelStress,Config_SN_T.Config_FK "
+        result = self.cur.execute(sql).fetchall()
+        if result is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in result]
+
+    @property
+    def fa_summary_data(self):
+        condition = {
+            "FALog_T.FK_RelStress": self.selected_stress_pks,
+            "FALog_T.removed": 0,
+            "Config_SN_T.Config_FK": self.selected_config_pks,
+            "FailureMode": self.filter_set.get("failure_mode")
+        }
+        sql = " SELECT  COUNT (DISTINCT FALog_T.SerialNumber) as SN_Count," \
+              " FALog_T.FK_RelStress, Config_SN_T.Config_FK, " \
+              " FailureMode from FALog_T" \
+              " inner join Config_SN_T on Config_SN_T.SerialNumber = FALog_T.SerialNumber" \
+              + self.sql_filter_str(condition) + \
+              " Group by FK_RelStress,Config_SN_T.Config_FK"
+        result = self.cur.execute(sql).fetchall()
+        print(sql)
+        if result is None:
+            return [dict()]
+        else:
+            return [dict(result) for result in result]
 
     @property
     def program_list(self):
@@ -1010,7 +1086,7 @@ class DBsqlite:
             log2 = {
                 "Config_FK": config_pk,
                 "SerialNumber": self.filter_set.get("serial_number"),
-                "DateChanged": current_time, #depricated
+                "DateChanged": current_time,  # depricated
                 # "WIP": wip,
             }
             if self.__update_to_table__("Config_SN_T", condition2, **log2):
@@ -1029,7 +1105,7 @@ class DBsqlite:
                 if self.sn_exist(sn):
                     log = {
                         "WIP": wip,
-                        "ModiTimestamp":current_time
+                        "ModiTimestamp": current_time
                     }
                     # condition = {
                     #     "SerialNumber": sn
@@ -1282,7 +1358,7 @@ class ConfigModel:
 
 
 class StressModel:
-    def __init__(self, idx: int = None, database: DBsqlite = None):
+    def __init__(self, idx: str = None, database: DBsqlite = None):
         self.database = database
         self.id = idx
 
@@ -1328,7 +1404,6 @@ class SnModel:
     def serial_number(self, sn):
         self._serial_number = None
         self._config = ConfigModel(None, None)
-        # self._stress = StressModel(None, None)
         self._wip = None
         if not (sn is None or sn == ""):
             if self.database:
@@ -1338,16 +1413,11 @@ class SnModel:
                     result = self.database.cur.execute(sql).fetchone()
                     self._serial_number = result["SerialNumber"]
                     self._config = ConfigModel(result["Config_FK"], self.database)
-                    # self._stress = StressModel(result["Stress_FK"], self.database)
                     self._date_last_record = result["DateAdded"]
 
     @property
     def config(self):
         return self._config
-
-    # @property
-    # def stress(self):
-    #     return self._stress
 
     @property
     def wip(self):
@@ -1359,3 +1429,118 @@ class SnModel:
         result = self.database.cur.execute(sql, (self.serial_number, self._date_last_record)).fetchone()
         if result:
             return result["PK"]
+
+
+class StatusSummary:
+    def __init__(self, db: DBsqlite = None):
+        self.on_going = db.ongoing_rel_summary_data
+        self.completed = db.completed_rel_summary_data
+        self.failures = db.fa_summary_data
+        self.database = db
+        if db.selected_config_pks:
+            self.configs = db.selected_config_pks
+        else:
+            self.configs = db.all_config_pks
+        if db.selected_stress_pks:
+            self.stress = db.selected_stress_pks
+        else:
+            self.stress = db.all_stress_pks
+        self.stress_obj_list = self.get_stress_obj_list()
+
+    def get_config_obj_list(self):
+        result = [ConfigModel(pk, self.database) for pk in self.configs]
+        result.sort(key=lambda x: x.config_name)
+        return result
+
+    def get_stress_obj_list(self):
+        result = [StressModel(pk, self.database) for pk in self.stress]
+        result.sort(key=lambda x: self.get_number(x.rel_checkpoint))
+        return result
+
+    @staticmethod
+    def get_number(rel_checkpoint_str: str = None):
+        if rel_checkpoint_str:
+            a = re.findall(r"[-+]?\d*\.\d+|\d+", rel_checkpoint_str)
+            if a:
+                return float(a[-1])
+            else:
+                return 0
+        else:
+            return 0
+
+    def group_by_stress(self):
+        stress_str_list = []
+        grouped_stress = dict()
+        for stress_obj in self.stress_obj_list:
+            stress_str = stress_obj.rel_stress
+            # print(stress_obj.id, grouped_stress.get(stress_str), stress_str, grouped_stress)
+            if stress_str in stress_str_list:
+                pre = grouped_stress.get(stress_str)
+                grouped_stress.get(stress_str).append(stress_obj)
+                # grouped_stress.update({stress_str: pre.append(stress_obj)})
+            else:
+                stress_str_list.append(stress_str)
+                grouped_stress.update({stress_str: [stress_obj]})
+                # print(grouped_stress.items())
+        return grouped_stress
+
+    def get_total_in_cell(self, stress_pk, config_pk):
+        result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
+                        self.completed)
+        sn_count = list(result)
+        if len(sn_count) == 1:
+            return sn_count[0].get("SN_Count")
+        else:
+            return 0
+
+    def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
+        if isinstance(fm, str):
+            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk and
+                            row.get("FailureMode"),
+                            self.failures)
+        else:
+            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
+                            self.failures)
+        sn_count = list(result)
+        if len(sn_count) == 1:
+            return sn_count[0].get("SN_Count")
+        else:
+            return 0
+        pass
+
+    def get_on_going_in_cell(self, stress_pk, config_pk):
+        result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
+                        self.on_going)
+        sn_count = list(result)
+        if len(sn_count) == 1:
+            return sn_count[0].get("SN_Count")
+        else:
+            return 0
+        pass
+
+    def cell_display(self, stress_pk, config_pk):
+        total = self.get_total_in_cell(stress_pk, config_pk)
+        on_going = self.get_on_going_in_cell(stress_pk, config_pk)
+        failure_count = self.get_failure_count_in_cell(stress_pk, config_pk)
+        if total == 0 and on_going == 0:
+            return ""
+        else:
+            return f'{failure_count}F/{total} ({on_going})'
+
+    def aggregated_cell_display(self, stress_pks, config_pk):
+        total = sum([self.get_total_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
+        on_going = sum([self.get_on_going_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
+        failure_count = sum([self.get_failure_count_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
+        if total == 0 and on_going == 0:
+            return ""
+        else:
+            return f'{failure_count}F/{total} ({on_going})'
+    # def tree_to_display(self):
+    #     config_pks = self.configs
+    #     table_display = []
+    #     for stress_obj in self.get_stress_obj_list():
+    #         parent = stress_obj.rel_stress
+    #         # print (row.values())
+    #         cell_display = [self.cell_display(stress_obj.id, config_pk) for config_pk in config_pks]
+    #         table_display.append(cell_display)
+    #     print(table_display)
