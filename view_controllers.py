@@ -1149,7 +1149,7 @@ class summary_table_vc:
              ],
         ]
         tree_row_col = sg.Column(layout=tree_col_layout, scrollable=False, expand_y=True, expand_x=True,
-                                 size=(int(900 * rel_tracker_view.scale), int(600 * rel_tracker_view.scale)))
+                                 size=(int(1000 * rel_tracker_view.scale), int(600 * rel_tracker_view.scale)))
         layout = [[sg.Text('Current Status, fail/total (on-going)')],
                   [tree_row_col],
                   [sg.CloseButton("Quit")]]

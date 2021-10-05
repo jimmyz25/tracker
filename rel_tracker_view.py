@@ -507,8 +507,11 @@ class rel_tracker_view:
                       sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            disabled=True, disabled_button_color="#ababab"),
                       sg.B("Correct Mistake", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True, disabled_button_color="#ababab"),
-
+                           disabled=True, disabled_button_color="#ababab",tooltip="no available"),
+                      sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                           disabled=True, disabled_button_color="#ababab",
+                           tooltip="search input folder and determine which stress and config info the test file "
+                                   "belongs to"),
                       ]
 
         table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'folder group',
