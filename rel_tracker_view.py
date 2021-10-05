@@ -64,16 +64,18 @@ class rel_tracker_view:
                           key="-Station_Name-", tooltip="maximum character: 18"), sg.Stretch(),
              ],
             [sg.Txt("Station Type", size=15),
-             sg.Combo(values=["a", "b"], size=30, readonly=True, key="-station-type-", enable_events=True),
+             sg.Combo(values=[], size=30, readonly=True, key="-station-type-", enable_events=True),
+             sg.B("Go"),
              sg.Stretch(),
              ],
             [sg.HorizontalSeparator()],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True, key="-Input_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), tooltip="Input folder where data will be saved before tagging",
-                             target=(sg.ThisRow, -2))],
-            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True, key="-Output_Folder-"),
+                             target=(sg.ThisRow, -2), key="input_folder_browse", disabled=True)],
+            [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True,
+                                                            key="-Output_Folder-"),
              sg.Stretch(),
-             sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2))],
+             sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), key="output_folder_browse", disabled=True,)],
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30,
                                                               readonly=True,
@@ -102,7 +104,8 @@ class rel_tracker_view:
             [sg.Txt("Notes", size=(15, 1)), sg.In(key="-New-Note-", enable_events=False)],
             [sg.Txt("SerialNumber (0)", size=(15, 3), expand_y=True, key="-Multi_SN-"),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
-                          tooltip="multiple SN separate by comma, enter to count\n Note:duplicates will be removed ")]
+                          tooltip="copy paste from csv or manually enter, finish with RETURN \n Note:duplicates will "
+                                  "be removed ")]
         ]
         tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
 
@@ -226,7 +229,8 @@ class rel_tracker_view:
              sg.InputCombo(size=30, values=[], key="RelStress", enable_events=True), sg.Stretch()],
             [sg.Txt("RelCheckpoint", size=15), sg.InputCombo(values=[], size=30, readonly=True,
                                                              key="RelCheckpoint", enable_events=True), sg.Stretch()],
-            [sg.B("Save and Close", enable_events=True, key="-Save-", size=(25, 1)), sg.B("Clear", enable_events=True, key="-Clear-")]
+            [sg.B("Save and Close", enable_events=True, key="-Save-", size=(25, 1)),
+             sg.B("Clear", enable_events=True, key="-Clear-")]
 
         ]
 
@@ -371,7 +375,7 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True, True]
         table_value2 = [[str(row) for row in range(8)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
-                               headings=table_col,select_mode=sg.TABLE_SELECT_MODE_BROWSE,
+                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                                header_background_color="white",
                                enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
@@ -507,9 +511,9 @@ class rel_tracker_view:
                       sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            disabled=True, disabled_button_color="#ababab"),
                       sg.B("Correct Mistake", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True, disabled_button_color="#ababab",tooltip="no available"),
+                           disabled=True, disabled_button_color="#ababab", tooltip="no available"),
                       sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           disabled=True, disabled_button_color="#ababab",
+                           disabled=False, disabled_button_color="#ababab",
                            tooltip="search input folder and determine which stress and config info the test file "
                                    "belongs to"),
                       ]
@@ -555,12 +559,9 @@ class rel_tracker_view:
             [sg.Txt("Failure Mode", size=(15, 1)),
              sg.InputText(key="-Failure_Mode_Search-", enable_events=True, size=(30, 1))],
             [sg.Listbox(key="-Failure_Mode_Selection-", values=[],
-                        size=(45, 5), enable_events=True,select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)],
+                        size=(45, 5), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)],
             [sg.B("Generate Summary", enable_events=True, size=(15, 1))]
         ]
         window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window
-
-
-

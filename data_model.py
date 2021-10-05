@@ -91,7 +91,8 @@ class DBsqlite:
                     "selected_row": None,
                     "selected_pks": None,
                     "station": None,
-                    "note": None
+                    "note": None,
+                    "file_creation_time": None
                 }
             )
             self.display_setting = dict(
@@ -699,11 +700,36 @@ class DBsqlite:
               + self.sql_filter_str(condition) + \
               " Group by FK_RelStress,Config_SN_T.Config_FK"
         result = self.cur.execute(sql).fetchall()
-        print(sql)
         if result is None:
             return [dict()]
         else:
             return [dict(result) for result in result]
+
+    @property
+    def data_tag(self):
+        """
+        0: foldergroup, 1: program, 2: build, 3.config, 4.serialnumber, 5. relstress, 6. relcheckpoint.
+        :return:
+        """
+        file_creation_time = self.filter_set.get("file_creation_time")
+        if isinstance(file_creation_time, float):
+            sql = " SELECT Tagger_Log_T.FolderGroup, Config_T.Program, Config_T.Build, Config_T.Config," \
+                  " Tagger_Log_T. SerialNumber, RelStress_T.RelStress, RelStress_T.RelCheckpoint FROM Tagger_Log_T" \
+                  " Inner Join Config_T ON Config_T.PK = Tagger_Log_T.FK_Config" \
+                  " Inner Join RelStress_T ON RelStress_T.PK = Tagger_Log_T.FK_RelStress" \
+                  " WHERE StartTimestamp < ? and EndTimestamp > ?" \
+                  " AND Tagger_Log_T.removed = 0 AND Tagger_Log_T.Station = ?"
+            results = self.cur.execute(sql, (file_creation_time, file_creation_time, self.station)).fetchall()
+            if results:
+                if len(results) > 1:
+                    print("there is ambiguity, no tag")
+                    return None
+                else:
+                    result = results[0]
+                    a = (result["FolderGroup"], result["Program"],
+                         result["Build"], result["Config"], result["SerialNumber"],
+                         result["RelStress"], result["RelCheckpoint"])
+                    return a
 
     @property
     def program_list(self):
@@ -1496,7 +1522,7 @@ class StatusSummary:
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk and
-                            row.get("FailureMode"),
+                                        row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
