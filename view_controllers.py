@@ -194,6 +194,7 @@ class rel_log_vc:
             if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Show Summary":
+
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
 
@@ -505,6 +506,7 @@ class fa_log_vc:
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event == "Show Summary":
+                rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
                 failure_mode_selector_popup = failure_mode_summary_vc(self.window)
                 failure_mode_selector_popup.show()
             elif event == "Reset Filter":
@@ -1167,7 +1169,7 @@ class summary_table_vc:
             return [["", "", "", "", ""]]
 
     @staticmethod
-    def notall_empty(a: list = None):
+    def not_all_empty(a: list = None):
         if a:
             if len(list(filter(lambda b: b != "", a))):
                 return True
@@ -1179,14 +1181,14 @@ class summary_table_vc:
     def tree_data(self):
         data = sg.TreeData()
         for stress_str, ckp_list in self.stress_group.items():
-            stress_pks = [checkpoint.id for checkpoint in ckp_list]
+            # stress_pks = [checkpoint.id for checkpoint in ckp_list]
             # row = [self.summary.aggregated_cell_display(stress_pks, config.id) for config in self.configs]
-            # if self.notall_empty(row):
+            # if self.not_all_empty(row):
             #     data.insert(parent='', text=stress_str, key=stress_str, values=[])
             data.insert(parent='', text=stress_str, key=stress_str, values=[])
         for stress in self.stresses:
             row = [self.summary.cell_display(stress.id, config.id) for config in self.configs]
-            if self.notall_empty(row):
+            if self.not_all_empty(row):
                 data.insert(parent=stress.rel_stress, text=stress.rel_checkpoint, key=stress.id, values=row)
         return data
 
@@ -1202,7 +1204,7 @@ class summary_table_vc:
                      row_height=int(rel_tracker_view.scale * 20),
                      num_rows=15,
                      col0_width=18,
-                     show_expanded=False,
+                     show_expanded=True,
                      expand_x=True,
                      expand_y=True,
                      enable_events=True,
