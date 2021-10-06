@@ -382,39 +382,38 @@ class rel_log_vc:
                     if isinstance(key, str):
                         if key.endswith("Input-") or key.endswith("-Note-"):
                             self.window[key].update(background_color="#f7f7f7")
-            if "_Input-" in event or event == '-table_select-' or event.endswith("_count-") or \
-                    event == "Enter Update Mode" or event == "Reset":
-                if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
-                    self.window["Add"].update(disabled=False)
-                else:
-                    self.window["Add"].update(disabled=True)
 
-                if rel_tracker_app.dbmodel \
-                        .ready_to_batch_update and self.window["-Tab_Selection-"].get() == "Register New Unit":
-                    self.window["Assign WIP"].update(disabled=False)
-                else:
-                    self.window["Assign WIP"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_update:
-                    self.window["Update"].update(disabled=False)
-                else:
-                    self.window["Update"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_checkin:
-                    self.window["CheckIn"].update(disabled=False)
-                else:
-                    self.window["CheckIn"].update(disabled=True)
-                if rel_tracker_app.dbmodel.ready_to_checkout and self.row_selection:
-                    self.window["Checkout"].update(disabled=False)
-                else:
-                    self.window["Checkout"].update(disabled=True)
-                if self.row_selection:
-                    self.window["Delete"].update(disabled=False)
-                    self.window["Remove for FA"].update(disabled=False)
-                else:
-                    self.window["Delete"].update(disabled=True)
-                    self.window["Remove for FA"].update(disabled=True)
-                if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
-                    total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
-                    self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
+            if rel_tracker_app.dbmodel.ready_to_add and self.window["-Tab_Selection-"].get() == "Register New Unit":
+                self.window["Add"].update(disabled=False)
+            else:
+                self.window["Add"].update(disabled=True)
+
+            if rel_tracker_app.dbmodel \
+                    .ready_to_batch_update:
+                self.window["Assign WIP"].update(disabled=False)
+            else:
+                self.window["Assign WIP"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_update:
+                self.window["Update"].update(disabled=False)
+            else:
+                self.window["Update"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_checkin:
+                self.window["CheckIn"].update(disabled=False)
+            else:
+                self.window["CheckIn"].update(disabled=True)
+            if rel_tracker_app.dbmodel.ready_to_checkout and self.row_selection:
+                self.window["Checkout"].update(disabled=False)
+            else:
+                self.window["Checkout"].update(disabled=True)
+            if self.row_selection:
+                self.window["Delete"].update(disabled=False)
+                self.window["Remove for FA"].update(disabled=False)
+            else:
+                self.window["Delete"].update(disabled=True)
+                self.window["Remove for FA"].update(disabled=True)
+            if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
+                total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
+                self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
         self.close_window()
 
     def close_window(self):
