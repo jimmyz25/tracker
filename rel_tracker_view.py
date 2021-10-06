@@ -1,19 +1,5 @@
 import PySimpleGUI as sg
 
-
-# import tkinter.font as tkf
-# import tkinter as tk
-
-
-# def get_scale():
-#     # root = tk.Tk()
-#     # widget = tk.Label(root, text="My String")
-#     # widget.pack()
-#     # height = (tkf.Font(font=widget['font']).metrics('linespace'))
-#     # scale = int(height / 16)
-#     return 1
-
-
 class rel_tracker_view:
     scale = 1
 
@@ -35,7 +21,6 @@ class rel_tracker_view:
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
-        print(window["-version-"].get_size())
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         return window
 
@@ -69,6 +54,7 @@ class rel_tracker_view:
              sg.Stretch(),
              ],
             [sg.HorizontalSeparator()],
+            [sg.Txt("data tagging station settings:")],
             [sg.Txt("Input Folder", size=15), sg.InputText(size=30, readonly=True, key="-Input_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), tooltip="Input folder where data will be saved before tagging",
                              target=(sg.ThisRow, -2), key="input_folder_browse", disabled=True)],
@@ -174,7 +160,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        # output_view = sg.Output(size=(130, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(130, 5), background_color="white",expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
@@ -195,7 +181,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -387,17 +373,17 @@ class rel_tracker_view:
                                headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
                                expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                                header_background_color="white",
-                               enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
-                               right_click_menu=['&right_click', ["-report_failure-"]])
+                               enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
+                               right_click_menu=['&right_click', ["update failure"]])
 
-        # output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -537,7 +523,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        # output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -551,8 +537,8 @@ class rel_tracker_view:
                                                    "you need data to be placed in a specific "
                                                    "sub-folder", key="-folder_name-"), ],
             button_row,
-            [table_view2]
-            # [output_view]
+            [table_view2],
+            [output_view]
         ]
 
         window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
@@ -574,3 +560,4 @@ class rel_tracker_view:
         window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window
+

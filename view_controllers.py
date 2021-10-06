@@ -79,9 +79,11 @@ class welcome_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.welcome_page()
-        self.show()
 
     def show(self):
+        if sqlite3.sqlite_version_info[0] < 3:
+            sg.popup_error(f"Sqlite version {sqlite3.sqlite_version}  is too low, please upgrade")
+            sys.exit()
         while True:  # the event loop
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
@@ -112,16 +114,22 @@ class preference_vc:
                 break
             elif event == "Save Preference":
                 rel_tracker_app.save_user_settings(self.window)
+                sg.popup_ok("user preference saved")
             elif event == "Sync with Golden":
-                print("sync with golden")
                 gold = rel_tracker_app.settings.get("-Golden_Database-")
-                rel_tracker_app.dbmodel.delete_trigger()
-                rel_tracker_app.dbmodel.sync_reference_tables(golden_db_address=gold)
-                rel_tracker_app.dbmodel.sync_rel_log_table(golden_db_address=gold)
-                rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
-                rel_tracker_app.dbmodel.sync_tagger_log_table(golden_db_address=gold)
-                #
-                rel_tracker_app.dbmodel.station = rel_tracker_app.settings.get("-Local_Database-")
+                user_input = sg.popup_ok_cancel(f"this operation will upload current station "
+                                                f"{rel_tracker_app.station} to golden database\n"
+                                                f"download other stations data to this local copy")
+                if user_input == "OK":
+                    rel_tracker_app.dbmodel.delete_trigger()
+                    rel_tracker_app.dbmodel.sync_reference_tables(golden_db_address=gold)
+                    rel_tracker_app.dbmodel.sync_rel_log_table(golden_db_address=gold)
+                    rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
+                    rel_tracker_app.dbmodel.sync_tagger_log_table(golden_db_address=gold)
+                    rel_tracker_app.dbmodel.station = rel_tracker_app.settings.get("-Local_Database-")
+                    sg.popup_ok(f"sync completed. Note: only {rel_tracker_app.station} data is uploaded to golden")
+                else:
+                    sg.popup_ok("no change is made to golden and local copy")
             elif event == "Stress Setup":
                 stress_setup_popup = stress_setup_vc(self.window)
                 stress_setup_popup.show()
@@ -230,17 +238,27 @@ class rel_log_vc:
                     # self.window["-WIP_Input-"].update(value="FA")
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
             elif event == "Add":
-                print("insert new sn to database")
-                rel_tracker_app.dbmodel.filter_set.update(
-                    {
-                        "station": rel_tracker_app.settings.get("-Station_Name-")
-                    }
-                )
-                rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
-                self.window['-table_select-'].update(values=self.table_data)
-                self.row_selection = None
-                self.window["-New-SN_Input-"].update(value="")
-                rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+                user_input = sg.popup_ok_cancel(f"You are about to insert "
+                                                f"{len(rel_tracker_app.dbmodel.filter_set.get('serial_number_list'))}"
+                                                f" units from {rel_tracker_app.dbmodel.filter_set.get('config')}"
+                                                f" to {rel_tracker_app.dbmodel.stress_str} ")
+                if user_input == "OK":
+                    rel_tracker_app.dbmodel.filter_set.update(
+                        {
+                            "station": rel_tracker_app.settings.get("-Station_Name-")
+                        }
+                    )
+                    rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
+                    print(f"{len(rel_tracker_app.dbmodel.filter_set.get('serial_number_list'))}"
+                          f" units from {rel_tracker_app.dbmodel.filter_set.get('config')}"
+                          f" added to {rel_tracker_app.dbmodel.stress_str} ")
+                    self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
+                    self.window["-New-SN_Input-"].update(value="")
+                    rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+                    print("window refreshed")
+                else:
+                    sg.popup_ok("User Abort")
 
             elif event == "Add Dummy SN":
                 print("insert new sn to database")
@@ -266,13 +284,18 @@ class rel_log_vc:
                 stress_popup.show()
                 if rel_tracker_app.dbmodel.ready_to_checkin:
                     rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
+                    print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} "
+                          f" moved to the following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
+
                 else:
                     print("not able to checkin")
             elif event == "Checkout":
                 rel_tracker_app.dbmodel.checkout_current_checkpoint_rellog_table()
+                print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} checked out "
+                      f"current checkpoint")
                 self.window['-table_select-'].update(values=self.table_data)
                 self.row_selection = None
             elif event == "Update":
@@ -381,9 +404,15 @@ class rel_log_vc:
                     self.window["-New-SN_Input-"].update(value="")
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
             elif event == "Delete":
-                rel_tracker_app.dbmodel.delete_from_rellog_table()
-                self.window['-table_select-'].update(values=self.table_data)
-                self.row_selection = None
+                user_input = sg.popup_ok_cancel(f"you are about to delete "
+                                                f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows")
+                if user_input == "OK":
+                    rel_tracker_app.dbmodel.delete_from_rellog_table()
+                    self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
+                    print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
+                else:
+                    sg.popup_ok("User Abort")
             # after each input, check app status and enable or disable buttons
             if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                 self.window['Register New Unit'].update(disabled=True)
@@ -520,6 +549,10 @@ class fa_log_vc:
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event == "Show Summary":
+                count = len(values.get('-table_select-'))
+                if count > 0:
+                    sg.popup_ok("Note: only config and stress related to table selection is shown ")
+                rel_tracker_app.dbmodel.filter_set.update({"stress": None})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
                 failure_mode_selector_popup = failure_mode_summary_vc(self.window)
                 failure_mode_selector_popup.show()
@@ -529,6 +562,11 @@ class fa_log_vc:
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
+            elif event == "-fa_table_select-":
+                # print(values)
+                self.fa_selected_row = values.get('-fa_table_select-')
+                selected_fa_row = self.window['-fa_table_select-'].get()[values.get('-fa_table_select-')[0]]
+                print(f'{selected_fa_row[3]} FA details: {selected_fa_row[-1]}')
             elif event == "-table_select-":
                 # selecting SerialNumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
@@ -549,7 +587,7 @@ class fa_log_vc:
                     })
                     self.window["-fa_table_select-"].update(values=self.fa_table_data)
                     self.fa_selected_row = None
-            elif event == "-report_failure-":
+            elif event == "update failure":
                 self.fa_selected_row = values.get('-fa_table_select-')[0]
                 rel_tracker_app.dbmodel.filter_set.update({
                     "serial_number": self.window["-fa_table_select-"].get()[self.fa_selected_row][3],
@@ -1022,7 +1060,9 @@ class failure_mode_config_vc:
                     "failure_mode": values.get("-failure_mode_list-")
                 })
             elif event == "Group Failure Modes":
-                failure_group = sg.popup_get_text("Please Provide Group Name")
+                failure_group = sg.popup_get_text("Please Provide New Group Name, \n "
+                                                  "if input already exists, selected "
+                                                  "failure mode will be moved to existing group")
                 rel_tracker_app.dbmodel.update_failure_mode_table(group_name=failure_group)
                 rel_tracker_app.dbmodel.filter_set.update({
                     "failure_group": failure_group
@@ -1181,6 +1221,7 @@ class summary_table_vc:
         self.stresses = self.summary.get_stress_obj_list()
         self.stress_group = self.summary.group_by_stress()
         self.window = self.generate_tree_view()
+        self.failure_modes = rel_tracker_app.dbmodel.filter_set.get("failure_mode")
 
     @property
     def on_going_wip_table_date(self):
@@ -1244,7 +1285,7 @@ class summary_table_vc:
         ]
         tree_row_col = sg.Column(layout=tree_col_layout, scrollable=False, expand_y=True, expand_x=True,
                                  size=(int(1000 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
-        layout = [[sg.Text('Current Status, fail/total (on-going)')],
+        layout = [[sg.Text('Current Status, fail/total (on-going)'), sg.Text("", key="-failure_mode_selection-")],
                   [tree_row_col],
                   [sg.Text("ongoing wips")],
                   [self.generate_on_going_wip_table(), sg.Stretch()],
@@ -1267,6 +1308,11 @@ class summary_table_vc:
         return table_view
 
     def show(self):
+        if rel_tracker_app.dbmodel.filter_set.get('failure_mode') is None:
+            display = "All"
+        else:
+            display = rel_tracker_app.dbmodel.filter_set.get('failure_mode')
+        self.window["-failure_mode_selection-"].update(f"failure mode shown: {display}")
         while True:  # the event loop
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
@@ -1300,11 +1346,9 @@ class failure_mode_summary_vc:
                     self.window["-Failure_Mode_Selection-"].update(values=self.all_failure_modes)
             elif event == "-Failure_Mode_Selection-":
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": values.get("-Failure_Mode_Selection-")})
-                pass
             elif event == "Generate Summary":
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
-            print(event, values)
 
     def close_window(self):
         self.window.close()

@@ -102,9 +102,7 @@ class DBsqlite:
                     "station_filter": None,
                 }
             )
-            print(sqlite3.version_info)
-            print(sqlite3.version)
-            print(sqlite3.sqlite_version)
+
             # self.cur.execute("UPDATE RelLog_T SET removed = a  WHERE  PK = \"aa\"")
 
     @classmethod

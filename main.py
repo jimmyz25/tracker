@@ -3,6 +3,9 @@ from view_controllers import *
 if __name__ == '__main__':
     app = rel_tracker_app()
     loading_page = welcome_vc()
+    loading_page.show()
+
+
     first_view_setting = rel_tracker_app.settings.get("-first_view-")
     if first_view_setting:
         if first_view_setting == "RelLog Station":
