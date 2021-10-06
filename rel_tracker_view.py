@@ -126,43 +126,43 @@ class rel_tracker_view:
                                 enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
-            [sg.B("Add", size=(15, 1), pad=(5, 2),
+            [sg.B("Add", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="register new units in batch"),
-             sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
+             sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="select or enter existing units then fill in WIP in 'register new unit' tab ")
              ],
-            [sg.B("Reset", size=(15, 1), pad=(5, 2),
+            [sg.B("Reset", size=(20, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="reset filter"),
-             sg.B("Update", size=(15, 1), pad=(5, 2),
+             sg.B("Update", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="only available in update mode")],
-            [sg.B("CheckIn", size=(15, 1), pad=(5, 2),
+            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="check in selected units to new checkpoints \n"
                           "Note: only available to latest status row"),
-             sg.B("Checkout", size=(15, 1), pad=(5, 2),
+             sg.B("Checkout", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="checkout current checkpoint to indicate completion of checkpoint")
              ],
-            [sg.B("Delete", size=(15, 1), pad=(5, 2),
+            [sg.B("Delete", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
+             sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="only for demo, disabled for normal use")
              ],
-            [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
+            [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="assign selected row to WIP: 'FA' "),
-             sg.B("Show Summary", size=(15, 1), pad=(5, 2),
+             sg.B("Show Summary", size=(20, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="generate a summary to show test status")
              ]
         ]
         button_column = sg.Column(layout=layout_button_column,
-                                  size=(int(280 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)))
+                                  size=(int(320 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -174,7 +174,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        output_view = sg.Output(size=(120 , 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
@@ -371,7 +371,7 @@ class rel_tracker_view:
         layout_button_row = [
             sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                  disabled=False, disabled_button_color="#ababab"),
-            sg.B("Configure Failure Modes", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+            sg.B("Edit Failure Modes", size=(25, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                  disabled=False, disabled_button_color="#ababab"),
             sg.B("Report Failure", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                  disabled=True, disabled_button_color="#ababab"),
@@ -390,7 +390,7 @@ class rel_tracker_view:
                                enable_events=False, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["-report_failure-"]])
 
-        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],

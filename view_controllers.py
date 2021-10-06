@@ -16,7 +16,8 @@ class rel_tracker_app:
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(35, 1),
-                  auto_size_buttons=False, input_elements_background_color="#f7f7f7", auto_size_text=True)
+                  auto_size_buttons=True, input_elements_background_color="#f7f7f7", auto_size_text=True,
+                  use_ttk_buttons=True, button_element_size=(20, 1))
     while True:
         if address:
             if DBsqlite.ok2use(address):
@@ -480,7 +481,7 @@ class fa_log_vc:
                 })
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
                 self.fa_selected_row = None
-            elif event == "Configure Failure Modes":
+            elif event == "Edit Failure Modes":
                 failure_mode_config_popup = failure_mode_config_vc(self.window)
                 failure_mode_config_popup.show()
             elif event.endswith("_Input-"):
