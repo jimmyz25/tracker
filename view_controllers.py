@@ -1167,7 +1167,7 @@ class summary_table_vc:
             return [["", "", "", "", ""]]
 
     @staticmethod
-    def all_are_empty(a: list = None):
+    def notall_empty(a: list = None):
         if a:
             if len(list(filter(lambda b: b != "", a))):
                 return True
@@ -1180,12 +1180,13 @@ class summary_table_vc:
         data = sg.TreeData()
         for stress_str, ckp_list in self.stress_group.items():
             stress_pks = [checkpoint.id for checkpoint in ckp_list]
-            row = [self.summary.aggregated_cell_display(stress_pks, config.id) for config in self.configs]
-            if self.all_are_empty(row):
-                data.insert(parent='', text=stress_str, key=stress_str, values=row)
+            # row = [self.summary.aggregated_cell_display(stress_pks, config.id) for config in self.configs]
+            # if self.notall_empty(row):
+            #     data.insert(parent='', text=stress_str, key=stress_str, values=[])
+            data.insert(parent='', text=stress_str, key=stress_str, values=[])
         for stress in self.stresses:
             row = [self.summary.cell_display(stress.id, config.id) for config in self.configs]
-            if self.all_are_empty(row):
+            if self.notall_empty(row):
                 data.insert(parent=stress.rel_stress, text=stress.rel_checkpoint, key=stress.id, values=row)
         return data
 

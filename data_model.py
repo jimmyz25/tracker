@@ -1534,8 +1534,8 @@ class StatusSummary:
 
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
-            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk and
-                                        row.get("FailureMode"),
+            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk
+                            and row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
@@ -1565,21 +1565,3 @@ class StatusSummary:
             return ""
         else:
             return f'{failure_count}F/{total} ({on_going})'
-
-    def aggregated_cell_display(self, stress_pks, config_pk):
-        total = min([self.get_total_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
-        on_going = sum([self.get_on_going_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
-        failure_count = max([self.get_failure_count_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
-        if total == 0 and on_going == 0:
-            return ""
-        else:
-            return f'{failure_count}F/{total} ({on_going})'
-    # def tree_to_display(self):
-    #     config_pks = self.configs
-    #     table_display = []
-    #     for stress_obj in self.get_stress_obj_list():
-    #         parent = stress_obj.rel_stress
-    #         # print (row.values())
-    #         cell_display = [self.cell_display(stress_obj.id, config_pk) for config_pk in config_pks]
-    #         table_display.append(cell_display)
-    #     print(table_display)
