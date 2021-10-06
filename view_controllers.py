@@ -1155,12 +1155,16 @@ class summary_table_vc:
     @property
     def on_going_wip_table_date(self):
         datasource = rel_tracker_app.dbmodel.on_going_wip
-        data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
-                 dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
-                 row.get("Start")] for row in
-                datasource]
-        data.sort(key=lambda x: x[3], reverse=True)
-        return data
+        print(datasource)
+        if len(datasource) > 1:
+            data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
+                     dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
+                     row.get("Start")] for row in
+                    datasource]
+            data.sort(key=lambda x: x[3], reverse=True)
+            return data
+        else:
+            return [["", "", "", "", ""]]
 
     @staticmethod
     def all_are_empty(a: list = None):

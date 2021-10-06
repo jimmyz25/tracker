@@ -20,7 +20,7 @@ class DBsqlite:
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
-                       for _ in range(200)]
+                       for _ in range(10000)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):
@@ -266,28 +266,29 @@ class DBsqlite:
         if self.filter_set.get("selected_pks") is not None:
             serial_number_list = []
             for pk in self.filter_set.get("selected_pks", []):
-                sql = " SELECT SerialNumber FROM RelLog_T WHERE PK = ?"
+                sql = " SELECT SerialNumber, EndTimestamp FROM RelLog_T WHERE PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
                 if result is None:
                     return False
                 sn = result["SerialNumber"]
-                sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
-                      " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
-                      " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
-                      " GROUP BY SerialNumber ) as A " \
-                      " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
-                      " WHERE RelLog_T.PK = ?" \
-                      " LIMIT 1"
-                result = self.cur.execute(sql, (sn, pk)).fetchone()
-                if result:
-                    sn = result["SerialNumber"]
-                    if sn in serial_number_list:
-                        return False
-                    serial_number_list.append(result["SerialNumber"])
-                    if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
-                        return False
-                else:
+                if sn in serial_number_list:
                     return False
+                serial_number_list.append(result["SerialNumber"])
+                if result["EndTimestamp"] is None or result["EndTimestamp"] == "":
+                    return False
+                if not SnModel(sn, self).is_latest_row(pk):
+                    return False
+                # sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
+                #       " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
+                #       " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
+                #       " and RelLog_T.removed = 0" \
+                #       " GROUP BY SerialNumber ) as A " \
+                #       " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
+                #       " WHERE RelLog_T.PK = ? " \
+                #       " LIMIT 1"
+                # result = self.cur.execute(sql, (sn, pk)).fetchone()
+                # if result:
+
             return True
 
     @property
@@ -298,28 +299,29 @@ class DBsqlite:
         if self.filter_set.get("selected_pks") is not None:
             serial_number_list = []
             for pk in self.filter_set.get("selected_pks", []):
-                sql = " SELECT SerialNumber FROM RelLog_T WHERE PK = ?"
+                sql = " SELECT SerialNumber, EndTimestamp FROM RelLog_T WHERE PK = ?"
                 result = self.cur.execute(sql, (pk,)).fetchone()
                 if result is None:
                     return False
                 sn = result["SerialNumber"]
-                sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
-                      " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
-                      " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
-                      " GROUP BY SerialNumber ) as A " \
-                      " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
-                      " WHERE RelLog_T.PK = ?" \
-                      " LIMIT 1"
-                result = self.cur.execute(sql, (sn, pk)).fetchone()
-                if result:
-                    sn = result["SerialNumber"]
-                    if sn in serial_number_list:
-                        return False
-                    serial_number_list.append(result["SerialNumber"])
-                    if result["EndTimestamp"] is not None:
-                        return False
-                else:
+                if sn in serial_number_list:
                     return False
+                serial_number_list.append(result["SerialNumber"])
+                if result["EndTimestamp"]:
+                    return False
+                if not SnModel(sn, self).is_latest_row(pk):
+                    return False
+                # sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
+                #       " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
+                #       " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
+                #       " and RelLog_T.removed = 0" \
+                #       " GROUP BY SerialNumber ) as A " \
+                #       " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
+                #       " WHERE RelLog_T.PK = ? " \
+                #       " LIMIT 1"
+                # result = self.cur.execute(sql, (sn, pk)).fetchone()
+                # if result:
+
             return True
 
     @property
@@ -481,6 +483,7 @@ class DBsqlite:
                   self.sql_filter_str(condition) + \
                   ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
             results = self.cur.execute(sql).fetchall()
+
             if results is None:
                 return [dict()]
             else:
@@ -596,7 +599,7 @@ class DBsqlite:
                   " inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress " \
                   + self.sql_filter_str(condition2) + \
-                  ' LIMIT 200'
+                  ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
 
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -632,7 +635,7 @@ class DBsqlite:
                   " inner join Config_T ON Config_T.PK = Config_SN_T.Config_FK " \
                   " inner join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress " \
                   + self.sql_filter_str(condition2) + \
-                  ' LIMIT 200 '
+                  ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200 '
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -1051,23 +1054,7 @@ class DBsqlite:
                 "notes": None,
                 "ModiTimestamp": current_time
             }
-            # condition = {
-            #     "SerialNumber": result["SerialNumber"],
-            # }
-            # log2 = {
-            #     "FK_RelStress": stress_pk,
-            #     "Stress_FK": stress_pk,
-            #     "DateAdded": current_time,
-            #     "DateChanged": current_time,
-            #     "Station": self.filter_set.get('station'),
-            #     "StartTimestamp": current_time,
-            #     "StartTime": time_str,
-            #     "EndTimestamp": None,
-            #     "EndTime": None,
-            #     "WIP": result["WIP"],
-            #     "removed": 0,
-            #     "notes": None
-            # }
+
             if self.__insert_to_table__("RelLog_T", **log):
                 self.con.commit()
             else:
@@ -1330,7 +1317,7 @@ class DBsqlite:
             return True
         set_statements = " SET " + ",".join(set_statement)
         sql = "UPDATE " + tablename + set_statements + condition_str
-        print(sql, value_list)
+        # print(sql, value_list)
         try:
             self.cur.execute(sql, value_list)
         except sqlite3.Error as e:
@@ -1451,7 +1438,6 @@ class SnModel:
                     result = self.database.cur.execute(sql).fetchone()
                     self._serial_number = result["SerialNumber"]
                     self._config = ConfigModel(result["Config_FK"], self.database)
-                    self._date_last_record = result["DateAdded"]
 
     @property
     def config(self):
@@ -1463,10 +1449,25 @@ class SnModel:
 
     @property
     def last_rel_log_row_pk(self):
-        sql = f'SELECT PK FROM RelLog_T where SerialNumber = ? and StartTimestamp = ?'
-        result = self.database.cur.execute(sql, (self.serial_number, self._date_last_record)).fetchone()
+        sql = "SELECT RelLog_T.PK" \
+              " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
+              " StartTimestamp, SerialNumber from RelLog_T  " \
+              " WHERE removed = 0 and SerialNumber = ?" \
+              " GROUP BY SerialNumber LIMIT 1) as A " \
+              " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
+              " WHERE RelLog_T.SerialNumber = ? LIMIT 1"
+        # sql = f'SELECT PK FROM RelLog_T where SerialNumber = ? where removed = 0'
+        result = self.database.cur.execute(sql, (self.serial_number, self.serial_number)).fetchone()
         if result:
             return result["PK"]
+        else:
+            return None
+
+    def is_latest_row(self, pk):
+        if isinstance(pk, str):
+            return pk == self.last_rel_log_row_pk
+        else:
+            return False
 
 
 class StatusSummary:
@@ -1566,9 +1567,9 @@ class StatusSummary:
             return f'{failure_count}F/{total} ({on_going})'
 
     def aggregated_cell_display(self, stress_pks, config_pk):
-        total = sum([self.get_total_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
+        total = min([self.get_total_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
         on_going = sum([self.get_on_going_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
-        failure_count = sum([self.get_failure_count_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
+        failure_count = max([self.get_failure_count_in_cell(stress_pk, config_pk) for stress_pk in stress_pks])
         if total == 0 and on_going == 0:
             return ""
         else:
