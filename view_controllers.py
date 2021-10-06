@@ -107,11 +107,24 @@ class preference_vc:
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
+            print (event, values)
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
                 break
             elif event == "Save Preference":
                 rel_tracker_app.save_user_settings(self.window)
+            elif event == "Sync with Golden":
+                print("sync with golden")
+                gold = rel_tracker_app.settings.get("-Golden_Database-")
+                print(gold)
+
+                rel_tracker_app.dbmodel.delete_trigger()
+                rel_tracker_app.dbmodel.sync_reference_tables(golden_db_address=gold)
+                rel_tracker_app.dbmodel.sync_rel_log_table(golden_db_address=gold)
+                rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
+
+                #
+                rel_tracker_app.dbmodel.station = rel_tracker_app.settings.get("-Local_Database-")
             elif event == "Stress Setup":
                 stress_setup_popup = stress_setup_vc(self.window)
                 stress_setup_popup.show()

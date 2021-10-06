@@ -123,6 +123,15 @@ class DBsqlite:
     def station(self):
         return self._station
 
+    def delete_trigger(self):
+        del_trigger = f"""
+                        DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_RELLOG;
+                        DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_RELLOG;
+                        DROP TRIGGER IF EXISTS Row_Security_Trigger_UPDATE_FALLOG;
+                        DROP TRIGGER IF EXISTS Row_Security_Trigger_DELETE_FALLOG;
+                        """
+        self.con.executescript(del_trigger)
+
     @station.setter
     def station(self, station_name: str = None):
         if isinstance(station_name, str):
@@ -831,68 +840,7 @@ class DBsqlite:
         result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
         return result is not None
 
-    def sync_sn_table(self, rows):
-        for row in rows:
-            if self.sn_exist(row["SerialNumber"]):
-                sql = f'UPDATE Config_SN_T SET Config_FK= ?,DateAdded = ?,WIP=?,Stress_FK=? WHERE ' \
-                      f'DateAdded<{row["DateAdded"]}' \
-                      f' and SerialNumber = ?'
-                self.cur.execute(sql,
-                                 (row["Config_FK"], row["DateAdded"], row["WIP"],
-                                  row["Stress_FK"],
-                                  row["SerialNumber"]))
-            else:
-                self.cur.execute(f'INSERT INTO Config_SN_T (SerialNumber,Config_FK, Stress_FK, DateAdded, WIP)'
-                                 f' VALUES (?,?,?,?,?)',
-                                 (
-                                     row["SerialNumber"], row["Config_FK"], row["Stress_FK"], row["DateAdded"],
-                                     row["WIP"])
-                                 )
-        self.con.commit()
-        return True
-
-    def sync_wip_table(self, rows):
-        for row in rows:
-            if self.wip_exist(row["WIP"]):
-                sql = f'UPDATE WIP_Status_T SET TimeStamp= ?,FK_RelStress=? WHERE ' \
-                      f'WIP_Status_T.TimeStamp<{row["TimeStamp"]}' \
-                      f' and WIP = ?'
-                self.cur.execute(sql, (row["TimeStamp"], row["FK_RelStress"], row["WIP"]))
-            else:
-                self.cur.execute(f'INSERT INTO WIP_Status_T (WIP, TimeStamp, FK_RelStress)'
-                                 f' VALUES (?,?,?)',
-                                 (row["WIP"], row["TimeStamp"], row["FK_RelStress"]))
-        self.con.commit()
-        return True
-
-    def sync_config_table(self, rows):
-        for row in rows:
-            if not self.config_exist(row["PK"]):
-                sql = f'INSERT INTO Config_T (PK, Program, Build, Config, Notes) Values (?,?,?,?,?)'
-                self.cur.execute(sql, (
-                    row["PK"], row["Program"], row["Build"], row["Config"], row["Notes"]))
-            else:
-                config_name = self.cur.execute("SELECT Config From Config_T WHERE PK = ?", (row["PK"],)).fetchone()
-                assert row["Config"] == config_name["Config"]
-        self.con.commit()
-        return True
-
-    def sync_stress_table(self, rows):
-        for row in rows:
-            if not self.stress_exist(row["PK"]):
-                sql = f'INSERT INTO RelStress_T (PK, RelStress, RelCheckpoint,DaysTillReachCheckpoint,' \
-                      f'removed,seqence) Values (?,?,?,?,?,?)'
-                self.cur.execute(sql,
-                                 (row["PK"], row["RelStress"], row["RelCheckpoint"],
-                                  row["DaysTillReachCheckpoint"], row["removed"], row["seqence"]))
-            else:
-                checkpoint_name = self.cur.execute("SELECT RelCheckpoint From RelStress_T WHERE PK = ?", (row['PK'],)) \
-                    .fetchone()
-                assert row["RelCheckpoint"] == checkpoint_name["RelCheckpoint"]
-        self.con.commit()
-        return True
-
-    def sync_rel_log_table(self, golden_db_address: str = None, station: str = None, cutoff_time: float = 0.0):
+    def sync_rel_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
         """
         this will upload data from a specific station to gold and download from gold data that doesn't below to
         this station
@@ -904,7 +852,7 @@ class DBsqlite:
         """
         if not isinstance(golden_db_address, str):
             return False
-        if not isinstance(station, str):
+        if not isinstance(self.station, str):
             return False
         self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
         sql = f'INSERT OR REPLACE INTO GOLD.RelLog_T SELECT * FROM main.RelLog_T WHERE removed = 0 and Station = ?'
@@ -912,12 +860,67 @@ class DBsqlite:
                f'SELECT Config_SN_T.* FROM main.Config_SN_T INNER JOIN main.RelLog_T ' \
                f'ON main.Config_SN_T.SerialNumber = main.RelLog_T.SerialNumber ' \
                f'WHERE RelLog_T.removed = 0 and Station = ?'
-        sql3 = f'INSERT OR REPLACE INTO main.RelLog_T SELECT * FROM GOLD.RelLog_T WHERE removed = 0 and Station <> ?'
-
-        self.cur.execute(sql2, (station,))
-        self.cur.execute(sql, (station,))
-        self.cur.execute(sql3, (station,))
+        sql3 = f'INSERT OR REPLACE INTO main.RelLog_T SELECT * FROM GOLD.RelLog_T ' \
+               f'WHERE GOLD.RelLog_T.removed = 0 and GOLD.RelLog_T.Station <> ?'
+        sql4 = f'delete from gold.RelLog_T WHERE PK in (SELECT PK FROM main.RelLog_T WHERE main.RelLog_T.removed = 1)'
+        sql5 = f'delete from main.RelLog_T WHERE PK in (SELECT PK FROM gold.RelLog_T WHERE gold.RelLog_T.removed = 1)'
+        self.cur.execute(sql2, (self.station,))
+        self.cur.execute(sql, (self.station,))
+        self.cur.execute(sql3, (self.station,))
+        self.cur.execute(sql4, (self.station,))
+        self.cur.execute(sql5, (self.station,))
         self.con.commit()
+        self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
+
+    def sync_fa_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
+        """
+        this will upload data from a specific station to gold and download from gold data that doesn't below to
+        this station
+        :param cutoff_time: cut off time should be saved as user setting, if get nonthing form user setting,
+        then use default 0
+        :param golden_db_address: database address
+        :param station: station name
+        :return: bool
+        """
+        if not isinstance(golden_db_address, str):
+            return False
+        if not isinstance(self.station, str):
+            return False
+        self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
+        sql = f'INSERT OR REPLACE INTO GOLD.FALog_T SELECT * FROM main.FALog_T WHERE removed = 0 and Station = ?'
+        sql3 = f'INSERT OR REPLACE INTO main.FALog_T ' \
+               f'SELECT * FROM GOLD.FALog_T WHERE GOLD.FALog_T.removed = 0 and GOLD.FALog_T.Station <> ?'
+        sql4 = f'delete from GOLD.FALog_T WHERE PK in (SELECT PK FROM main.FALog_T WHERE main.FALog_T.removed = 1)'
+        sql5 = f'delete from main.FALog_T WHERE PK in (SELECT PK FROM GOLD.FALog_T WHERE GOLD.FALog_T.removed = 1)'
+        self.cur.execute(sql, (self.station,))
+        self.cur.execute(sql3, (self.station,))
+        self.cur.execute(sql4, (self.station,))
+        self.cur.execute(sql5, (self.station,))
+        self.con.commit()
+        self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
+
+    def sync_reference_tables(self, golden_db_address: str = None, cutoff_time: float = 0.0):
+        if not isinstance(golden_db_address, str):
+            return False
+        self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
+        sql = f'INSERT OR REPLACE INTO GOLD.RelStress_T SELECT * FROM main.RelStress_T WHERE removed = 0'
+        sql3 = f'INSERT OR REPLACE INTO main.RelStress_T ' \
+               f'SELECT * FROM GOLD.RelStress_T WHERE GOLD.RelStress_T.removed = 0'
+        self.cur.execute(sql)
+        self.cur.execute(sql3)
+        self.con.commit()
+        sql = f'INSERT OR REPLACE INTO GOLD.Config_T SELECT * FROM main.Config_T WHERE removed = 0'
+        sql3 = f'INSERT OR REPLACE INTO main.Config_T SELECT * FROM GOLD.Config_T WHERE GOLD.Config_T.removed = 0'
+        self.cur.execute(sql)
+        self.cur.execute(sql3)
+        self.con.commit()
+        sql = f'INSERT OR REPLACE INTO GOLD.FailureMode_T SELECT * FROM main.FailureMode_T WHERE removed = 0'
+        sql3 = f'INSERT OR REPLACE INTO main.FailureMode_T ' \
+               f'SELECT * FROM GOLD.FailureMode_T WHERE GOLD.FailureMode_T.removed = 0'
+        self.cur.execute(sql)
+        self.cur.execute(sql3)
+        self.con.commit()
+        self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
 
     def insert_to_failure_log_table(self):
         current_time = dt.datetime.now().timestamp()
@@ -1535,7 +1538,7 @@ class StatusSummary:
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk
-                            and row.get("FailureMode"),
+                                        and row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
