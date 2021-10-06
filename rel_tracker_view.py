@@ -127,28 +127,38 @@ class rel_tracker_view:
 
         layout_button_column = [
             [sg.B("Add", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab"),
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="register new units in batch"),
              sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab")
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="select or enter existing units then fill in WIP in 'register new unit' tab ")
              ],
             [sg.B("Reset", size=(15, 1), pad=(5, 2),
-                  disabled=False, disabled_button_color="#ababab"),
+                  disabled=False, disabled_button_color="#ababab",
+                  tooltip="reset filter"),
              sg.B("Update", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab")],
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="only available in update mode")],
             [sg.B("CheckIn", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab"),
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="check in selected units to new checkpoints \n"
+                          "Note: only available to latest status row"),
              sg.B("Checkout", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab")
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="checkout current checkpoint to indicate completion of checkpoint")
              ],
             [sg.B("Delete", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab"),
              sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
-                  disabled=False, disabled_button_color="#ababab")
+                  disabled=False, disabled_button_color="#ababab",
+                  tooltip="only for demo, disabled for normal use")
              ],
             [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab"),
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="assign selected row to WIP: 'FA' "),
              sg.B("Show Summary", size=(15, 1), pad=(5, 2),
-                  disabled=False, disabled_button_color="#ababab")
+                  disabled=False, disabled_button_color="#ababab",
+                  tooltip="generate a summary to show test status")
              ]
         ]
         button_column = sg.Column(layout=layout_button_column,

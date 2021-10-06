@@ -732,6 +732,18 @@ class DBsqlite:
                     return a
 
     @property
+    def on_going_wip(self):
+        sql = " SELECT WIP, min(StartTimestamp) as Start, " \
+              " EndTimestamp is Null as On_going, COUNT(DISTINCT SerialNumber) as Count from RelLog_T" \
+              " WHERE removed = 0 " \
+              " GROUP By WIP, EndTimestamp is Null "
+        results = self.cur.execute(sql).fetchall()
+        if results:
+            return [dict(result) for result in results]
+        else:
+            return [dict()]
+
+    @property
     def program_list(self):
         if self.cur:
             sql = "SELECT Distinct Program FROM Config_T "

@@ -700,7 +700,7 @@ class data_log_vc:
                             new_dir = os.path.join(self.output_folder, tag[0], tag[1], tag[2], tag[3], tag[5], tag[6])
                         else:
                             new_dir = os.path.join(self.output_folder, tag[1], tag[2], tag[3], tag[5], tag[6])
-                        new_name = tag[4]+"_"+os.path.basename(file[0])
+                        new_name = tag[4] + "_" + os.path.basename(file[0])
                     else:
                         non_processed += 1
                         new_dir = os.path.join(self.input_folder, "Non_Processed")
@@ -1153,6 +1153,16 @@ class summary_table_vc:
         self.stress_group = self.summary.group_by_stress()
         self.window = self.generate_tree_view()
 
+    @property
+    def on_going_wip_table_date(self):
+        datasource = rel_tracker_app.dbmodel.on_going_wip
+        data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
+                 dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
+                 row.get("Start")] for row in
+                datasource]
+        data.sort(key=lambda x: x[3], reverse=True)
+        return data
+
     @staticmethod
     def all_are_empty(a: list = None):
         if a:
@@ -1199,14 +1209,28 @@ class summary_table_vc:
              ],
         ]
         tree_row_col = sg.Column(layout=tree_col_layout, scrollable=False, expand_y=True, expand_x=True,
-                                 size=(int(1000 * rel_tracker_view.scale), int(600 * rel_tracker_view.scale)))
+                                 size=(int(1000 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
         layout = [[sg.Text('Current Status, fail/total (on-going)')],
                   [tree_row_col],
+                  [sg.Text("ongoing wips")],
+                  [self.generate_on_going_wip_table(), sg.Stretch()],
+                  [sg.VStretch()],
                   [sg.CloseButton("Quit")]]
         window = sg.Window('Quick Summary', layout, finalize=True, modal=True)
         if self.master:
             window.TKroot.transient(master=self.master.TKroot.winfo_toplevel())
         return window
+
+    def generate_on_going_wip_table(self):
+        table_col = ['WIP', 'On-going', 'unit count', 'StartTime', 'StartTimestamp']
+        show_heading = [True, True, True, True, False]
+        table_value = self.on_going_wip_table_date
+        table_view = sg.Table(values=table_value, visible_column_map=show_heading,
+                              headings=table_col,
+                              expand_x=True, num_rows=10, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white",
+                              enable_events=True, key="-wip_select-", pad=(5, 10), hide_vertical_scroll=True)
+        return table_view
 
     def show(self):
         while True:  # the event loop
