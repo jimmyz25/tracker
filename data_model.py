@@ -20,7 +20,7 @@ class DBsqlite:
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
-                       for _ in range(10000)]
+                       for _ in range(100)]
         self.filter_set.update({"serial_number_list": a_lot_of_sn})
 
     def sql_filter_str(self, kwp: dict, final=True, strict=False):

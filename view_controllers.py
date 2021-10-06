@@ -18,10 +18,13 @@ class rel_tracker_app:
     sg.SetOptions(font='Arial 12', element_padding=(2, 2), element_size=(35, 1),
                   auto_size_buttons=False, input_elements_background_color="#f7f7f7", auto_size_text=True)
     while True:
-        if DBsqlite.ok2use(address):
-            dbmodel = DBsqlite(address, station=station)
-            settings.update({"-Local_Database-": address})
-            break
+        if address:
+            if DBsqlite.ok2use(address):
+                dbmodel = DBsqlite(address, station=station)
+                settings.update({"-Local_Database-": address})
+                break
+            else:
+                address = sg.popup_get_file("please select database file")
         else:
             address = sg.popup_get_file("please select database file")
 
