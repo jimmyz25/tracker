@@ -174,7 +174,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(130, 5), background_color="white",expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
@@ -189,7 +189,7 @@ class rel_tracker_view:
             [sg.Txt("")]
         ]
         status_column = sg.Column(layout=layout_status_column,
-                                  size=(int(250 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
+                                  size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
                                   key="-status-column")
         layout = [
             [self.__facebook__()],
