@@ -287,16 +287,6 @@ class DBsqlite:
                     return False
                 if not SnModel(sn, self).is_latest_row(pk):
                     return False
-                # sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
-                #       " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
-                #       " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
-                #       " and RelLog_T.removed = 0" \
-                #       " GROUP BY SerialNumber ) as A " \
-                #       " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
-                #       " WHERE RelLog_T.PK = ? " \
-                #       " LIMIT 1"
-                # result = self.cur.execute(sql, (sn, pk)).fetchone()
-                # if result:
 
             return True
 
@@ -320,17 +310,6 @@ class DBsqlite:
                     return False
                 if not SnModel(sn, self).is_latest_row(pk):
                     return False
-                # sql = " SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.EndTimestamp" \
-                #       " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
-                #       " StartTimestamp,SerialNumber from RelLog_T WHERE SerialNumber = ?" \
-                #       " and RelLog_T.removed = 0" \
-                #       " GROUP BY SerialNumber ) as A " \
-                #       " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
-                #       " WHERE RelLog_T.PK = ? " \
-                #       " LIMIT 1"
-                # result = self.cur.execute(sql, (sn, pk)).fetchone()
-                # if result:
-
             return True
 
     @property
@@ -343,33 +322,33 @@ class DBsqlite:
     def stress_str(self):
         return " ".join([str(self.filter_set.get("stress", "")), str(self.filter_set.get("checkpoint", ""))])
 
-    @property
-    def cache_sn_table(self):
-        sql = f'SELECT * FROM Config_SN_T ORDER BY DateAdded DESC LIMIT 50000'
-        results = self.cur.execute(sql).fetchall()
-        return results
+    # @property
+    # def cache_sn_table(self):
+    #     sql = f'SELECT * FROM Config_SN_T ORDER BY DateAdded DESC LIMIT 50000'
+    #     results = self.cur.execute(sql).fetchall()
+    #     return results
 
-    @property
-    def cache_config_table(self):
-        sql = f'SELECT * FROM Config_T'
-        results = self.cur.execute(sql).fetchall()
-        return results
-
-    @property
-    def cache_wip_table(self):
-        sql = f'SELECT * FROM WIP_Status_T'
-        results = self.cur.execute(sql).fetchall()
-        return results
-
-    @property
-    def cache_stress_table(self):
-        sql = f'SELECT * FROM RelStress_T'
-        results = self.cur.execute(sql).fetchall()
-        return results
+    # @property
+    # def cache_config_table(self):
+    #     sql = f'SELECT * FROM Config_T'
+    #     results = self.cur.execute(sql).fetchall()
+    #     return results
+    #
+    # @property
+    # def cache_wip_table(self):
+    #     sql = f'SELECT * FROM WIP_Status_T'
+    #     results = self.cur.execute(sql).fetchall()
+    #     return results
+    #
+    # @property
+    # def cache_stress_table(self):
+    #     sql = f'SELECT * FROM RelStress_T'
+    #     results = self.cur.execute(sql).fetchall()
+    #     return results
 
     @property
     def cache_rel_log_table(self, timestamp: float = 0):
-        sql = f'SELECT * FROM RelLog_T WHERE StartTimestamp>{timestamp}'
+        sql = f'SELECT * FROM RelLog_T WHERE StartTimestamp>{timestamp} and removed = 0'
         results = self.cur.execute(sql).fetchall()
         return results
 
@@ -378,7 +357,8 @@ class DBsqlite:
         sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
               self.sql_filter_str({
                   "SerialNumber": self.filter_set.get("serial_number"),
-                  "FK_RelStress": self.selected_stress_pks
+                  "FK_RelStress": self.selected_stress_pks,
+                  "removed": 0
               })
         results = self.cur.execute(sql).fetchall()
         if results is None:
@@ -451,7 +431,8 @@ class DBsqlite:
         if self.cur:
             sql = "SELECT FailureMode From FALog_T " + self.sql_filter_str({
                 "SerialNumber": self.filter_set.get("serial_number"),
-                "FK_RelStress": self.selected_stress_pks
+                "FK_RelStress": self.selected_stress_pks,
+                "removed": 0
             })
             result_existing = self.cur.execute(sql).fetchall()
             existing = set(result["FailureMode"] for result in result_existing)
@@ -564,7 +545,7 @@ class DBsqlite:
             "FK_Config": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
             "Station": self.display_setting.get("station_filter"),
-            "Tagger_Log_T.removed": 0
+            "Tagger_Log_T.removed": 0,
         }
         if self.cur:
             sql = f'SELECT Tagger_Log_T.PK,Tagger_Log_T.WIP, Config_T.Config,Tagger_Log_T.SerialNumber,' \
@@ -847,7 +828,6 @@ class DBsqlite:
         :param cutoff_time: cut off time should be saved as user setting, if get nonthing form user setting,
         then use default 0
         :param golden_db_address: database address
-        :param station: station name
         :return: bool
         """
         if not isinstance(golden_db_address, str):
@@ -864,11 +844,12 @@ class DBsqlite:
                f'WHERE GOLD.RelLog_T.removed = 0 and GOLD.RelLog_T.Station <> ?'
         sql4 = f'delete from gold.RelLog_T WHERE PK in (SELECT PK FROM main.RelLog_T WHERE main.RelLog_T.removed = 1)'
         sql5 = f'delete from main.RelLog_T WHERE PK in (SELECT PK FROM gold.RelLog_T WHERE gold.RelLog_T.removed = 1)'
+        self.cur.execute(sql5)
+        self.cur.execute(sql4)
         self.cur.execute(sql2, (self.station,))
         self.cur.execute(sql, (self.station,))
         self.cur.execute(sql3, (self.station,))
-        self.cur.execute(sql4, (self.station,))
-        self.cur.execute(sql5, (self.station,))
+
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
 
@@ -879,7 +860,6 @@ class DBsqlite:
         :param cutoff_time: cut off time should be saved as user setting, if get nonthing form user setting,
         then use default 0
         :param golden_db_address: database address
-        :param station: station name
         :return: bool
         """
         if not isinstance(golden_db_address, str):
@@ -892,10 +872,39 @@ class DBsqlite:
                f'SELECT * FROM GOLD.FALog_T WHERE GOLD.FALog_T.removed = 0 and GOLD.FALog_T.Station <> ?'
         sql4 = f'delete from GOLD.FALog_T WHERE PK in (SELECT PK FROM main.FALog_T WHERE main.FALog_T.removed = 1)'
         sql5 = f'delete from main.FALog_T WHERE PK in (SELECT PK FROM GOLD.FALog_T WHERE GOLD.FALog_T.removed = 1)'
+        self.cur.execute(sql5)
+        self.cur.execute(sql4)
         self.cur.execute(sql, (self.station,))
         self.cur.execute(sql3, (self.station,))
-        self.cur.execute(sql4, (self.station,))
-        self.cur.execute(sql5, (self.station,))
+        self.con.commit()
+        self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
+
+    def sync_tagger_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
+        """
+        this will upload data from a specific station to gold and download from gold data that doesn't below to
+        this station
+        :param cutoff_time: cut off time should be saved as user setting, if get nonthing form user setting,
+        then use default 0
+        :param golden_db_address: database address
+        :return: bool
+        """
+        if not isinstance(golden_db_address, str):
+            return False
+        if not isinstance(self.station, str):
+            return False
+        self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
+        sql = f'INSERT OR REPLACE INTO GOLD.Tagger_Log_T SELECT * FROM main.Tagger_Log_T' \
+              f' WHERE removed = 0 and Station = ?'
+        sql3 = f'INSERT OR REPLACE INTO main.Tagger_Log_T ' \
+               f'SELECT * FROM GOLD.Tagger_Log_T WHERE GOLD.Tagger_Log_T.removed = 0 and GOLD.Tagger_Log_T.Station <> ?'
+        sql4 = f'delete from GOLD.Tagger_Log_T WHERE PK in ' \
+               f'(SELECT PK FROM main.Tagger_Log_T WHERE main.Tagger_Log_T.removed = 1)'
+        sql5 = f'delete from main.Tagger_Log_T WHERE PK in ' \
+               f' (SELECT PK FROM GOLD.Tagger_Log_T WHERE GOLD.Tagger_Log_T.removed = 1)'
+        self.cur.execute(sql5)
+        self.cur.execute(sql4)
+        self.cur.execute(sql, (self.station,))
+        self.cur.execute(sql3, (self.station,))
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
 
@@ -944,11 +953,17 @@ class DBsqlite:
                 self.con.commit()
 
     def delete_from_failure_log_table(self):
-        if isinstance(self.filter_set.get("selected_pks"), list):
-            for pk in self.filter_set.get("selected_pks"):
-                sql = f"DELETE FROM FALog_T WHERE PK = ?"
-                self.cur.execute(sql, (pk,))
-            self.con.commit()
+        for pk in self.filter_set.get("selected_pks"):
+            if self.__delete_from_table__("FALog_T", {"PK": pk}):
+                self.con.commit()
+            else:
+                self.con.rollback()
+
+        # if isinstance(self.filter_set.get("selected_pks"), list):
+        #     for pk in self.filter_set.get("selected_pks"):
+        #         sql = f"DELETE FROM FALog_T WHERE PK = ?"
+        #         self.cur.execute(sql, (pk,))
+        #     self.con.commit()
 
     def update_failure_log_table(self, **log):
         if isinstance(self.filter_set.get("selected_pks"), list):
@@ -1149,25 +1164,15 @@ class DBsqlite:
 
     def delete_from_rellog_table(self):
         for pk in self.filter_set.get("selected_pks"):
-            # result = self.cur.execute("SELECT SerialNumber from RelLog_T Where PK = ?  ", (pk,)).fetchone()
-            #
-            # if result:
             if self.__delete_from_table__("RelLog_T", {"PK": pk}):
                 self.con.commit()
-                # sn = result["SerialNumber"]
-                #
-                # result2 = self.cur.execute("SELECT Max(StartTimestamp) as Timestamp from RelLog_T WHERE "
-                #                            "SerialNumber = ? and removed = 0", (sn,)).fetchone()
-                # condition = {"SerialNumber": sn}
-                # if result2:
-                #     timestamp = result2["Timestamp"]
-                #     log = {"DateAdded": timestamp, "DateChanged": timestamp}
-                #     if self.__update_to_table__("Config_SN_T", condition, **log):
-                #         self.con.commit()
-                #     else:
-                #         self.con.rollback()
-                # else:
-                #     self.con.rollback()
+            else:
+                self.con.rollback()
+
+    def delete_from_tagger_log_table(self):
+        for pk in self.filter_set.get("selected_pks"):
+            if self.__delete_from_table__("Tagger_Log_T", {"PK": pk}):
+                self.con.commit()
             else:
                 self.con.rollback()
 
@@ -1459,7 +1464,6 @@ class SnModel:
               " GROUP BY SerialNumber LIMIT 1) as A " \
               " on A.StartTimestamp = RelLog_T.StartTimestamp and A.SerialNumber = RelLog_T.SerialNumber" \
               " WHERE RelLog_T.SerialNumber = ? LIMIT 1"
-        # sql = f'SELECT PK FROM RelLog_T where SerialNumber = ? where removed = 0'
         result = self.database.cur.execute(sql, (self.serial_number, self.serial_number)).fetchone()
         if result:
             return result["PK"]
@@ -1517,7 +1521,7 @@ class StatusSummary:
             stress_str = stress_obj.rel_stress
             # print(stress_obj.id, grouped_stress.get(stress_str), stress_str, grouped_stress)
             if stress_str in stress_str_list:
-                pre = grouped_stress.get(stress_str)
+                # pre = grouped_stress.get(stress_str)
                 grouped_stress.get(stress_str).append(stress_obj)
                 # grouped_stress.update({stress_str: pre.append(stress_obj)})
             else:
@@ -1538,7 +1542,7 @@ class StatusSummary:
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk
-                                        and row.get("FailureMode"),
+                            and row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,

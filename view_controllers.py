@@ -107,7 +107,6 @@ class preference_vc:
     def show(self):
         while True:  # the event loop
             event, values = self.window.read()
-            print (event, values)
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
                 break
@@ -116,13 +115,11 @@ class preference_vc:
             elif event == "Sync with Golden":
                 print("sync with golden")
                 gold = rel_tracker_app.settings.get("-Golden_Database-")
-                print(gold)
-
                 rel_tracker_app.dbmodel.delete_trigger()
                 rel_tracker_app.dbmodel.sync_reference_tables(golden_db_address=gold)
                 rel_tracker_app.dbmodel.sync_rel_log_table(golden_db_address=gold)
                 rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
-
+                rel_tracker_app.dbmodel.sync_tagger_log_table(golden_db_address=gold)
                 #
                 rel_tracker_app.dbmodel.station = rel_tracker_app.settings.get("-Local_Database-")
             elif event == "Stress Setup":
@@ -657,6 +654,11 @@ class data_log_vc:
                 self.timer_started = False
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 print("stop timer")
+            elif event == "Delete":
+                # delete_from_tagger_log_table
+                rel_tracker_app.dbmodel.delete_from_tagger_log_table()
+                self.window["-data_table_select-"].update(values=self.tagger_table_data)
+                pass
             elif event.endswith("_Input-"):
                 rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
                 rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
@@ -702,6 +704,11 @@ class data_log_vc:
                     row = self.window["-data_table_select-"].get()[values.get('-data_table_select-')[0]]
                     self.selected_tagger_pk = row[0]
                     self.selected_endtime = row[8]
+                    # selected = [self.window['-highlighted_failures-']
+                    #                 .get()[index] for index in values.get('-highlighted_failures-')]
+                    #
+                    # selected_pk = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": [self.selected_tagger_pk]})
             elif event == "Offline Tag":
                 total = 0
                 non_processed = 0
@@ -759,6 +766,10 @@ class data_log_vc:
                 else:
                     self.window["End Timer"].update(disabled=True)
                 self.window["Start Timer"].update(disabled=True)
+            if len(values.get("-data_table_select-")) == 1:
+                self.window["Delete"].update(disabled=False)
+            else:
+                self.window["Delete"].update(disabled=True)
 
         self.close_window()
 
