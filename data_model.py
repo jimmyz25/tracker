@@ -947,21 +947,20 @@ class DBsqlite:
                     "WIP": SnModel(self.filter_set.get("serial_number"), self).wip,
                     "removed": 0
                 }
-                self.__insert_to_table__("FALog_T", **log)
-                self.con.commit()
+                if self.__insert_to_table__("FALog_T", **log):
+                    self.con.commit()
+                    return True
+                else:
+                    return False
 
     def delete_from_failure_log_table(self):
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("FALog_T", {"PK": pk}):
                 self.con.commit()
+                return True
             else:
                 self.con.rollback()
-
-        # if isinstance(self.filter_set.get("selected_pks"), list):
-        #     for pk in self.filter_set.get("selected_pks"):
-        #         sql = f"DELETE FROM FALog_T WHERE PK = ?"
-        #         self.cur.execute(sql, (pk,))
-        #     self.con.commit()
+                return False
 
     def update_failure_log_table(self, **log):
         if isinstance(self.filter_set.get("selected_pks"), list):
@@ -1164,15 +1163,19 @@ class DBsqlite:
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("RelLog_T", {"PK": pk}):
                 self.con.commit()
+                return True
             else:
                 self.con.rollback()
+                return False
 
     def delete_from_tagger_log_table(self):
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("Tagger_Log_T", {"PK": pk}):
                 self.con.commit()
+                return True
             else:
                 self.con.rollback()
+                return False
 
     def insert_to_stress_table(self, rel_checkpoint: str = None):
         if isinstance(rel_checkpoint, str):

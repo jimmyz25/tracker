@@ -407,10 +407,10 @@ class rel_log_vc:
                 user_input = sg.popup_ok_cancel(f"you are about to delete "
                                                 f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows")
                 if user_input == "OK":
-                    rel_tracker_app.dbmodel.delete_from_rellog_table()
-                    self.window['-table_select-'].update(values=self.table_data)
-                    self.row_selection = None
-                    print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
+                    if rel_tracker_app.dbmodel.delete_from_rellog_table():
+                        print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
+                        self.window['-table_select-'].update(values=self.table_data)
+                        self.row_selection = None
                 else:
                     sg.popup_ok("User Abort")
             # after each input, check app status and enable or disable buttons
@@ -1226,7 +1226,6 @@ class summary_table_vc:
     @property
     def on_going_wip_table_date(self):
         datasource = rel_tracker_app.dbmodel.on_going_wip
-        print(datasource)
         if len(datasource) > 1:
             data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
                      dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
