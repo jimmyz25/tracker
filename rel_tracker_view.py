@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 
+
 class rel_tracker_view:
     scale = 1
 
@@ -9,7 +10,7 @@ class rel_tracker_view:
     @staticmethod
     def welcome_page():
         layout1 = [
-            [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
+            [sg.Txt("Rel Logger", size=(5, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
                     auto_size_text=False, key="-version-")],
@@ -19,7 +20,7 @@ class rel_tracker_view:
         column1 = sg.Column(layout1, background_color="#4267B2",
                             size=(int(600 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
         layout = [[column1]]
-        window = sg.Window('Welcome Page', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=True,
+        window = sg.Window('Welcome Page', layout, keep_on_top=True, grab_anywhere=False, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         return window
@@ -61,7 +62,7 @@ class rel_tracker_view:
             [sg.Txt("Output Folder", size=15), sg.InputText(size=30, readonly=True,
                                                             key="-Output_Folder-"),
              sg.Stretch(),
-             sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), key="output_folder_browse", disabled=True,)],
+             sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), key="output_folder_browse", disabled=True, )],
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15), sg.InputText(size=30,
                                                               readonly=True,
@@ -160,7 +161,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
-        output_view = sg.Output(size=(130, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(130, 5), background_color="white", expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
@@ -376,7 +377,7 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(150, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -523,7 +524,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(120, 5), background_color="white",expand_x=True, key="-output-")
+        output_view = sg.Output(size=(120, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -560,4 +561,3 @@ class rel_tracker_view:
         window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window
-

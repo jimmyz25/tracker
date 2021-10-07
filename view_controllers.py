@@ -79,6 +79,7 @@ class welcome_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.welcome_page()
+        # self.show()
 
     def show(self):
         if sqlite3.sqlite_version_info[0] < 3:

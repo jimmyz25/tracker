@@ -1003,7 +1003,7 @@ class DBsqlite:
         }
         if self.__delete_from_table__("FailureMode_T", condition):
             self.con.commit()
-            print (f'{self.filter_set.get("failure_mode")} get deleted')
+            print(f'{self.filter_set.get("failure_mode")} get deleted')
         else:
             self.con.rollback()
 
@@ -1081,7 +1081,7 @@ class DBsqlite:
             else:
                 self.con.rollback()
                 print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
-        print (f'{count} units checkin to {str(StressModel(stress_pk,self))}')
+        print(f'{count} units checkin to {str(StressModel(stress_pk, self))}')
 
     def checkout_current_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
@@ -1164,7 +1164,7 @@ class DBsqlite:
                         count = count + 1
                     else:
                         self.con.rollback()
-        print (f"{count} units added to WIP: {wip}, now you can start tracking them as a group")
+        print(f"{count} units added to WIP: {wip}, now you can start tracking them as a group")
 
     def delete_from_rellog_table(self):
         count = 0
@@ -1556,7 +1556,7 @@ class StatusSummary:
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk
-                            and row.get("FailureMode"),
+                                        and row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,

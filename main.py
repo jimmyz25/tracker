@@ -5,7 +5,6 @@ if __name__ == '__main__':
     loading_page = welcome_vc()
     loading_page.show()
 
-
     first_view_setting = rel_tracker_app.settings.get("-first_view-")
     if first_view_setting:
         if first_view_setting == "RelLog Station":
@@ -22,6 +21,4 @@ if __name__ == '__main__':
         else:
             next_view = app.view_list.pop()
             next_view.show()
-    # sys.exit()
-
-
+    # # sys.exit()
