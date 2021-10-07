@@ -102,7 +102,7 @@ class DBsqlite:
                     "station_filter": None,
                 }
             )
-
+            self.printout = None
             # self.cur.execute("UPDATE RelLog_T SET removed = a  WHERE  PK = \"aa\"")
 
     @classmethod
@@ -949,13 +949,18 @@ class DBsqlite:
                 }
                 if self.__insert_to_table__("FALog_T", **log):
                     self.con.commit()
+                    print(f"added {failure_mode} to {self.filter_set.get('serial_number')}")
 
     def delete_from_failure_log_table(self):
+        count = 0
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("FALog_T", {"PK": pk}):
                 self.con.commit()
+                count += 1
             else:
                 self.con.rollback()
+                print("error, delete is not completed")
+        print(f"{count} rows are deleted from failure_log")
 
     def update_failure_log_table(self, **log):
         if isinstance(self.filter_set.get("selected_pks"), list):
@@ -975,8 +980,9 @@ class DBsqlite:
                 "FailureMode": failure_mode,
                 "removed": 0
             }
-            self.__insert_to_table__("FailureMode_T", **log)
-            self.con.commit()
+            if self.__insert_to_table__("FailureMode_T", **log):
+                self.con.commit()
+                print(f'{failure_mode} created in Default group, move to other group as needed')
 
     def update_failure_mode_table(self, group_name: str = None):
         # this will not only update in failure_mode table but also update FA_Log
@@ -997,12 +1003,14 @@ class DBsqlite:
         }
         if self.__delete_from_table__("FailureMode_T", condition):
             self.con.commit()
+            print (f'{self.filter_set.get("failure_mode")} get deleted')
         else:
             self.con.rollback()
 
     def insert_new_to_rel_log_table(self):
         current_time = dt.datetime.now().timestamp()
         time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
+        count = 0
         if isinstance(self.filter_set.get("serial_number_list"), list):
             for sn in self.filter_set.get("serial_number_list"):
                 if not self.sn_exist(sn):
@@ -1032,15 +1040,18 @@ class DBsqlite:
                             log.update({"PK": str(uuid.uuid1())})
                             if self.__insert_to_table__("RelLog_T", **log):
                                 self.con.commit()
+                                count = count + 1
                             else:
                                 self.con.rollback()
                         else:
                             self.con.rollback()
+            print(f'{count} units are added to system')
 
     def checkin_to_new_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
         time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
         new_stress_pk = self.selected_stress_pks
+        count = 0
         if new_stress_pk:
             stress_pk = self.selected_stress_pks.pop()
         else:
@@ -1066,9 +1077,11 @@ class DBsqlite:
             }
             if self.__insert_to_table__("RelLog_T", **log):
                 self.con.commit()
+                count = count + 1
             else:
                 self.con.rollback()
                 print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
+        print (f'{count} units checkin to {str(StressModel(stress_pk,self))}')
 
     def checkout_current_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
@@ -1084,6 +1097,7 @@ class DBsqlite:
             }
             if self.__update_to_table__("RelLog_T", condition=condition, **log):
                 self.con.commit()
+                print(f'{self.cur.rowcount} rows checkout from current checkpoint')
             else:
                 self.con.rollback()
 
@@ -1112,11 +1126,6 @@ class DBsqlite:
             condition2 = {
                 "SerialNumber": result["SerialNumber"],
             }
-            # if date_added_to_config_sn_t > result["StartTimestamp"]:
-            #     # if config_sn_t records later info than updated row, do not update wip
-            #     wip = None
-            # else:
-            #     wip = self.filter_set.get("wip")
             log2 = {
                 "Config_FK": config_pk,
                 "SerialNumber": self.filter_set.get("serial_number"),
@@ -1126,6 +1135,7 @@ class DBsqlite:
             if self.__update_to_table__("Config_SN_T", condition2, **log2):
                 if self.__update_to_table__("RelLog_T", condition1, **log1):
                     self.con.commit()
+                    print(f"{self.cur.rowcount} row in rel log updated")
                 else:
                     self.con.rollback()
             else:
@@ -1134,6 +1144,7 @@ class DBsqlite:
 
     def assign_wip_row_rellog_table(self, wip: str = None):
         current_time = dt.datetime.now().timestamp()
+        count = 0
         if isinstance(self.filter_set.get("serial_number_list"), list):
             for sn in self.filter_set.get("serial_number_list"):
                 if self.sn_exist(sn):
@@ -1150,22 +1161,30 @@ class DBsqlite:
                     }
                     if self.__update_to_table__("RelLog_T", condition, **log):
                         self.con.commit()
+                        count = count + 1
                     else:
                         self.con.rollback()
+        print (f"{count} units added to WIP: {wip}, now you can start tracking them as a group")
 
     def delete_from_rellog_table(self):
+        count = 0
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("RelLog_T", {"PK": pk}):
                 self.con.commit()
+                count += 1
             else:
                 self.con.rollback()
+        print(f'{count} rows deleted from RelLog')
 
     def delete_from_tagger_log_table(self):
+        count = 0
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("Tagger_Log_T", {"PK": pk}):
                 self.con.commit()
+                count += 1
             else:
                 self.con.rollback()
+        print(f'{count} rows deleted from TaggerLog')
 
     def insert_to_stress_table(self, rel_checkpoint: str = None):
         if isinstance(rel_checkpoint, str):
@@ -1175,8 +1194,9 @@ class DBsqlite:
                 "RelCheckpoint": rel_checkpoint,
                 "removed": 0
             }
-            self.__insert_to_table__("RelStress_T", **log)
-            self.con.commit()
+            if self.__insert_to_table__("RelStress_T", **log):
+                self.con.commit()
+                print(f'{rel_checkpoint} added to {self.filter_set.get("stress")}')
 
     def update_stress_table(self, stress_name, checkpoints: list = None):
         # this will not only update in failure_mode table but also update FA_Log
@@ -1198,6 +1218,7 @@ class DBsqlite:
         }
         if self.__delete_from_table__("RelStress_T", condition):
             self.con.commit()
+            print(f'{checkpoints} deleted from {self.filter_set.get("stress")}')
         else:
             self.con.rollback()
 
@@ -1210,8 +1231,9 @@ class DBsqlite:
                 "Config": config_name,
                 "removed": 0
             }
-            self.__insert_to_table__("Config_T", **log)
-            self.con.commit()
+            if self.__insert_to_table__("Config_T", **log):
+                self.con.commit()
+                print(f'{config_name} added to {self.filter_set.get("program")} {self.filter_set.get("build")}')
 
     def update_config_table(self, config_name: str = None):
         # this will not only update in failure_mode table but also update FA_Log
@@ -1242,8 +1264,10 @@ class DBsqlite:
             "WIP": self.filter_set.get("wip"),
             "removed": 0
         }
-        self.__insert_to_table__("Tagger_Log_T", **log)
-        self.con.commit()
+        if self.__insert_to_table__("Tagger_Log_T", **log):
+            self.con.commit()
+            print(f'timer started for {self.filter_set.get("serial_number")}, '
+                  f'you may start parametric test, please make sure parametric raw data is generated before end timer')
 
     def end_timer_data_table(self, pk: str = None):
         if pk:
@@ -1261,7 +1285,7 @@ class DBsqlite:
                 }
                 if self.__update_to_table__("Tagger_Log_T", condition, **log):
                     self.con.commit()
-                    print("timer stopped")
+                    print(f"timer stopped. transfer data to 'Input_folder' to do Rel event tagging.")
                 else:
                     self.con.rollback()
 

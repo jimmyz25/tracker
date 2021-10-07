@@ -287,10 +287,10 @@ class rel_log_vc:
                 stress_popup = stress_select_vc(self.window)
                 stress_popup.show()
                 if rel_tracker_app.dbmodel.ready_to_checkin:
-                    print(rel_tracker_app.dbmodel.filter_set.get("note"))
+                    # print(rel_tracker_app.dbmodel.filter_set.get("note"))
                     rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
-                    print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} "
-                          f" moved to the following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
+                    # print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} "
+                    #       f" moved to the following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
@@ -377,7 +377,16 @@ class rel_log_vc:
                         self.window["-SN_Input-"].update(str(sn.serial_number))
                         self.window["-Config_Input-"].update(str(sn.config))
                         self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                        self.window["-WIP_Input-"].update(rel_tracker_app.dbmodel.filter_set.get("wip"))
+                        if rel_tracker_app.dbmodel.filter_set.get("wip") is None:
+                            wip = ""
+                        else:
+                            wip = rel_tracker_app.dbmodel.filter_set.get("wip")
+                        self.window["-WIP_Input-"].update(wip)
+                        if rel_tracker_app.dbmodel.filter_set.get("note") is None:
+                            note = ""
+                        else:
+                            note = rel_tracker_app.dbmodel.filter_set.get("note")
+                        self.window["-Note-"].update(note)
             elif event == "Enter Update Mode":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
@@ -696,7 +705,6 @@ class data_log_vc:
                 rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
                 self.timer_started = False
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
-                print("stop timer")
             elif event == "Delete":
                 # delete_from_tagger_log_table
                 rel_tracker_app.dbmodel.delete_from_tagger_log_table()
