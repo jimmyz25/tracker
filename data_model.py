@@ -463,7 +463,7 @@ class DBsqlite:
         if self.cur:
             sql = f'SELECT RelLog_T.PK,Config_T.Config, RelLog_T.WIP,RelLog_T.SerialNumber,' \
                   f'Station,StartTime,EndTime, RelStress_T.RelStress, ' \
-                  f'RelStress_T.RelCheckpoint ' \
+                  f'RelStress_T.RelCheckpoint,RelLog_T.Notes ' \
                   f'FROM RelLog_T ' \
                   f'  inner Join RelStress_T ON RelLog_T.FK_RelStress = RelStress_T.PK ' + \
                   f'  inner Join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
@@ -949,18 +949,13 @@ class DBsqlite:
                 }
                 if self.__insert_to_table__("FALog_T", **log):
                     self.con.commit()
-                    return True
-                else:
-                    return False
 
     def delete_from_failure_log_table(self):
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("FALog_T", {"PK": pk}):
                 self.con.commit()
-                return True
             else:
                 self.con.rollback()
-                return False
 
     def update_failure_log_table(self, **log):
         if isinstance(self.filter_set.get("selected_pks"), list):
@@ -1031,7 +1026,7 @@ class DBsqlite:
                             "EndTime": None,
                             "WIP": self.filter_set.get("wip"),
                             "removed": 0,
-                            "notes": self.filter_set.get("note")
+                            "Notes": self.filter_set.get("note")
                         }
                         if self.__insert_to_table__("Config_SN_T", **log):
                             log.update({"PK": str(uuid.uuid1())})
@@ -1066,10 +1061,9 @@ class DBsqlite:
                 "EndTime": None,
                 "WIP": result["WIP"],
                 "removed": 0,
-                "notes": None,
+                "Notes": self.filter_set.get("note"),
                 "ModiTimestamp": current_time
             }
-
             if self.__insert_to_table__("RelLog_T", **log):
                 self.con.commit()
             else:
@@ -1112,7 +1106,7 @@ class DBsqlite:
             log1 = {
                 "FK_RelStress": stress_pk,
                 "WIP": self.filter_set.get("wip"),
-                "notes": None,
+                "notes": self.filter_set.get("note"),
                 "ModiTimestamp": current_time
             }
             condition2 = {
@@ -1163,19 +1157,15 @@ class DBsqlite:
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("RelLog_T", {"PK": pk}):
                 self.con.commit()
-                return True
             else:
                 self.con.rollback()
-                return False
 
     def delete_from_tagger_log_table(self):
         for pk in self.filter_set.get("selected_pks"):
             if self.__delete_from_table__("Tagger_Log_T", {"PK": pk}):
                 self.con.commit()
-                return True
             else:
                 self.con.rollback()
-                return False
 
     def insert_to_stress_table(self, rel_checkpoint: str = None):
         if isinstance(rel_checkpoint, str):
@@ -1298,7 +1288,6 @@ class DBsqlite:
         values_tup = tuple(values)
         ques_mark = self.__construct_question_mark__(tablename)
         sql = "INSERT OR REPLACE INTO " + tablename + " (" + cols_str + ") VALUES " + ques_mark
-
         try:
             self.cur.execute(sql, values_tup)
         except sqlite3.Error as e:

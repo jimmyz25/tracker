@@ -201,7 +201,7 @@ class rel_log_vc:
             else:
                 datasource = rel_tracker_app.dbmodel.rel_log_table_view_data
             data = [[row.get("PK"), row.get("Config"), row.get("WIP"), row.get("SerialNumber"), row.get("RelStress"),
-                     row.get("RelCheckpoint"), row.get("StartTime"), row.get("EndTime"), row.get("Note")] for row in
+                     row.get("RelCheckpoint"), row.get("StartTime"), row.get("EndTime"), row.get("Notes")] for row in
                     datasource]
             # data.sort(key=lambda x: x[3])
             return data
@@ -275,20 +275,25 @@ class rel_log_vc:
                 rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
 
             elif event == "CheckIn":
+                # print(event,values)
+                # print(values.get("-Note-"))
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
-                        "station": rel_tracker_app.settings.get("-Station_Name-")
+                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "note": values.get("-Note-")
                     }
                 )
                 stress_popup = stress_select_vc(self.window)
                 stress_popup.show()
                 if rel_tracker_app.dbmodel.ready_to_checkin:
+                    print(rel_tracker_app.dbmodel.filter_set.get("note"))
                     rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
                     print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} "
                           f" moved to the following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
+
 
                 else:
                     print("not able to checkin")
@@ -364,15 +369,16 @@ class rel_log_vc:
                             "program": sn.config.program,
                             "build": sn.config.build,
                             "config": sn.config.config_name,
-                            "wip": sn.wip,
+                            "wip": selected[0][2],
                             "stress": selected[0][4],
                             "checkpoint": selected[0][5],
-                            "serial_number": sn.serial_number
+                            "serial_number": sn.serial_number,
+                            "note": selected[0][-1]
                         })
                         self.window["-SN_Input-"].update(str(sn.serial_number))
                         self.window["-Config_Input-"].update(str(sn.config))
                         self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
-                        self.window["-WIP_Input-"].update(str(sn.wip))
+                        self.window["-WIP_Input-"].update(rel_tracker_app.dbmodel.filter_set.get("wip"))
             elif event == "Enter Update Mode":
                 self.window['Existing Units'].select()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": True})
@@ -407,10 +413,10 @@ class rel_log_vc:
                 user_input = sg.popup_ok_cancel(f"you are about to delete "
                                                 f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows")
                 if user_input == "OK":
-                    if rel_tracker_app.dbmodel.delete_from_rellog_table():
-                        print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
-                        self.window['-table_select-'].update(values=self.table_data)
-                        self.row_selection = None
+                    rel_tracker_app.dbmodel.delete_from_rellog_table()
+                    print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
+                    self.window['-table_select-'].update(values=self.table_data)
+                    self.row_selection = None
                 else:
                     sg.popup_ok("User Abort")
             # after each input, check app status and enable or disable buttons
@@ -441,7 +447,7 @@ class rel_log_vc:
                 self.window["Update"].update(disabled=False)
             else:
                 self.window["Update"].update(disabled=True)
-            if rel_tracker_app.dbmodel.ready_to_checkin:
+            if rel_tracker_app.dbmodel.ready_to_checkin and self.row_selection:
                 self.window["CheckIn"].update(disabled=False)
             else:
                 self.window["CheckIn"].update(disabled=True)
