@@ -294,8 +294,6 @@ class rel_log_vc:
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
-
-
                 else:
                     print("not able to checkin")
             elif event == "Checkout":
