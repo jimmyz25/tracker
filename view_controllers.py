@@ -245,7 +245,8 @@ class rel_log_vc:
                 if user_input == "OK":
                     rel_tracker_app.dbmodel.filter_set.update(
                         {
-                            "station": rel_tracker_app.settings.get("-Station_Name-")
+                            "station": rel_tracker_app.settings.get("-Station_Name-"),
+                            "note": values.get("-New-Note-")
                         }
                     )
                     rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
