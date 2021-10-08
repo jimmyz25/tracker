@@ -512,6 +512,8 @@ class rel_tracker_view:
                                    "belongs to"),
                       sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            disabled=True, disabled_button_color="#ababab"),
+                      sg.B("CSV Compiler", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                           disabled=False, disabled_button_color="#ababab"),
                       ]
 
         table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'folder group',
@@ -560,4 +562,44 @@ class rel_tracker_view:
         ]
         window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
+        return window
+
+    @staticmethod
+    def file_view():
+        table_col = ["     " + str(i) + "     " for i in range(10)]
+        table_value = [["" for row in range(10)] for _ in range(1)]
+        table_view = sg.Table(values=table_value,
+                              headings=table_col, select_mode=sg.TABLE_SELECT_MODE_NONE,
+                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white",
+                              enable_events=True, key="-file_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
+
+        setting_col_layout = [
+            [sg.Txt("encode"), sg.Stretch(), sg.In(size=15, key="encode")],
+            [sg.Txt("start_row"), sg.Stretch(), sg.In(size=15, key="start_row")],
+            [sg.Txt("start_time"), sg.Stretch(), sg.In(size=15, key="start_time")],
+            [sg.Txt("end_time"), sg.Stretch(), sg.In(size=15, key="end_time")],
+            [sg.Txt("serial_number"), sg.Stretch(), sg.In(size=15, key="serial_number")],
+            [sg.Txt("separator"), sg.Stretch(), sg.In(size=15, key="separator")],
+            [sg.Txt("skip_keyword"), sg.Stretch(), sg.In(size=15, key="skip_keyword")],
+            [sg.Txt("skip_row"), sg.Stretch(), sg.In(size=15, key="skip_row")],
+            [sg.B("Re_generate_view")]
+        ]
+        setting_col = sg.Column(setting_col_layout)
+
+        layout1 = [
+            [sg.Txt("data tagging station settings:")],
+            [sg.Txt("File Preview", size=15), sg.InputText(size=30, readonly=True, key="-Preview-"), sg.Stretch(),
+             sg.FileBrowse(size=(10, 1), enable_events=True,
+                           target=(sg.ThisRow, -2), disabled=False), sg.B("Open File")],
+            [sg.Txt("Scan all files", size=15), sg.InputText(size=30, readonly=True,
+                                                             key="-Scan_Folder-", enable_events=True),
+             sg.Stretch(),
+             sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), disabled=False, ), sg.B("Scan Folder")],
+            [sg.HorizontalSeparator()],
+            [table_view, setting_col],
+        ]
+
+        window = sg.Window('CSV Compiler', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False)
         return window

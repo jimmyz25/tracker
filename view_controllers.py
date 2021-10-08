@@ -6,6 +6,7 @@ from rel_tracker_view import *
 from data_model import *
 import sys
 import os
+from file_clean_up import *
 
 
 class rel_tracker_app:
@@ -290,8 +291,8 @@ class rel_log_vc:
                 if rel_tracker_app.dbmodel.ready_to_checkin:
                     # print(rel_tracker_app.dbmodel.filter_set.get("note"))
                     rel_tracker_app.dbmodel.checkin_to_new_checkpoint_rellog_table()
-                    # print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} "
-                    #       f" moved to the following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
+                    # print(f"{rel_tracker_app.dbmodel.filter_set.get('serial_number_list')} " f" moved to the
+                    # following checkpoint: {rel_tracker_app.dbmodel.filter_set.get('checkpoint')}")
                     rel_tracker_app.reset_window_inputs(self.window)
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
@@ -695,6 +696,9 @@ class data_log_vc:
                 preference = preference_vc()
                 rel_tracker_app.view_list.append(preference)
                 break
+            elif event == "CSV Compiler":
+                file_view = file_view_vc()
+                file_view.show()
             elif event == "Start Timer":
                 rel_tracker_app.dbmodel.filter_set.update({"station": rel_tracker_app.station})
                 if self.window['-tag_group-'].get():
@@ -1362,6 +1366,33 @@ class failure_mode_summary_vc:
             elif event == "Generate Summary":
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
+
+    def close_window(self):
+        self.window.close()
+
+
+class file_view_vc:
+
+    def __init__(self, master: sg.Window = None):
+        view = rel_tracker_view(rel_tracker_app.settings)
+        self.window = view.file_view()
+        self.master = master
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+
+    def show(self):
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            if event == "Open File":
+                address = self.window["-Preview-"].get()
+                file = RawData()
+                preview_data = file.auto_parse(address)
+                print(preview_data)
+                self.window["-file_preview_window-"].update(values=preview_data)
+            print(event, values)
+        self.close_window()
 
     def close_window(self):
         self.window.close()
