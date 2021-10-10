@@ -132,7 +132,7 @@ class RawData:
                         df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
                             .map(lambda x: dt.datetime.strptime(x, self.settings.get("timestamp_format")).timestamp(),
                                  'ignore')
-                    except ValueError:
+                    except KeyError:
                         print("cannot process timestamp")
                         pass
             header = df.columns.tolist()
