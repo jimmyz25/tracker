@@ -575,15 +575,16 @@ class rel_tracker_view:
                               enable_events=True, key="-file_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
 
         setting_col_layout = [
-            [sg.Txt("encode"), sg.Stretch(), sg.In(size=15, key="encode")],
-            [sg.Txt("start_row"), sg.Stretch(), sg.In(size=15, key="start_row")],
-            [sg.Txt("start_time"), sg.Stretch(), sg.In(size=15, key="start_time")],
-            [sg.Txt("end_time"), sg.Stretch(), sg.In(size=15, key="end_time")],
-            [sg.Txt("serial_number"), sg.Stretch(), sg.In(size=15, key="serial_number")],
-            [sg.Txt("separator"), sg.Stretch(), sg.In(size=15, key="separator")],
-            [sg.Txt("skip_keyword"), sg.Stretch(), sg.In(size=15, key="skip_keyword")],
-            [sg.Txt("skip_row"), sg.Stretch(), sg.In(size=15, key="skip_row")],
-            [sg.B("Re_generate_view")]
+            [sg.Txt("encode"), sg.Stretch(), sg.Combo(values=[], size=15, key="encode")],
+            [sg.Txt("start_row"), sg.Stretch(), sg.Spin(values=[i for i in range(10)], size=15, key="start_row")],
+            [sg.Txt("start_time"), sg.Stretch(), sg.Combo(values=[],size=15, key="start_time")],
+            [sg.Txt("end_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="end_time")],
+            [sg.Txt("serial_number"), sg.Stretch(), sg.Combo(values=[],size=15, key="serial_number")],
+            [sg.Txt("separator"), sg.Stretch(), sg.Combo(values=[], size=15, key="separator")],
+            [sg.Txt("skip_keywords"), sg.Stretch(), sg.Input(size=15, key="skip_keywords", tooltip="separated by ; ")],
+            [sg.Txt("skip_rows"), sg.Stretch(), sg.Input(size=15, key="skip_rows", tooltip="separated by ;")],
+            [sg.Txt("timestamp format"),sg.Stretch(),sg.Combo(values=['%Y%m%d-%H%M%S'], key="timestamp_format", size=15)],
+            [sg.B("Regen Preview")]
         ]
         setting_col = sg.Column(setting_col_layout)
 

@@ -1377,8 +1377,30 @@ class file_view_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.file_view()
         self.master = master
+        self.file = RawData()
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+
+    #
+    # [sg.Txt("encode"), sg.Stretch(), sg.Combo(values=[], size=15, key="encode")],
+    # [sg.Txt("start_row"), sg.Stretch(), sg.Spin(values=[i for i in range(10)], size=15, key="start_row")],
+    # [sg.Txt("start_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="start_time")],
+    # [sg.Txt("end_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="end_time")],
+    # [sg.Txt("serial_number"), sg.Stretch(), sg.Combo(values=[], size=15, key="serial_number")],
+    # [sg.Txt("separator"), sg.Stretch(), sg.Combo(values=[], size=15, key="separator")],
+    # [sg.Txt("skip_keyword"), sg.Stretch(), sg.Input(size=15, key="skip_keyword", tooltip="separated by ; ")],
+    # [sg.Txt("skip_rows"), sg.Stretch(), sg.Input(size=15, key="skip_row", tooltip="separated by ;")],
+    def update_setting_view(self):
+
+        self.window["start_row"].update(value=self.file.settings.get("start_row"))
+        self.window["start_time"].update(values=self.file.settings.get("start_time_candi"),
+                                         value=self.file.settings.get("start_time_col"))
+        self.window["end_time"].update(values=self.file.settings.get("end_time_candi"),
+                                       value=self.file.settings.get("end_time_col"))
+        self.window["serial_number"].update(values=self.file.settings.get("sn_col_candi"),
+                                            value=self.file.settings.get("sn_col"))
+        self.window["encode"].update(value=self.file.settings.get("encode"))
+        self.window["separator"].update(value=self.file.settings.get("separator"))
 
     def show(self):
         while True:  # the event loop
@@ -1387,11 +1409,35 @@ class file_view_vc:
                 break
             if event == "Open File":
                 address = self.window["-Preview-"].get()
-                file = RawData()
-                preview_data = file.auto_parse(address)
-                print(preview_data)
+                preview_data = self.file.auto_parse(address)
                 self.window["-file_preview_window-"].update(values=preview_data)
-            print(event, values)
+                self.update_setting_view()
+
+            if event == "Regen Preview":
+                if self.window["skip_keywords"].get() != "":
+                    skip_keywords = self.window["skip_keywords"].get().split(",")
+                else:
+                    skip_keywords = None
+                if self.window["skip_rows"].get() != "":
+                    skip_rows = self.window["skip_rows"].get().split(",")
+                else:
+                    skip_rows = None
+                self.file.settings.update({
+                    "encode": self.window["encode"].get(),
+                    "start_row":  self.window["start_row"].get(),
+                    "end_row": -1,
+                    "start_keyword": self.window["start_time"].get(),
+                    "end_keyword": self.window["end_time"].get(),
+                    "serial_number_keyword": self.window["serial_number"].get(),
+                    "separator":  self.window["separator"].get(),
+                    "skip_keywords":  skip_keywords,
+                    "skip_rows":  skip_rows,
+                    "timestamp_format": self.window["timestamp_format"].get()
+                })
+                # print(self.file.settings)
+                preview_data = self.file.auto_parse(self.window["-Preview-"].get())
+                self.window["-file_preview_window-"].update(values=preview_data)
+                self.update_setting_view()
         self.close_window()
 
     def close_window(self):
