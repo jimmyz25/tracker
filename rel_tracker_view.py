@@ -156,15 +156,14 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(9)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col,
+                              headings=table_col,select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
-                              enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=True)
+                              enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
         # output_view = sg.Output(size=(130, 5), background_color="white", expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
-            [sg.Txt("Last Sync: 24min ago", key="-last_sync-")],
             [sg.Txt("Latest Checkpoint Only", size=20),
              sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
              sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],

@@ -227,7 +227,6 @@ class DBsqlite:
                     return log
             return [None, None, None]
 
-
     @property
     def ready_to_data_tagging(self):
         result = self.cur.execute("SELECT PK FROM Tagger_Log_T WHERE EndTimestamp is Null").fetchone()
@@ -956,22 +955,26 @@ class DBsqlite:
         time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
         if isinstance(self.filter_set.get("failure_mode"), list):
             for failure_mode in self.filter_set.get("failure_mode"):
-                uuid_str = str(uuid.uuid1())
-                log = {
-                    "PK": uuid_str,
-                    "FK_RelStress": self.selected_stress_pks.pop(),
-                    "Station": self.filter_set.get('station'),
-                    "SerialNumber": self.filter_set.get("serial_number"),
-                    "FailureGroup": self.filter_set.get("failure_group"),
-                    "FailureMode": failure_mode,
-                    "StartTimestamp": current_time,
-                    "StartTime": time_str,
-                    "WIP": SnModel(self.filter_set.get("serial_number"), self).wip,
-                    "removed": 0
-                }
-                if self.__insert_to_table__("FALog_T", **log):
-                    self.con.commit()
-                    print(f"added {failure_mode} to {self.filter_set.get('serial_number')}")
+                result = self.cur.execute("SELECT PK FROM FailureMode_T WHERE FailureMode = ?",
+                                          (failure_mode,)).fetchone()
+                if result:
+                    uuid_str = str(uuid.uuid1())
+                    log = {
+                        "PK": uuid_str,
+                        "FK_RelStress": self.selected_stress_pks.pop(),
+                        "Station": self.filter_set.get('station'),
+                        "SerialNumber": self.filter_set.get("serial_number"),
+                        "FailureGroup": self.filter_set.get("failure_group"),
+                        "FailureMode": failure_mode,
+                        "StartTimestamp": current_time,
+                        "FK_FailureMode": result["PK"],
+                        "StartTime": time_str,
+                        "WIP": SnModel(self.filter_set.get("serial_number"), self).wip,
+                        "removed": 0
+                    }
+                    if self.__insert_to_table__("FALog_T", **log):
+                        self.con.commit()
+                        print(f"added {failure_mode} to {self.filter_set.get('serial_number')}")
 
     def delete_from_failure_log_table(self):
         count = 0

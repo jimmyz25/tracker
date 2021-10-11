@@ -1434,14 +1434,14 @@ class file_view_vc:
                     skip_rows = None
                 self.file.settings.update({
                     "encode": self.window["encode"].get(),
-                    "start_row":  self.window["start_row"].get(),
+                    "start_row": self.window["start_row"].get(),
                     "end_row": -1,
                     "start_keyword": self.window["start_time"].get(),
                     "end_keyword": self.window["end_time"].get(),
                     "serial_number_keyword": self.window["serial_number"].get(),
-                    "separator":  self.window["separator"].get(),
-                    "skip_keywords":  skip_keywords,
-                    "skip_rows":  skip_rows,
+                    "separator": self.window["separator"].get(),
+                    "skip_keywords": skip_keywords,
+                    "skip_rows": skip_rows,
                     "timestamp_format": self.window["timestamp_format"].get()
                 })
                 # print(self.file.settings)
