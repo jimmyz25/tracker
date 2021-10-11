@@ -109,14 +109,23 @@ class preference_vc:
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
+        if self.window["-station-type-"].get() == "Data Tagging":
+            self.window["input_folder_browse"].update(disabled=False)
+            self.window["output_folder_browse"].update(disabled=False)
+        else:
+            self.window["input_folder_browse"].update(disabled=True)
+            self.window["output_folder_browse"].update(disabled=True)
         while True:  # the event loop
             event, values = self.window.read()
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
                 break
             elif event == "Save Preference":
-                rel_tracker_app.save_user_settings(self.window)
-                sg.popup_ok("user preference saved")
+                if self.window["-Station_Name-"].get() == "":
+                    sg.popup_error("station name cannot be empty")
+                else:
+                    rel_tracker_app.save_user_settings(self.window)
+                    sg.popup_ok("user preference saved")
             elif event == "Sync with Golden":
                 gold = rel_tracker_app.settings.get("-Golden_Database-")
                 user_input = sg.popup_ok_cancel(f"this operation will upload current station "
@@ -1420,6 +1429,7 @@ class file_view_vc:
                     skip_keywords = None
                 if self.window["skip_rows"].get() != "":
                     skip_rows = self.window["skip_rows"].get().split(",")
+                    print(skip_rows)
                 else:
                     skip_rows = None
                 self.file.settings.update({

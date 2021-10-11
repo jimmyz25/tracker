@@ -206,6 +206,28 @@ class DBsqlite:
         else:
             return ""
 
+    def get_test_history(self, sn: str):
+        """
+        check sn test history in Rel log and place in reverse
+        :param sn:
+        :return:
+        """
+        if self.sn_exist(sn):
+            sql = " SELECT WIP, StartTimestamp, FK_RelStress from RelLog_T where SerialNumber = ? and removed = 0" \
+                  " ORDER BY StartTimestamp DESC"
+            result = self.cur.execute(sql, (sn,)).fetchall()
+            if result:
+                return [list(row) for row in result]
+
+    def rel_tagging(self, sn: str, timestamp: float):
+        history = self.get_test_history(sn)
+        if history:
+            for log in history:
+                if timestamp > log[1]:
+                    return log
+            return [None, None, None]
+
+
     @property
     def ready_to_data_tagging(self):
         result = self.cur.execute("SELECT PK FROM Tagger_Log_T WHERE EndTimestamp is Null").fetchone()

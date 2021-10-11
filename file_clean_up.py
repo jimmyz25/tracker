@@ -70,9 +70,16 @@ class RawData:
         end_kw = self.settings.get("end_keyword")
         sn_kw = self.settings.get("serial_number_keyword")
         with open(file, newline="") as f:
-            dialect = csv.Sniffer().sniff(f.readline(max_row))
+            try:
+                dialect = csv.Sniffer().sniff(f.readline(max_row))
+            except csv.Error:
+                dialect = csv.unix_dialect
             f.seek(0)
-            csv_reader = csv.reader(f, dialect)
+            try:
+                csv_reader = csv.reader(f, dialect)
+            except csv.Error:
+                print("not able to read this file")
+                return [["" for row in range(10)] for _ in range(1)]
             data = [[cell.strip() for cell in row] for row in csv_reader]
             self.settings.update({"separator": dialect.delimiter})
             self.settings.update({"quotechar": dialect.quotechar})
@@ -121,7 +128,7 @@ class RawData:
             if len(result) > 0:
                 self.settings.update({"sn_col": result[0]})
 
-            to_display = [self.row_validation(ind, line)[
+            to_display = [self.row_validation(ind, line, row_count)[
                           self.settings.get("start_col"):]
                           for ind, line in enumerate(lines[0: row_count])]
 
@@ -132,9 +139,11 @@ class RawData:
                         df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
                             .map(lambda x: dt.datetime.strptime(x, self.settings.get("timestamp_format")).timestamp(),
                                  'ignore')
-                    except KeyError:
+                    except ValueError:
                         print("cannot process timestamp")
                         pass
+                    except KeyError:
+                        print("cannot find column names")
             header = df.columns.tolist()
             if self.settings.get("sn_col"):
                 if self.settings.get("sn_col") in header:
@@ -144,9 +153,20 @@ class RawData:
                 if self.settings.get("start_time_col") in header:
                     start_time_index = header.index(self.settings.get("start_time_col"))
                     header.insert(0, header.pop(start_time_index))
-            df = df[header[:max_col_to_display]]
-            values = df.values.tolist()
-            return [header]+values
+            # df = df[header]
+            header = header[:max_col_to_display]
+            df = df[header]
+            values = df.head(10).values.tolist()
+
+            header_top = ["head"] + header
+            values = [[i + 1] + row for i, row in enumerate(values)]
+            header_tail = ["tail"] + header
+            if max_row > 5:
+                values_tail = df.tail(5).values.tolist()
+                values_tail = [[i - 5] + row for i, row in enumerate(values_tail)]
+                return [header_top] + values + [header_tail] + values_tail
+            else:
+                return [header_top] + values
 
     @staticmethod
     def first_column_index(line: list = None):
@@ -165,7 +185,7 @@ class RawData:
         else:
             return ["" for _ in range(max_col)]
 
-    def row_validation(self, ind: int, row: list):
+    def row_validation(self, ind: int, row: list, row_count: int):
         # print (row)
         # return row
         # if skip_keyword in row, remove row
@@ -173,16 +193,16 @@ class RawData:
             for keyword in self.settings.get("skip_keywords"):
                 if keyword in "".join(row):
                     print("row skipped")
-                    return []
+                    return self.fill_up_row(max_col=len(row), row=[])
         if self.settings.get("skip_rows"):
             for row_index in self.settings.get("skip_rows"):
-                try:
+                if row_index.strip('-').isnumeric():
+
                     row_index = int(row_index)
-                except TypeError:
-                    return row
-                if ind == row_index:
-                    print("row skipped")
-                    return []
+                    print(row_index)
+                    if ind == row_index or row_count + row_index == ind:
+                        print("row skipped")
+                        return self.fill_up_row(max_col=len(row), row=[])
         return row
         #
         # if isinstance(self.settings.get("start_time_pos"), int):

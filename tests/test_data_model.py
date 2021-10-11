@@ -6,7 +6,7 @@ import random
 import string
 import pandas as pd
 
-RMD = "/Users/mingyuzhong/Documents/tracker/ReliabilityManagementDB.db"
+RMD = "/Users/jimmyzhong/Desktop/Empty DB for Training.db"
 db = DBsqlite(RMD)
 golden_address = "/Users/mingyuzhong/Documents/tracker/ReliabilityManagementDB copy.db"
 gold = DBsqlite(golden_address)
@@ -249,13 +249,31 @@ def test_failure_mode_list_to_select():
     assert True == True
 
 
-def test_get_total_in_cell_display():
-    a = status_summary(db)
-    b = a.get_total_in_cell_display("90e52e7a-20e6-11ec-a422-1e00d9211e69", "94695890-20e7-11ec-ba51-1e00d9211e69")
+# def test_get_total_in_cell_display():
+#     a = status_summary(db)
+#     b = a.get_total_in_cell_display("90e52e7a-20e6-11ec-a422-1e00d9211e69", "94695890-20e7-11ec-ba51-1e00d9211e69")
+#     assert True == True
+
+#
+# def test_tree_to_display():
+#     a = status_summary(db)
+#     b = a.tree_to_display()
+#     assert True == True
+
+
+def test_get_test_history():
+    history = db.get_test_history(sn="03734D43H7")
+    print(history)
     assert True == True
 
 
-def test_tree_to_display():
-    a = status_summary(db)
-    b = a.tree_to_display()
+def test_rel_tagging():
+    rel_tag = db.rel_tagging(sn="03734D43H7", timestamp=1633639328)
+    print(rel_tag)
+    rel_tag = db.rel_tagging(sn="03734D43H7", timestamp=1633639353)
+    print(rel_tag)
+    rel_tag = db.rel_tagging(sn="03734D43H7", timestamp=1633639392)
+    print(rel_tag)
+    rel_tag = db.rel_tagging(sn="03734D43H7", timestamp=1633639394)
+    print(rel_tag)
     assert True == True

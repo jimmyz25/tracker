@@ -570,9 +570,17 @@ class rel_tracker_view:
         table_value = [["" for row in range(10)] for _ in range(1)]
         table_view = sg.Table(values=table_value,
                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_NONE,
-                              expand_x=True, num_rows=11, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              expand_x=True, num_rows=17, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white",
                               enable_events=True, key="-file_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
+
+        table2_col = ["filename","file_address","creation_time"]
+        table2_value = [["" for row in range(10)] for _ in range(3)]
+        table2_view = sg.Table(values=table2_value,
+                              headings=table2_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
+                              expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
+                              header_background_color="white",
+                              enable_events=True, key="-folder_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
 
         setting_col_layout = [
             [sg.Txt("encode"), sg.Stretch(), sg.Combo(values=[], size=15, key="encode")],
@@ -592,13 +600,15 @@ class rel_tracker_view:
             [sg.Txt("data tagging station settings:")],
             [sg.Txt("File Preview", size=15), sg.InputText(size=30, readonly=True, key="-Preview-"), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), enable_events=True,
-                           target=(sg.ThisRow, -2), disabled=False), sg.B("Open File")],
+                           target=(sg.ThisRow, -2), disabled=False,file_types=("*.csv", "*.CSV")), sg.B("Open File")],
+            [sg.HorizontalSeparator()],
+            [table_view, setting_col],
             [sg.Txt("Scan all files", size=15), sg.InputText(size=30, readonly=True,
                                                              key="-Scan_Folder-", enable_events=True),
              sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), disabled=False, ), sg.B("Scan Folder")],
             [sg.HorizontalSeparator()],
-            [table_view, setting_col],
+            [table2_view]
         ]
 
         window = sg.Window('CSV Compiler', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
