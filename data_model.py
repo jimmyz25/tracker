@@ -373,12 +373,19 @@ class DBsqlite:
 
     @property
     def cache_failure_mode_of_sn_table(self):
-        sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
+        sql = f'SELECT FALog_T.PK,FailureMode_T.FailureGroup,FailureMode_T.FailureMode,FA_Details FROM FALog_T ' \
+              f' Inner Join FailureMode_T ON FailureMode_T.PK = FALog_T.FK_FailureMode ' + \
               self.sql_filter_str({
                   "SerialNumber": self.filter_set.get("serial_number"),
                   "FK_RelStress": self.selected_stress_pks,
-                  "removed": 0
+                  "FALog_T.removed": 0
               })
+        # sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
+        #       self.sql_filter_str({
+        #           "SerialNumber": self.filter_set.get("serial_number"),
+        #           "FK_RelStress": self.selected_stress_pks,
+        #           "removed": 0
+        #       })
         results = self.cur.execute(sql).fetchall()
         if results is None:
             return [dict()]
@@ -448,10 +455,12 @@ class DBsqlite:
     @property
     def failure_mode_list_to_add_to_sn(self):
         if self.cur:
-            sql = "SELECT FailureMode From FALog_T " + self.sql_filter_str({
-                "SerialNumber": self.filter_set.get("serial_number"),
-                "FK_RelStress": self.selected_stress_pks,
-                "removed": 0
+            sql = " SELECT FailureMode_T.FailureMode From FALog_T " \
+                  " Inner join FailureMode_T On FailureMode_T.PK = FALog_T.FK_FailureMode" \
+                  + self.sql_filter_str({
+                    "SerialNumber": self.filter_set.get("serial_number"),
+                    "FK_RelStress": self.selected_stress_pks,
+                    "FALog_T.removed": 0
             })
             result_existing = self.cur.execute(sql).fetchall()
             existing = set(result["FailureMode"] for result in result_existing)
@@ -540,12 +549,13 @@ class DBsqlite:
         if self.cur:
             sql = f'SELECT FALog_T.PK,Config_T.Config,FALog_T.SerialNumber,' \
                   f'FALog_T.Station,FALog_T.StartTime,RelStress_T.RelStress,' \
-                  f' FALog_T.FailureMode,FALog_T.FailureGroup,' \
+                  f' FailureMode_T.FailureMode,FailureMode_T.FailureGroup,' \
                   f'RelStress_T.RelCheckpoint, FALog_T.FA_Details' \
                   f' FROM FALog_T ' \
-                  f' inner Join RelStress_T ON FALog_T.FK_RelStress = RelStress_T.PK ' + \
-                  f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' + \
-                  f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
+                  f' inner Join RelStress_T ON FALog_T.FK_RelStress = RelStress_T.PK ' \
+                  f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' \
+                  f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' \
+                  f' inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode' + \
                   self.sql_filter_str(condition) + \
                   '   LIMIT 200'
             results = self.cur.execute(sql).fetchall()
@@ -699,16 +709,18 @@ class DBsqlite:
 
     @property
     def fa_summary_data(self):
+
         condition = {
             "FALog_T.FK_RelStress": self.selected_stress_pks,
             "FALog_T.removed": 0,
             "Config_SN_T.Config_FK": self.selected_config_pks,
-            "FailureMode": self.filter_set.get("failure_mode")
+            "FailureMode_T.FailureMode": self.filter_set.get("failure_mode")
         }
         sql = " SELECT  COUNT (DISTINCT FALog_T.SerialNumber) as SN_Count," \
               " FALog_T.FK_RelStress, Config_SN_T.Config_FK, " \
-              " FailureMode from FALog_T" \
+              " FailureMode_T.FailureMode from FALog_T" \
               " inner join Config_SN_T on Config_SN_T.SerialNumber = FALog_T.SerialNumber" \
+              " inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode" \
               + self.sql_filter_str(condition) + \
               " Group by FK_RelStress,Config_SN_T.Config_FK"
         result = self.cur.execute(sql).fetchall()
@@ -1003,7 +1015,8 @@ class DBsqlite:
                 "PK": str(uuid.uuid1()),
                 "FailureGroup": "Default",
                 "FailureMode": failure_mode,
-                "removed": 0
+                "removed": 0,
+                "Station": self.filter_set.get('station')
             }
             if self.__insert_to_table__("FailureMode_T", **log):
                 self.con.commit()
@@ -1016,7 +1029,7 @@ class DBsqlite:
                 "FailureMode": self.filter_set.get("failure_mode")
             }
             log = {
-                "FailureGroup": group_name
+                "FailureGroup": group_name,
             }
             if self.__update_to_table__("FALog_T", condition=condition, **log) and \
                     self.__update_to_table__("FailureMode_T", condition=condition, **log):
