@@ -588,12 +588,12 @@ class DBsqlite:
     @property
     def all_station_latest_sn_history(self):
         condition = {
-            "RelLog_T.WIP": self.filter_set.get("wip"),
             "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
             "FK_RelStress": self.selected_stress_pks,
             "RelLog_T.removed": 0
         }
         condition2 = {
+            "RelLog_T.WIP": self.filter_set.get("wip"),
             "Config_SN_T.Config_FK": self.selected_config_pks,
         }
         if self.cur:
@@ -623,13 +623,13 @@ class DBsqlite:
     def latest_sn_history(self):
 
         condition = {
-            "RelLog_T.WIP": self.filter_set.get("wip"),
             "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
             "FK_RelStress": self.selected_stress_pks,
             "RelLog_T.removed": 0,
             "Station": self.display_setting.get("station_filter"),
         }
         condition2 = {
+            "RelLog_T.WIP": self.filter_set.get("wip"),
             "Config_SN_T.Config_FK": self.selected_config_pks,
         }
         if self.cur:

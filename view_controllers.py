@@ -468,18 +468,18 @@ class rel_log_vc:
                 self.window["Update"].update(disabled=True)
             if rel_tracker_app.dbmodel.ready_to_checkin and self.row_selection:
                 self.window["CheckIn"].update(disabled=False)
+                self.window["Remove for FA"].update(disabled=False)
             else:
                 self.window["CheckIn"].update(disabled=True)
+                self.window["Remove for FA"].update(disabled=True)
             if rel_tracker_app.dbmodel.ready_to_checkout and self.row_selection:
                 self.window["Checkout"].update(disabled=False)
             else:
                 self.window["Checkout"].update(disabled=True)
             if self.row_selection:
                 self.window["Delete"].update(disabled=False)
-                self.window["Remove for FA"].update(disabled=False)
             else:
                 self.window["Delete"].update(disabled=True)
-                self.window["Remove for FA"].update(disabled=True)
             if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
                 total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                 self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
