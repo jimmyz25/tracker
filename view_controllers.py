@@ -128,6 +128,7 @@ class preference_vc:
                     sg.popup_ok("user preference saved")
             elif event == "Sync with Golden":
                 gold = rel_tracker_app.settings.get("-Golden_Database-")
+
                 user_input = sg.popup_ok_cancel(f"this operation will upload current station "
                                                 f"{rel_tracker_app.station} to golden database\n"
                                                 f"download other stations data to this local copy")
@@ -137,10 +138,12 @@ class preference_vc:
                     rel_tracker_app.dbmodel.sync_rel_log_table(golden_db_address=gold)
                     rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
                     rel_tracker_app.dbmodel.sync_tagger_log_table(golden_db_address=gold)
-                    rel_tracker_app.dbmodel.station = rel_tracker_app.settings.get("-Local_Database-")
                     sg.popup_ok(f"sync completed. Note: only {rel_tracker_app.station} data is uploaded to golden")
+                    rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+                    rel_tracker_app.dbmodel.station = rel_tracker_app.station
                 else:
                     sg.popup_ok("no change is made to golden and local copy")
+
             elif event == "Stress Setup":
                 stress_setup_popup = stress_setup_vc(self.window)
                 stress_setup_popup.show()
@@ -230,9 +233,8 @@ class rel_log_vc:
                 sg.popup_ok("Note: all failure modes are shown ")
                 rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
-                failure_mode_selector_popup = failure_mode_summary_vc(self.window)
-                failure_mode_selector_popup.show()
-
+                # failure_mode_selector_popup = failure_mode_summary_vc(self.window)
+                # failure_mode_selector_popup.show()
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
 

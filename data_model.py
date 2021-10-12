@@ -458,9 +458,9 @@ class DBsqlite:
             sql = " SELECT FailureMode_T.FailureMode From FALog_T " \
                   " Inner join FailureMode_T On FailureMode_T.PK = FALog_T.FK_FailureMode" \
                   + self.sql_filter_str({
-                    "SerialNumber": self.filter_set.get("serial_number"),
-                    "FK_RelStress": self.selected_stress_pks,
-                    "FALog_T.removed": 0
+                "SerialNumber": self.filter_set.get("serial_number"),
+                "FK_RelStress": self.selected_stress_pks,
+                "FALog_T.removed": 0
             })
             result_existing = self.cur.execute(sql).fetchall()
             existing = set(result["FailureMode"] for result in result_existing)
@@ -864,8 +864,10 @@ class DBsqlite:
         if not isinstance(golden_db_address, str):
             return False
         if not isinstance(self.station, str):
+            print(" station is not string")
             return False
         self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
+        self.con.commit()
         sql = f'INSERT OR REPLACE INTO GOLD.RelLog_T SELECT * FROM main.RelLog_T WHERE removed = 0 and Station = ?'
         sql2 = f'INSERT OR REPLACE INTO GOLD.Config_SN_T ' \
                f'SELECT Config_SN_T.* FROM main.Config_SN_T INNER JOIN main.RelLog_T ' \
@@ -880,9 +882,10 @@ class DBsqlite:
         self.cur.execute(sql2, (self.station,))
         self.cur.execute(sql, (self.station,))
         self.cur.execute(sql3, (self.station,))
-
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
+        self.con.commit()
+        print("RelLog sync completed")
 
     def sync_fa_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
         """
@@ -941,6 +944,7 @@ class DBsqlite:
 
     def sync_reference_tables(self, golden_db_address: str = None, cutoff_time: float = 0.0):
         if not isinstance(golden_db_address, str):
+            print("golden_db_address is not str")
             return False
         self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
         sql = f'INSERT OR REPLACE INTO GOLD.RelStress_T SELECT * FROM main.RelStress_T WHERE removed = 0'
