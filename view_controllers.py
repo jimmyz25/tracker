@@ -227,6 +227,11 @@ class rel_log_vc:
             if event == "-WINDOW CLOSE ATTEMPTED-":
                 break
             elif event == "Show Summary":
+                sg.popup_ok("Note: all failure modes are shown ")
+                rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
+                rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
+                failure_mode_selector_popup = failure_mode_summary_vc(self.window)
+                failure_mode_selector_popup.show()
 
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
@@ -577,7 +582,7 @@ class fa_log_vc:
                 count = len(values.get('-table_select-'))
                 if count > 0:
                     sg.popup_ok("Note: only config and stress related to table selection is shown ")
-                rel_tracker_app.dbmodel.filter_set.update({"stress": None})
+                rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
                 failure_mode_selector_popup = failure_mode_summary_vc(self.window)
                 failure_mode_selector_popup.show()
@@ -757,7 +762,7 @@ class data_log_vc:
                         "program": sn.config.program,
                         "build": sn.config.build,
                         "config": sn.config.config_name,
-                        "wip": sn.wip,
+                        "wip": selected[4],
                         "stress": selected[2],
                         "checkpoint": selected[3],
                         "serial_number": sn.serial_number
@@ -1002,9 +1007,12 @@ class failure_mode_vc:
                 self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
                 self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
             elif event == "-Remove-":
-                rel_tracker_app.dbmodel.delete_from_failure_log_table()
-                self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
-                self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
+                user_input = sg.popup_ok_cancel(f"you are about to remove {values.get('-highlighted_failures-')} \n"
+                                                f"Note: Remove only if failure mode was added by mistake ")
+                if user_input == "OK":
+                    rel_tracker_app.dbmodel.delete_from_failure_log_table()
+                    self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
+                    self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
             elif event == "-highlighted_failures-":
                 rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-highlighted_failures-')})
                 selected = [self.window['-highlighted_failures-']

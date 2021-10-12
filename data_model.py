@@ -1031,8 +1031,7 @@ class DBsqlite:
             log = {
                 "FailureGroup": group_name,
             }
-            if self.__update_to_table__("FALog_T", condition=condition, **log) and \
-                    self.__update_to_table__("FailureMode_T", condition=condition, **log):
+            if self.__update_to_table__("FailureMode_T", condition=condition, **log):
                 self.con.commit()
 
     def delete_from_failure_mode_table(self):

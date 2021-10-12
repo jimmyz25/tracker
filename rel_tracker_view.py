@@ -257,7 +257,7 @@ class rel_tracker_view:
                   disabled=True, key="-Remove-", disabled_button_color="#ababab")],
         ]
         button_column = sg.Column(layout=layout_button_column, expand_y=True)
-        table_col = ['PK', 'failure mode set', 'failure mode', 'detail']
+        table_col = ['PK', 'failure mode set', '     failure mode     ', '     detail     ']
         show_heading = [False, True, True, True]
         table_value = [[str(row) for row in range(4)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
