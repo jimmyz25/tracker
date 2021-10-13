@@ -600,7 +600,7 @@ class rel_tracker_view:
             [sg.Txt("data tagging station settings:")],
             [sg.Txt("File Preview", size=15), sg.InputText(size=30, readonly=True, key="-Preview-"), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), enable_events=True,
-                           target=(sg.ThisRow, -2), disabled=False, file_types=("*.csv", "*.CSV")), sg.B("Open File")],
+                           target=(sg.ThisRow, -2), disabled=False), sg.B("Open File")],
             [sg.HorizontalSeparator()],
             [table_view, setting_col],
             [sg.Txt("Scan all files", size=15), sg.InputText(size=30, readonly=True,

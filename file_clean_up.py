@@ -93,10 +93,9 @@ class RawData:
             else:
                 start_row = 0
             if start_row == 0:
-                col_count_list = [len(list(filter(lambda x: x != "", line)))
+                col_count_list = [len(list(filter(lambda x: x != "", line[:min(10, row_count)])))
                                   for line in data]  # check each row, how many non-empty sections
-                # if max(col_count_list) > pre_max_count:
-                pre_max_count = max(col_count_list)
+                pre_max_count = max(col_count_list) # find maximum in the first 10 rows
                 # from top to max_row, try to see which row has max
                 # number of sections, this section is then a candidate for column name
                 start_row = col_count_list.index(pre_max_count)
@@ -104,6 +103,7 @@ class RawData:
             self.settings.update({"start_row": start_row})
             col_name_row_separated = lines[0]
             max_col_to_display = min(max_col, len(col_name_row_separated))
+            col_length = len(col_name_row_separated)
             sn_col_candidates = list(filter(lambda x: self.settings.get("serial_number_keyword") in x,
                                             col_name_row_separated))
             start_time_candidates = list(
@@ -129,11 +129,11 @@ class RawData:
             if len(result) > 0:
                 self.settings.update({"sn_col": result[0]})
 
-            to_display = [self.row_validation(ind, line, row_count)[
+            all_data = [self.row_validation(ind, line, row_count, row_length=col_length)[
                           self.settings.get("start_col"):]
                           for ind, line in enumerate(lines[0: row_count])]
 
-            df = pd.DataFrame(to_display[1:], columns=to_display[0])
+            df = pd.DataFrame(all_data[1:], columns=all_data[0])
             if self.settings.get("start_time_col"):
                 if self.settings.get("timestamp_format"):
                     try:
@@ -186,7 +186,7 @@ class RawData:
         else:
             return ["" for _ in range(max_col)]
 
-    def row_validation(self, ind: int, row: list, row_count: int):
+    def row_validation(self, ind: int, row: list, row_count: int, row_length: int):
         # print (row)
         # return row
         # if skip_keyword in row, remove row
@@ -194,14 +194,14 @@ class RawData:
             for keyword in self.settings.get("skip_keywords"):
                 if keyword in "".join(row):
                     print("row skipped")
-                    return self.fill_up_row(max_col=len(row), row=[])
+                    return self.fill_up_row(max_col=row_length, row=[])
         if self.settings.get("skip_rows"):
             for row_index in self.settings.get("skip_rows"):
                 if row_index.strip('-').isnumeric():
                     row_index = int(row_index)
                     if ind == row_index or row_count + row_index == ind:
-                        return self.fill_up_row(max_col=len(row), row=[])
-        return row
+                        return self.fill_up_row(max_col=row_length, row=[])
+        return self.fill_up_row(max_col=row_length, row=row)
         #
         # if isinstance(self.settings.get("start_time_pos"), int):
         #     row.insert(0, row.pop(self.settings.get("start_time_pos")))
@@ -245,7 +245,6 @@ class RawData:
                 reader = csv.reader(csvfile, delimiter=self.settings.get("separator"),
                                     quotechar=self.settings.get("quotechar"))
                 lines = [[cell.strip() for cell in row] for row in reader]
-
                 row_count = len(lines)
                 data = [self.row_validation(ind, line, row_count)[
                         self.settings.get("start_col"):]
