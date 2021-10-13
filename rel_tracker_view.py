@@ -10,7 +10,7 @@ class rel_tracker_view:
     @staticmethod
     def welcome_page():
         layout1 = [
-            [sg.Txt("Rel Logger", size=(5, 1), font=("Helvetica", 50), text_color='White',
+            [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
                     auto_size_text=False, key="-version-")],
@@ -79,7 +79,7 @@ class rel_tracker_view:
             [sg.Btn("Save Preference", size=15), sg.Btn("Sync with Golden", size=15)]
         ]
 
-        window = sg.Window('Preference', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Preference', layout1, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True)
         return window
 
@@ -184,7 +184,7 @@ class rel_tracker_view:
             # [output_view]
         ]
 
-        window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, default_button_element_size=(5, 1))
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
@@ -210,7 +210,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Config Selection', layout1, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, modal=True)
         window["Program"].bind("<KeyPress>", "-KeyPress")
         # window.TKroot.grab_set()
@@ -229,7 +229,7 @@ class rel_tracker_view:
 
         ]
 
-        window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Stress Selection', layout1, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, modal=True)
         window["RelStress"].bind("<KeyPress>", "-KeyPress")
         # window.TKroot.grab_set()
@@ -285,7 +285,7 @@ class rel_tracker_view:
             [sg.Multiline(default_text="", size=(40, 15), expand_x=True, key="-fa-detail-")]
         ]
 
-        window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Update Failure Mode', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
         return window
@@ -318,7 +318,7 @@ class rel_tracker_view:
             [filter_column, button_column],
         ]
 
-        window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Config Failure Mode', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window
 
@@ -386,7 +386,7 @@ class rel_tracker_view:
             # [output_view]
         ]
 
-        window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, modal=True)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
@@ -424,7 +424,7 @@ class rel_tracker_view:
             [filter_column, button_column],
         ]
 
-        window = sg.Window('Setup Stress', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Setup Stress', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         window["-rel_stress-"].bind("<KeyPress>", "key")
         return window
@@ -462,7 +462,7 @@ class rel_tracker_view:
             [filter_column, button_column],
         ]
 
-        window = sg.Window('Setup Config', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('Setup Config', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         window["-program-"].bind("<KeyPress>", "key")
         window["-build-"].bind("<KeyPress>", "key")
@@ -543,8 +543,8 @@ class rel_tracker_view:
             # [output_view]
         ]
 
-        window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=True, modal=True)
+        window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=True, modal=False)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
 
@@ -559,7 +559,7 @@ class rel_tracker_view:
                         size=(45, 5), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)],
             [sg.B("Generate Summary", enable_events=True, size=(15, 1))]
         ]
-        window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
+        window = sg.Window('failure mode selector', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window
 
@@ -612,6 +612,6 @@ class rel_tracker_view:
             [sg.B("Decode and Combine"), sg.B("Decode Selected")],
         ]
 
-        window = sg.Window('CSV Compiler', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,
-                           finalize=True, enable_close_attempted_event=False)
+        window = sg.Window('CSV Compiler', layout1, keep_on_top=True, grab_anywhere=False, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False, modal=True)
         return window
