@@ -1,7 +1,6 @@
 import csv
-
 import pandas as pd
-import datetime as dt
+# import datetime as dt
 from data_model import *
 
 
@@ -86,22 +85,21 @@ class RawData:
             self.settings.update({"separator": dialect.delimiter})
             self.settings.update({"quotechar": dialect.quotechar})
             row_count = len(data)
-
-            # determine separator by checking which separator is able to split line with max sections
             if self.settings.get("start_row"):
                 start_row = self.settings.get("start_row")
             else:
                 start_row = 0
             if start_row == 0:
-                col_count_list = [len(list(filter(lambda x: x != "", line[:min(10, row_count)])))
-                                  for line in data]  # check each row, how many non-empty sections
-                pre_max_count = max(col_count_list) # find maximum in the first 10 rows
+                col_count_list = [len(list(filter(lambda x: x != "", line)))
+                                  for line in data[:min(10, row_count)]]  # check each row, how many non-empty sections
+                pre_max_count = max(col_count_list)  # find maximum in the first 10 rows
                 # from top to max_row, try to see which row has max
                 # number of sections, this section is then a candidate for column name
                 start_row = col_count_list.index(pre_max_count)
-            lines = data[start_row: row_count]
-            self.settings.update({"start_row": start_row})
-            col_name_row_separated = lines[0]
+                self.settings.update({"start_row": start_row})
+            # for ind, line in enumerate(lines):
+            #     print(ind)
+            col_name_row_separated = data[start_row]
             max_col_to_display = min(max_col, len(col_name_row_separated))
             col_length = len(col_name_row_separated)
             sn_col_candidates = list(filter(lambda x: self.settings.get("serial_number_keyword") in x,
@@ -117,23 +115,23 @@ class RawData:
                 "col_name_set": set(col_name_row_separated)
             })
             result = list(filter(lambda x: start_kw.lower() in x.lower(),
-                                 lines[0]))
+                                 data[start_row]))
             if len(result) > 0:
                 self.settings.update({"start_time_col": result[0]})
             result = list(
-                filter(lambda x: end_kw.lower() in x.lower(), lines[0]))
+                filter(lambda x: end_kw.lower() in x.lower(), data[start_row]))
             if len(result) > 0:
                 self.settings.update({"end_time_col": result[0]})
             result = list(
-                filter(lambda x: sn_kw.lower() in x.lower(), lines[0]))
+                filter(lambda x: sn_kw.lower() in x.lower(), data[start_row]))
             if len(result) > 0:
                 self.settings.update({"sn_col": result[0]})
-
-            all_data = [self.row_validation(ind, line, row_count, row_length=col_length)[
-                          self.settings.get("start_col"):]
-                          for ind, line in enumerate(lines[0: row_count])]
-
-            df = pd.DataFrame(all_data[1:], columns=all_data[0])
+            all_data = [self.row_validation(ind, row=line, row_count=row_count, row_length=col_length)[
+                        self.settings.get("start_col"):]
+                        for ind, line in enumerate(data)]
+            # all_data = [self.row_validation(ind=ind, row=line, row_count=row_count, row_length=col_length)
+            #             for ind, line in enumerate(data)]
+            df = pd.DataFrame(all_data[start_row + 1:], columns=all_data[start_row])
             if self.settings.get("start_time_col"):
                 if self.settings.get("timestamp_format"):
                     try:
@@ -160,7 +158,7 @@ class RawData:
             values = df.head(10).values.tolist()
 
             header_top = ["head"] + header
-            values = [[i + 1] + row for i, row in enumerate(values)]
+            values = [[i + start_row + 1] + row for i, row in enumerate(values)]
             header_tail = ["tail"] + header
             if max_row > 5:
                 values_tail = df.tail(5).values.tolist()
@@ -179,10 +177,14 @@ class RawData:
     @staticmethod
     def fill_up_row(max_col: int, row: list):
         if row:
-            if len(row) < max_col:
+            length_of_row = len(row)
+            if length_of_row < max_col:
                 delta = max_col - len(row)
                 row.append(["" for _ in range(delta)])
-            return row
+            elif length_of_row > max_col:
+                return row[:max_col]
+            else:
+                return row
         else:
             return ["" for _ in range(max_col)]
 
@@ -190,6 +192,8 @@ class RawData:
         # print (row)
         # return row
         # if skip_keyword in row, remove row
+        if row is None:
+            return self.fill_up_row(max_col=row_length, row=[])
         if self.settings.get("skip_keywords"):
             for keyword in self.settings.get("skip_keywords"):
                 if keyword in "".join(row):
@@ -201,6 +205,7 @@ class RawData:
                     row_index = int(row_index)
                     if ind == row_index or row_count + row_index == ind:
                         return self.fill_up_row(max_col=row_length, row=[])
+        a = self.fill_up_row(max_col=row_length, row=row)
         return self.fill_up_row(max_col=row_length, row=row)
         #
         # if isinstance(self.settings.get("start_time_pos"), int):
@@ -246,23 +251,30 @@ class RawData:
                                     quotechar=self.settings.get("quotechar"))
                 lines = [[cell.strip() for cell in row] for row in reader]
                 row_count = len(lines)
-                data = [self.row_validation(ind, line, row_count)[
-                        self.settings.get("start_col"):]
-                        for ind, line in enumerate(lines[0: row_count])]
-                header_initial = data[0][0]
+                # row_count = len(lines)
+                # data = lines[self.settings.get("start_row"):]
+                # data = [self.row_validation(ind, line, row_count)[
+                #         self.settings.get("start_col"):]
+                #         for ind, line in enumerate(lines[0: row_count])]
+                header_initial = lines[self.settings.get("start_row")][0]
+                header_column_count = len(lines[self.settings.get("start_row")])
                 header = []
                 values = []
-                for line in data:
+                for ind, line in enumerate(lines):
                     if line[0] == header_initial:
                         print("found header")
                         header = line
+                        header_column_count = len(header)
                         if len(values) > 1:
                             df = pd.DataFrame(columns=header, data=values)
                             frame.append(df)
                             values = []
                     else:
-                        values.append(line)
+                        values.append(
+                            self.row_validation(ind=ind, row=line, row_count=row_count, row_length=header_column_count))
                 df = pd.DataFrame(columns=header, data=values)
+                print(df)
+                df.dropna(how="all")
                 frame.append(df)
 
             except csv.Error as e:

@@ -1466,8 +1466,9 @@ class file_view_vc:
                 file = os.path.join(folder,str(dt.datetime.now().date())+"output.csv")
                 if file:
                     if isinstance(result, pd.DataFrame):
-                        with open(file,"w") as f:
-                            result.to_csv(path=f)
+                        with open(file, "w") as f:
+                            result.to_csv(path_or_buf=f)
+                            # result.to_csv()
                     sg.popup_ok(f'decoded file has been saved as {str(dt.datetime.now().date())+"output.csv"} ')
         self.close_window()
 
