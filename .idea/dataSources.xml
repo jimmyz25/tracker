@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="ReliabilityManagementDB.db" read-only="true" uuid="006076ae-5924-4245-bb4a-6776f634aa0f">
+    <data-source source="LOCAL" name="Empty DB for Training.db" uuid="8781a1af-fbf1-43bf-87f0-757605d829a3">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\jimmyzhong\PycharmProjects\tracker1\ReliabilityManagementDB.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:C:\Users\jimmyzhong\Desktop\Empty DB for Training.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

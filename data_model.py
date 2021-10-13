@@ -210,10 +210,16 @@ class DBsqlite:
         """
         check sn test history in Rel log and place in reverse
         :param sn:
-        :return:
+        :return:WIP, StartTimestamp, RelStress_T.RelStress, RelStress_T.RelCheckpoint,Config_T.Program," \
+                  " Config_T.Build,Config_T.Config
         """
         if self.sn_exist(sn):
-            sql = " SELECT WIP, StartTimestamp, FK_RelStress from RelLog_T where SerialNumber = ? and removed = 0" \
+            sql = " SELECT WIP, StartTimestamp, RelStress_T.RelStress, RelStress_T.RelCheckpoint,Config_T.Program," \
+                  " Config_T.Build,Config_T.Config from RelLog_T " \
+                  " Inner Join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress" \
+                  " Inner Join Config_SN_T ON Config_SN_T.SerialNumber = RelLog_T.SerialNumber " \
+                  " Inner Join Config_T ON Config_T.PK = Config_SN_T.Config_FK" \
+                  " where RelLog_T.SerialNumber = ? and RelLog_T.removed = 0" \
                   " ORDER BY StartTimestamp DESC"
             result = self.cur.execute(sql, (sn,)).fetchall()
             if result:
@@ -223,16 +229,21 @@ class DBsqlite:
         """
         :param sn:
         :param timestamp:
-        :return: (WIP, StartTimestamp, FK_RelStress)
+        :return: WIP, StartTimestamp, RelStress_T.RelStress, RelStress_T.RelCheckpoint,Config_T.Program," \
+                  " Config_T.Build,Config_T.Config
         """
-        history = self.get_test_history(sn)
-        if history:
-            for log in history:
-                if timestamp > log[1]:
-                    return [log[0], log[2]]
-            return ["NA", "NA"]
+        if timestamp:
+
+            history = self.get_test_history(sn)
+            if history:
+                for log in history:
+                    if timestamp > log[1]:
+                        return [log[i] for i in range(7)]
+                return [None for _ in range(7)]
+            else:
+                return [None for _ in range(7)]
         else:
-            return ["NA", "NA"]
+            return [None for _ in range(7)]
 
     @property
     def ready_to_data_tagging(self):

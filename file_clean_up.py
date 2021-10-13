@@ -283,9 +283,18 @@ class RawData:
 
     @staticmethod
     def rel_tagging(s, db: DBsqlite, sn_col_name):
+        """
+        WIP, StartTimestamp, RelStress_T.RelStress, RelStress_T.RelCheckpoint,Config_T.Program," \
+                      " Config_T.Build,Config_T.Config
+        """
         result = db.rel_tagging(s[sn_col_name], s["StartTimestamp"])
-        s["wip"] = result[0]
-        s["fk_stress"] = result[1]
+        s["WIP"] = result[0]
+        s["StartTimestamp"] = result[1]
+        s["RelStress"] = result[2]
+        s["RelCheckpoint"] = result[3]
+        s["Program"] = result[4]
+        s["Build"] = result[5]
+        s["Config"] = result[6]
         return s
 
     def concat_matching_files(self, file_list: list, db: DBsqlite):
