@@ -1013,7 +1013,8 @@ class failure_mode_vc:
                                                 f"Note: Remove only if failure mode was added by mistake ")
                 if user_input == "OK":
                     rel_tracker_app.dbmodel.delete_from_failure_log_table()
-                    self.window["-failure_to_select-"].update(values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
+                    self.window["-failure_to_select-"].update(
+                        values=rel_tracker_app.dbmodel.failure_mode_list_to_add_to_sn)
                     self.window["-highlighted_failures-"].update(values=self.existing_failure_mode_table_data)
             elif event == "-highlighted_failures-":
                 rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-highlighted_failures-')})
@@ -1397,20 +1398,11 @@ class file_view_vc:
         self.window = view.file_view()
         self.master = master
         self.file = RawData()
+        self.related_files = None
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
 
-    #
-    # [sg.Txt("encode"), sg.Stretch(), sg.Combo(values=[], size=15, key="encode")],
-    # [sg.Txt("start_row"), sg.Stretch(), sg.Spin(values=[i for i in range(10)], size=15, key="start_row")],
-    # [sg.Txt("start_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="start_time")],
-    # [sg.Txt("end_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="end_time")],
-    # [sg.Txt("serial_number"), sg.Stretch(), sg.Combo(values=[], size=15, key="serial_number")],
-    # [sg.Txt("separator"), sg.Stretch(), sg.Combo(values=[], size=15, key="separator")],
-    # [sg.Txt("skip_keyword"), sg.Stretch(), sg.Input(size=15, key="skip_keyword", tooltip="separated by ; ")],
-    # [sg.Txt("skip_rows"), sg.Stretch(), sg.Input(size=15, key="skip_row", tooltip="separated by ;")],
     def update_setting_view(self):
-
         self.window["start_row"].update(value=self.file.settings.get("start_row"))
         self.window["start_time"].update(values=self.file.settings.get("start_time_candi"),
                                          value=self.file.settings.get("start_time_col"))
@@ -1422,24 +1414,25 @@ class file_view_vc:
         self.window["separator"].update(value=self.file.settings.get("separator"))
 
     def show(self):
+
         while True:  # the event loop
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
                 break
-            if event == "Open File":
+            elif event == "Open File":
                 address = self.window["-Preview-"].get()
-                preview_data = self.file.auto_parse(address)
-                self.window["-file_preview_window-"].update(values=preview_data)
-                self.update_setting_view()
-
-            if event == "Regen Preview":
+                if address:
+                    preview_data = self.file.auto_parse(address)
+                    self.window["-file_preview_window-"].update(values=preview_data)
+                    self.update_setting_view()
+                    self.window["-folder_preview_window-"].update(values=[[""]])
+            elif event == "Regen Preview":
                 if self.window["skip_keywords"].get() != "":
                     skip_keywords = self.window["skip_keywords"].get().split(",")
                 else:
                     skip_keywords = None
                 if self.window["skip_rows"].get() != "":
                     skip_rows = self.window["skip_rows"].get().split(",")
-                    print(skip_rows)
                 else:
                     skip_rows = None
                 self.file.settings.update({
@@ -1455,9 +1448,27 @@ class file_view_vc:
                     "timestamp_format": self.window["timestamp_format"].get()
                 })
                 # print(self.file.settings)
-                preview_data = self.file.auto_parse(self.window["-Preview-"].get())
-                self.window["-file_preview_window-"].update(values=preview_data)
-                self.update_setting_view()
+                if self.window["-Preview-"].get() != "":
+                    preview_data = self.file.auto_parse(self.window["-Preview-"].get())
+                    self.window["-file_preview_window-"].update(values=preview_data)
+                    self.update_setting_view()
+                    self.window["-folder_preview_window-"].update(values=[[""]])
+            elif event == "Scan Folder":
+                folder = values.get("-Folder_to_Scan-")
+                if folder:
+                    file_list = [file[0] for file in data_log_vc.get_file_info_from_folder(folder)]
+                    result = self.file.search_match_in_files(file_list)
+                    self.related_files = result
+                    self.window["-folder_preview_window-"].update(values=result)
+            elif event == "Decode and Combine":
+                result = self.file.concat_matching_files(self.related_files,rel_tracker_app.dbmodel)
+                folder = sg.popup_get_folder("Please provide folder where output will be saved")
+                file = os.path.join(folder,str(dt.datetime.now().date())+"output.csv")
+                if file:
+                    if isinstance(result, pd.DataFrame):
+                        with open(file,"w") as f:
+                            result.to_csv(path=f)
+                    sg.popup_ok(f'decoded file has been saved as {str(dt.datetime.now().date())+"output.csv"} ')
         self.close_window()
 
     def close_window(self):

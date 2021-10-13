@@ -156,7 +156,7 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(9)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col,select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                              headings=table_col, select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                               expand_x=True, num_rows=15, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
@@ -566,31 +566,32 @@ class rel_tracker_view:
     @staticmethod
     def file_view():
         table_col = ["     " + str(i) + "     " for i in range(10)]
-        table_value = [["" for row in range(10)] for _ in range(1)]
+        table_value = [["" for _ in range(10)] for _ in range(1)]
         table_view = sg.Table(values=table_value,
                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_NONE,
                               expand_x=True, num_rows=17, font="Helvetica 12", header_font="Helvetica 12 bold",
                               header_background_color="white",
                               enable_events=True, key="-file_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
 
-        table2_col = ["filename","file_address","creation_time"]
-        table2_value = [["" for row in range(10)] for _ in range(3)]
+        table2_col = ["filename"]
+        table2_value = [["" for _ in range(10)] for _ in range(1)]
         table2_view = sg.Table(values=table2_value,
-                              headings=table2_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
-                              expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
-                              header_background_color="white",
-                              enable_events=True, key="-folder_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
+                               headings=table2_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
+                               expand_x=True, num_rows=20, font="Helvetica 12", header_font="Helvetica 12 bold",
+                               header_background_color="white",
+                               enable_events=True, key="-folder_preview_window-", pad=(5, 5), hide_vertical_scroll=True)
 
         setting_col_layout = [
             [sg.Txt("encode"), sg.Stretch(), sg.Combo(values=[], size=15, key="encode")],
             [sg.Txt("start_row"), sg.Stretch(), sg.Spin(values=[i for i in range(10)], size=15, key="start_row")],
-            [sg.Txt("start_time"), sg.Stretch(), sg.Combo(values=[],size=15, key="start_time")],
+            [sg.Txt("start_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="start_time")],
             [sg.Txt("end_time"), sg.Stretch(), sg.Combo(values=[], size=15, key="end_time")],
-            [sg.Txt("serial_number"), sg.Stretch(), sg.Combo(values=[],size=15, key="serial_number")],
+            [sg.Txt("serial_number"), sg.Stretch(), sg.Combo(values=[], size=15, key="serial_number")],
             [sg.Txt("separator"), sg.Stretch(), sg.Combo(values=[], size=15, key="separator")],
             [sg.Txt("skip_keywords"), sg.Stretch(), sg.Input(size=15, key="skip_keywords", tooltip="separated by ; ")],
             [sg.Txt("skip_rows"), sg.Stretch(), sg.Input(size=15, key="skip_rows", tooltip="separated by ;")],
-            [sg.Txt("timestamp format"),sg.Stretch(),sg.Combo(values=['%Y%m%d-%H%M%S'], key="timestamp_format", size=15)],
+            [sg.Txt("timestamp format"), sg.Stretch(),
+             sg.Combo(values=['%Y%m%d-%H%M%S'], key="timestamp_format", size=15)],
             [sg.B("Regen Preview")]
         ]
         setting_col = sg.Column(setting_col_layout)
@@ -599,15 +600,16 @@ class rel_tracker_view:
             [sg.Txt("data tagging station settings:")],
             [sg.Txt("File Preview", size=15), sg.InputText(size=30, readonly=True, key="-Preview-"), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), enable_events=True,
-                           target=(sg.ThisRow, -2), disabled=False,file_types=("*.csv", "*.CSV")), sg.B("Open File")],
+                           target=(sg.ThisRow, -2), disabled=False, file_types=("*.csv", "*.CSV")), sg.B("Open File")],
             [sg.HorizontalSeparator()],
             [table_view, setting_col],
             [sg.Txt("Scan all files", size=15), sg.InputText(size=30, readonly=True,
-                                                             key="-Scan_Folder-", enable_events=True),
+                                                             key="-Folder_to_Scan-", enable_events=True),
              sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), disabled=False, ), sg.B("Scan Folder")],
             [sg.HorizontalSeparator()],
-            [table2_view]
+            [table2_view],
+            [sg.B("Decode and Combine"), sg.B("Decode Selected")],
         ]
 
         window = sg.Window('CSV Compiler', layout1, keep_on_top=False, grab_anywhere=True, no_titlebar=False,

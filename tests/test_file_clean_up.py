@@ -27,3 +27,40 @@ def test_auto_parse():
     # print(time_str)
 
     assert 1 == 1
+
+
+def test_search_match_in_files():
+    assert False
+
+
+def test_clean_up_file():
+    a = RawData()
+    a.settings.update(
+        {
+            "separator": ",",
+        }
+    )
+    file = '/Users/jimmyzhong/Desktop/5385BZ_VID-1_Summary_20210526_G25TC_P_R_MPK.csv'
+    result = a.clean_up_file(file)
+    print(result)
+    assert 1 == 1
+
+
+def test_concat_matching_files():
+    """
+    bring starttime and serialnumber to first, all text column to front, all numbers to back
+    :return:
+    """
+    a = RawData()
+    a.settings.update(
+        {
+            "separator": ",",
+            "start_time_col": "Start Time",
+            "timestamp_format": "%Y/%m/%d %H:%M:%S",
+            "sn_col": "Lens Housing Barcode"
+        }
+    )
+    file_list = ['/Users/jimmyzhong/Desktop/5385BZ_VID-1_Summary_20210526_G25TC_P_R_MPK.csv',
+            '/Users/jimmyzhong/Desktop/5385BZ_VID-1_Summary_20210526_G25TC_P_R_MPK.csv']
+    result = a.concat_matching_files(file_list,db)
+    assert 1 == 1

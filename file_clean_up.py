@@ -2,6 +2,7 @@ import csv
 
 import pandas as pd
 import datetime as dt
+from data_model import *
 
 
 class RawData:
@@ -64,7 +65,8 @@ class RawData:
         :param file: which file to preview
         :param max_col: when generating preview, how many columns to display
         :param max_row: when generating preview, how many rows to display
-        :return: a preview data set, and in the process, provide list of possible columns for sn, start time and end time
+        :return: a preview data set, and in the process, provide list of possible columns for sn,
+         start time and end time
         """
         start_kw = self.settings.get("start_keyword")
         end_kw = self.settings.get("end_keyword")
@@ -79,14 +81,13 @@ class RawData:
                 csv_reader = csv.reader(f, dialect)
             except csv.Error:
                 print("not able to read this file")
-                return [["" for row in range(10)] for _ in range(1)]
+                return [["" for _ in range(10)] for _ in range(1)]
             data = [[cell.strip() for cell in row] for row in csv_reader]
             self.settings.update({"separator": dialect.delimiter})
             self.settings.update({"quotechar": dialect.quotechar})
             row_count = len(data)
 
             # determine separator by checking which separator is able to split line with max sections
-            pre_max_count = 0
             if self.settings.get("start_row"):
                 start_row = self.settings.get("start_row")
             else:
@@ -197,27 +198,108 @@ class RawData:
         if self.settings.get("skip_rows"):
             for row_index in self.settings.get("skip_rows"):
                 if row_index.strip('-').isnumeric():
-
                     row_index = int(row_index)
-                    print(row_index)
                     if ind == row_index or row_count + row_index == ind:
-                        print("row skipped")
                         return self.fill_up_row(max_col=len(row), row=[])
         return row
         #
         # if isinstance(self.settings.get("start_time_pos"), int):
         #     row.insert(0, row.pop(self.settings.get("start_time_pos")))
 
-    def clean_up(self, lines: list = None):
+    def search_match_in_files(self, file_path_list: list):
+        ok_to_process_file_list = []
+        for file in file_path_list:
+            if file.lower().endswith(".csv"):
+                with open(file, newline='') as csvfile:
+                    try:
+                        reader = csv.reader(csvfile, delimiter=self.settings.get("separator"),
+                                            quotechar=self.settings.get("quotechar"))
+                        limited_row = []
+                        for index, row in enumerate(reader):
+                            if index > 10:
+                                break
+                            limited_row.append(row)
+                        data = [[cell.strip() for cell in row] for row in limited_row]
+                        if len(data) > 1:
+                            column_name = set(data[self.settings.get("start_row")])
+                            if len(column_name - self.settings.get("col_name_set")) / len(column_name) < 0.1 and \
+                                    self.settings.get("sn_col") in column_name and \
+                                    self.settings.get("start_time_col") in column_name:
+                                ok_to_process_file_list.append(file)
+                    except csv.Error as e:
+                        print(e)
+        return [[row] for row in ok_to_process_file_list]
+
+    def clean_up_file(self, file: str):
         """
-        0. confirm start row matches setting. if not, return empty []
+        0. confirm start row matches setting. if not, return empty [], completed in other function
         1. remove anything above start_row
         2. remove any row that contains skip keyword
-        3. create a df, drop na
-        4. bring all character columns to front
-        5. rename sn column name, start time column name, end time column name
-
-        :param lines: file
-        :return:
+        3. create a list of df each time line sees a header row
+        :param file: pre validated file that's ok to proceed
+        :return: a list of df
         """
-        pass
+        frame = []
+        with open(file, newline='') as csvfile:
+            try:
+                reader = csv.reader(csvfile, delimiter=self.settings.get("separator"),
+                                    quotechar=self.settings.get("quotechar"))
+                lines = [[cell.strip() for cell in row] for row in reader]
+
+                row_count = len(lines)
+                data = [self.row_validation(ind, line, row_count)[
+                        self.settings.get("start_col"):]
+                        for ind, line in enumerate(lines[0: row_count])]
+                header_initial = data[0][0]
+                header = []
+                values = []
+                for line in data:
+                    if line[0] == header_initial:
+                        print("found header")
+                        header = line
+                        if len(values) > 1:
+                            df = pd.DataFrame(columns=header, data=values)
+                            frame.append(df)
+                            values = []
+                    else:
+                        values.append(line)
+                df = pd.DataFrame(columns=header, data=values)
+                frame.append(df)
+
+            except csv.Error as e:
+                print(e)
+        return frame
+
+    @staticmethod
+    def rel_tagging(s, db: DBsqlite, sn_col_name):
+        result = db.rel_tagging(s[sn_col_name], s["StartTimestamp"])
+        s["wip"] = result[0]
+        s["fk_stress"] = result[1]
+        return s
+
+    def concat_matching_files(self, file_list: list, db: DBsqlite):
+        if isinstance(file_list, list):
+            sn_col_name = self.settings.get('sn_col')
+            frame = []
+            for file in file_list:
+                print(file)
+                subframe = self.clean_up_file(file[0])
+                if subframe:
+                    frame.extend(subframe)
+            df = pd.concat(frame, sort=False, ignore_index=False)
+            if self.settings.get('start_time_col') in df.columns.values.tolist():
+                df['StartTimestamp'] = df[self.settings.get('start_time_col')] \
+                    .map(lambda x: self.get_timestamp(x), na_action='ignore')
+                df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
+            return df
+        else:
+            return None
+
+    def get_timestamp(self, time_string):
+        try:
+            timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
+            return timestamp
+        except TypeError:
+            return None
+        except ValueError:
+            return None

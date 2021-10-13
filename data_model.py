@@ -220,12 +220,19 @@ class DBsqlite:
                 return [list(row) for row in result]
 
     def rel_tagging(self, sn: str, timestamp: float):
+        """
+        :param sn:
+        :param timestamp:
+        :return: (WIP, StartTimestamp, FK_RelStress)
+        """
         history = self.get_test_history(sn)
         if history:
             for log in history:
                 if timestamp > log[1]:
-                    return log
-            return [None, None, None]
+                    return [log[0], log[2]]
+            return ["NA", "NA"]
+        else:
+            return ["NA", "NA"]
 
     @property
     def ready_to_data_tagging(self):
@@ -456,12 +463,12 @@ class DBsqlite:
     def failure_mode_list_to_add_to_sn(self):
         if self.cur:
             sql = " SELECT FailureMode_T.FailureMode From FALog_T " \
-                  " Inner join FailureMode_T On FailureMode_T.PK = FALog_T.FK_FailureMode" \
-                  + self.sql_filter_str({
-                "SerialNumber": self.filter_set.get("serial_number"),
-                "FK_RelStress": self.selected_stress_pks,
-                "FALog_T.removed": 0
-            })
+                  " Inner join FailureMode_T On FailureMode_T.PK = FALog_T.FK_FailureMode" + \
+                  self.sql_filter_str({
+                      "SerialNumber": self.filter_set.get("serial_number"),
+                      "FK_RelStress": self.selected_stress_pks,
+                      "FALog_T.removed": 0
+                  })
             result_existing = self.cur.execute(sql).fetchall()
             existing = set(result["FailureMode"] for result in result_existing)
             return self.failure_mode_list - existing
@@ -1596,8 +1603,8 @@ class StatusSummary:
 
     def get_failure_count_in_cell(self, stress_pk, config_pk, fm: str = None):
         if isinstance(fm, str):
-            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk
-                                        and row.get("FailureMode"),
+            result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk and
+                            row.get("FailureMode"),
                             self.failures)
         else:
             result = filter(lambda row: row.get("FK_RelStress") == stress_pk and row.get("Config_FK") == config_pk,
