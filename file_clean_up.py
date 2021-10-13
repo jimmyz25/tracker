@@ -136,7 +136,7 @@ class RawData:
                 if self.settings.get("timestamp_format"):
                     try:
                         df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
-                            .map(lambda x: dt.datetime.strptime(x, self.settings.get("timestamp_format")).timestamp(),
+                            .map(lambda x: self.get_timestamp(x),
                                  'ignore')
                     except ValueError:
                         print("cannot process timestamp")
@@ -257,18 +257,22 @@ class RawData:
                 values = []
                 for ind, line in enumerate(lines):
                     if line[0] == header_initial:
-                        print("found header")
-                        header = line
-                        header_column_count = len(header)
-                        if len(values) > 1:
+                        if len(header) > 0:
                             df = pd.DataFrame(columns=header, data=values)
+                            column_names = [i for i in list(df) if i != ""]
+                            df = df[column_names]
                             frame.append(df)
                             values = []
+                        header = line  # get new header
+                        header_column_count = len(header)
                     else:
-                        values.append(
-                            self.row_validation(ind=ind, row=line, row_count=row_count, row_length=header_column_count))
+                        new_row = self.row_validation(ind=ind,
+                                                      row=line, row_count=row_count, row_length=header_column_count)
+                        if len(list(filter(lambda x: x != "", new_row))) > 0:
+                            values.append(new_row)
                 df = pd.DataFrame(columns=header, data=values)
-                df.dropna(how="all", inplace=True)
+                column_names = [i for i in list(df) if i != ""]
+                df = df[column_names]
                 frame.append(df)
 
             except csv.Error as e:
@@ -300,22 +304,26 @@ class RawData:
                 subframe = self.clean_up_file(file[0])
                 if subframe:
                     frame.extend(subframe)
-            df = pd.concat(frame, sort=False, ignore_index=False)
+            df = pd.concat(frame, sort=False, ignore_index=True)
             if self.settings.get('start_time_col') in df.columns.values.tolist():
                 df['StartTimestamp'] = df[self.settings.get('start_time_col')] \
                     .map(lambda x: self.get_timestamp(x), na_action='ignore')
                 df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
                 # df = df.dropna(how="all")
-                print(df)
             return df
         else:
             return None
 
-    def get_timestamp(self, time_string):
-        try:
-            timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
-            return timestamp
-        except TypeError:
-            return None
-        except ValueError:
-            return None
+    def get_timestamp(self, time_string: str):
+        if isinstance(time_string, str):
+            try:
+                time_string = time_string.strip()
+                print(time_string)
+                timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
+                return timestamp
+            except TypeError:
+                return None
+            except ValueError:
+                return None
+            except:
+                return None
