@@ -180,7 +180,7 @@ class RawData:
             length_of_row = len(row)
             if length_of_row < max_col:
                 delta = max_col - len(row)
-                row.append(["" for _ in range(delta)])
+                row.extend(["" for _ in range(delta)])
             elif length_of_row > max_col:
                 return row[:max_col]
             else:
@@ -302,6 +302,8 @@ class RawData:
                 df['StartTimestamp'] = df[self.settings.get('start_time_col')] \
                     .map(lambda x: self.get_timestamp(x), na_action='ignore')
                 df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
+                # df = df.dropna(how="all")
+                print(df)
             return df
         else:
             return None

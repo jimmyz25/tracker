@@ -161,7 +161,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
         layout_status_column = [
             [self.__station_name__()],
             [sg.Txt("Latest Checkpoint Only", size=20),
@@ -181,7 +181,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -376,14 +376,14 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -525,7 +525,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -540,7 +540,7 @@ class rel_tracker_view:
                                                    "sub-folder", key="-folder_name-"), ],
             button_row,
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
