@@ -205,7 +205,7 @@ class RawData:
                     row_index = int(row_index)
                     if ind == row_index or row_count + row_index == ind:
                         return self.fill_up_row(max_col=row_length, row=[])
-        a = self.fill_up_row(max_col=row_length, row=row)
+        # a = self.fill_up_row(max_col=row_length, row=row)
         return self.fill_up_row(max_col=row_length, row=row)
         #
         # if isinstance(self.settings.get("start_time_pos"), int):
@@ -251,11 +251,6 @@ class RawData:
                                     quotechar=self.settings.get("quotechar"))
                 lines = [[cell.strip() for cell in row] for row in reader]
                 row_count = len(lines)
-                # row_count = len(lines)
-                # data = lines[self.settings.get("start_row"):]
-                # data = [self.row_validation(ind, line, row_count)[
-                #         self.settings.get("start_col"):]
-                #         for ind, line in enumerate(lines[0: row_count])]
                 header_initial = lines[self.settings.get("start_row")][0]
                 header_column_count = len(lines[self.settings.get("start_row")])
                 header = []
@@ -273,8 +268,7 @@ class RawData:
                         values.append(
                             self.row_validation(ind=ind, row=line, row_count=row_count, row_length=header_column_count))
                 df = pd.DataFrame(columns=header, data=values)
-                print(df)
-                df.dropna(how="all")
+                df.dropna(how="all", inplace=True)
                 frame.append(df)
 
             except csv.Error as e:
