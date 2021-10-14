@@ -113,6 +113,7 @@ class rel_tracker_view:
                                 enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
+            [self.__station_name__()],
             [sg.B("Add", size=(20, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="register new units in batch"),
@@ -146,7 +147,8 @@ class rel_tracker_view:
              sg.B("Show Summary", size=(20, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="generate a summary to show test status")
-             ]
+             ],
+
         ]
         button_column = sg.Column(layout=layout_button_column,
                                   size=(int(320 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)))
@@ -163,15 +165,8 @@ class rel_tracker_view:
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
         # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
         layout_status_column = [
-            [self.__station_name__()],
-            [sg.Txt("Latest Checkpoint Only", size=20),
-             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
-            [sg.Txt("Current Station Only", size=20),
-             sg.Rad("T", group_id="table_show_current_station",
-                    default=False, enable_events=True, key="-show_current1-"),
-             sg.Rad("F", group_id="table_show_current_station",
-                    default=True, enable_events=True, key="-show_current0-")],
+
+
             [sg.Txt("")]
         ]
         status_column = sg.Column(layout=layout_status_column,
@@ -180,6 +175,14 @@ class rel_tracker_view:
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
+            [sg.Txt("Latest Checkpoint Only", size=20),
+             sg.Rad("T", group_id="table_show_latest", default=False, enable_events=True, key="-show_latest1-"),
+             sg.Rad("F", group_id="table_show_latest", default=True, enable_events=True, key="-show_latest0-")],
+            [sg.Txt("Current Station Only", size=20),
+             sg.Rad("T", group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("F", group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
             [table_view],
             # [output_view]
         ]

@@ -321,7 +321,6 @@ class RawData:
         if isinstance(time_string, str):
             try:
                 time_string = time_string.strip()
-                print(time_string)
                 if time_string != "":
                     timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
                     return timestamp

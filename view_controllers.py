@@ -1079,6 +1079,9 @@ class failure_mode_config_vc:
             if event == sg.WIN_CLOSED:
                 break
             elif event == "Create New Failure Mode":
+                rel_tracker_app.dbmodel.filter_set.update({
+                    "failure_group": "Default",
+                })
                 failure_mode = sg.popup_get_text("Please Provide Failure Mode Name")
                 rel_tracker_app.dbmodel.insert_to_failure_mode_table(failure_mode)
                 rel_tracker_app.dbmodel.filter_set.update({

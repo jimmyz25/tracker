@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="Empty DB for Training.db" uuid="8781a1af-fbf1-43bf-87f0-757605d829a3">
+    <data-source source="LOCAL" name="Empty DB for Training.db [2]" uuid="7ab52a49-ca20-4ba0-872b-275027e81b8a">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\jimmyzhong\Desktop\Empty DB for Training.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/Desktop/Tracker App package/training package 2/Empty DB for Training.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

@@ -561,7 +561,7 @@ class DBsqlite:
             "Config_FK": self.selected_config_pks,
             "FailureMode": self.filter_set.get("failure_mode"),
             "FK_RelStress": self.selected_stress_pks,
-            "Station": self.display_setting.get("station_filter"),
+            "FALog_T.Station": self.display_setting.get("station_filter"),
             "FALog_T.removed": 0
         }
         if self.cur:
@@ -591,7 +591,7 @@ class DBsqlite:
             "Tagger_Log_T.SerialNumber": self.filter_set.get("serial_number"),
             "FK_Config": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
-            "Station": self.display_setting.get("station_filter"),
+            "Tagger_Log_T.Station": self.display_setting.get("station_filter"),
             "Tagger_Log_T.removed": 0,
         }
         if self.cur:
@@ -1038,7 +1038,7 @@ class DBsqlite:
                 "FailureGroup": "Default",
                 "FailureMode": failure_mode,
                 "removed": 0,
-                "Station": self.filter_set.get('station')
+                "Station": self.station
             }
             if self.__insert_to_table__("FailureMode_T", **log):
                 self.con.commit()
