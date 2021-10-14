@@ -134,15 +134,18 @@ class RawData:
             df = pd.DataFrame(all_data[start_row + 1:], columns=all_data[start_row])
             if self.settings.get("start_time_col"):
                 if self.settings.get("timestamp_format"):
-                    try:
-                        df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
-                            .map(lambda x: self.get_timestamp(x),
-                                 'ignore')
-                    except ValueError:
-                        print("cannot process timestamp")
-                        pass
-                    except KeyError:
-                        print("cannot find column names")
+                    df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
+                        .map(lambda x: self.get_timestamp(x),
+                             'ignore')
+                    # try:
+                    #     df[self.settings.get("start_time_col")] = df[self.settings.get("start_time_col")] \
+                    #         .map(lambda x: self.get_timestamp(x),
+                    #              'ignore')
+                    # except ValueError:
+                    #     print("cannot process timestamp")
+                    #     pass
+                    # except KeyError:
+                    #     print("cannot find column names")
             header = df.columns.tolist()
             if self.settings.get("sn_col"):
                 if self.settings.get("sn_col") in header:
@@ -319,11 +322,8 @@ class RawData:
             try:
                 time_string = time_string.strip()
                 print(time_string)
-                timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
-                return timestamp
-            except TypeError:
-                return None
+                if time_string != "":
+                    timestamp = dt.datetime.strptime(time_string, self.settings.get("timestamp_format")).timestamp()
+                    return timestamp
             except ValueError:
-                return None
-            except:
                 return None

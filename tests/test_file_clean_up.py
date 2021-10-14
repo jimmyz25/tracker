@@ -64,3 +64,10 @@ def test_concat_matching_files():
             '/Users/jimmyzhong/Desktop/5385BZ_VID-1_Summary_20210526_G25TC_P_R_MPK.csv']
     result = a.concat_matching_files(file_list,db)
     assert 1 == 1
+
+def test_get_timestamp():
+    a = RawData()
+    time_str = "10/13/2021 14:06"
+    format = "%m/%d/%Y %H:%M"
+    a = dt.datetime.strptime(time_str, format)
+    print (a)
