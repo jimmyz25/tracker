@@ -109,6 +109,7 @@ class preference_vc:
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
+
         if self.window["-station-type-"].get() == "Data Tagging":
             self.window["input_folder_browse"].update(disabled=False)
             self.window["output_folder_browse"].update(disabled=False)
@@ -1207,7 +1208,6 @@ class stress_setup_vc:
                 self.window["Archive Checkpoints"].update(disabled=False)
             else:
                 self.window["Archive Checkpoints"].update(disabled=True)
-
         self.close_window()
 
     def close_window(self):
