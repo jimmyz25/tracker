@@ -779,9 +779,10 @@ class DBsqlite:
     @property
     def on_going_wip(self):
         sql = " SELECT WIP, min(StartTimestamp) as Start, " \
-              " EndTimestamp is Null as On_going, COUNT(DISTINCT SerialNumber) as Count from RelLog_T" \
+              " max(EndTimestamp is Null) as On_going, COUNT(DISTINCT SerialNumber) as Count from RelLog_T" \
               " WHERE removed = 0 " \
-              " GROUP By WIP, EndTimestamp is Null "
+              " GROUP By WIP" \
+              " ORDER BY Start DESC"
         results = self.cur.execute(sql).fetchall()
         if results:
             return [dict(result) for result in results]
