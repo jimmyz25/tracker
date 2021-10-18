@@ -16,7 +16,7 @@ class rel_tracker_app:
     station = settings.get("-Station_Name-")
     view_list = []
     sg.theme("LightGrey1")
-    sg.SetOptions(font='Arial 11', element_padding=(2, 2), element_size=(35, 1),
+    sg.SetOptions(font=rel_tracker_view.text_font, element_padding=(2, 2), element_size=(35, 1),
                   auto_size_buttons=True, input_elements_background_color="#f7f7f7", auto_size_text=True,
                   use_ttk_buttons=True, button_element_size=(20, 1))
     while True:
