@@ -24,6 +24,7 @@ class rel_tracker_view:
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         print(sg.Window.get_screen_size())
+        print(sg.Window.get_screen_size())
         # print(sg.Window.get_screen_dimensions())
         return window
 

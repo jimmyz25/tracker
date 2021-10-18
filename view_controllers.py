@@ -3,7 +3,7 @@
 import shutil
 import platform
 from rel_tracker_view import *
-from data_model import *
+# from data_model import *
 import sys
 import os
 from file_clean_up import *
