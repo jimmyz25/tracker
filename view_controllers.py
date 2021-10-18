@@ -1,9 +1,9 @@
 # this is a collection of view controllers. each view controller works on a view
 # import PySimpleGUI
 import shutil
-
+import platform
 from rel_tracker_view import *
-from data_model import *
+# from data_model import *
 import sys
 import os
 from file_clean_up import *
@@ -109,6 +109,7 @@ class preference_vc:
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
+
         if self.window["-station-type-"].get() == "Data Tagging":
             self.window["input_folder_browse"].update(disabled=False)
             self.window["output_folder_browse"].update(disabled=False)
@@ -807,6 +808,7 @@ class data_log_vc:
                         os.makedirs(new_dir)
                     if not os.path.exists(new_destination):
                         shutil.copy2(file[0], new_destination)
+
                         print(f"{os.path.basename(file[0])} copied to output folder")
                     total += 1
                 print(f"{total} in total files. {non_processed} non processed files saved in non_processed subfolder "
@@ -853,12 +855,31 @@ class data_log_vc:
             sys.exit()
 
     @staticmethod
+    def creation_date(path_to_file):
+        """
+        Try to get the date that a file was created, falling back to when it was
+        last modified if that isn't possible.
+        See http://stackoverflow.com/a/39501288/1709587 for explanation.
+        """
+        if platform.system() == 'Windows':
+            return os.path.getctime(path_to_file)
+        else:
+            stat = os.stat(path_to_file)
+            try:
+                return stat.st_birthtime
+            except AttributeError:
+                # We're probably on Linux. No easy way to get creation dates here,
+                # so we'll settle for when its content was last modified.
+                return stat.st_mtime
+
+    @staticmethod
     def get_file_info_from_folder(folder):
         result = []
         for root, dirs, files in os.walk(folder, topdown=True):
             for name in files:
                 filepath = os.path.join(root, name)
-                creation_time = os.stat(filepath).st_ctime
+                # creation_time = os.stat(filepath).st_ctime
+                creation_time = data_log_vc.creation_date(filepath)
                 processed = False
                 result.append((filepath, creation_time, processed))
         return result
@@ -1187,7 +1208,6 @@ class stress_setup_vc:
                 self.window["Archive Checkpoints"].update(disabled=False)
             else:
                 self.window["Archive Checkpoints"].update(disabled=True)
-
         self.close_window()
 
     def close_window(self):

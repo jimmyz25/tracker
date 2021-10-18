@@ -754,7 +754,8 @@ class DBsqlite:
         :return:
         """
         file_creation_time = self.filter_set.get("file_creation_time")
-        if isinstance(file_creation_time, float):
+        print(self.station)
+        if file_creation_time:
             sql = " SELECT Tagger_Log_T.FolderGroup, Config_T.Program, Config_T.Build, Config_T.Config," \
                   " Tagger_Log_T. SerialNumber, RelStress_T.RelStress, RelStress_T.RelCheckpoint FROM Tagger_Log_T" \
                   " Inner Join Config_T ON Config_T.PK = Tagger_Log_T.FK_Config" \
@@ -762,12 +763,14 @@ class DBsqlite:
                   " WHERE StartTimestamp < ? and EndTimestamp > ?" \
                   " AND Tagger_Log_T.removed = 0 AND Tagger_Log_T.Station = ?"
             results = self.cur.execute(sql, (file_creation_time, file_creation_time, self.station)).fetchall()
+
             if results:
                 if len(results) > 1:
                     print("there is ambiguity, no tag")
                     return None
                 else:
                     result = results[0]
+                    print(result)
                     a = (result["FolderGroup"], result["Program"],
                          result["Build"], result["Config"], result["SerialNumber"],
                          result["RelStress"], result["RelCheckpoint"])

@@ -23,6 +23,9 @@ class rel_tracker_view:
         window = sg.Window('Welcome Page', layout, keep_on_top=True, grab_anywhere=False, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
+        print(sg.Window.get_screen_size())
+        print(sg.Window.get_screen_size())
+        # print(sg.Window.get_screen_dimensions())
         return window
 
     @staticmethod
@@ -163,7 +166,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
         layout_status_column = [
 
 
@@ -184,7 +187,7 @@ class rel_tracker_view:
              sg.Rad("F", group_id="table_show_current_station",
                     default=True, enable_events=True, key="-show_current0-")],
             [table_view],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -379,14 +382,14 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -528,7 +531,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -543,7 +546,7 @@ class rel_tracker_view:
                                                    "sub-folder", key="-folder_name-"), ],
             button_row,
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -594,7 +597,7 @@ class rel_tracker_view:
             [sg.Txt("skip_keywords"), sg.Stretch(), sg.Input(size=15, key="skip_keywords", tooltip="separated by ; ")],
             [sg.Txt("skip_rows"), sg.Stretch(), sg.Input(size=15, key="skip_rows", tooltip="separated by ;")],
             [sg.Txt("timestamp format"), sg.Stretch(),
-             sg.Combo(values=['%Y%m%d-%H%M%S'], key="timestamp_format", size=15)],
+             sg.Combo(values=['%Y%m%d-%H%M%S',"%Y/%m/%d %H:%M:%S"], key="timestamp_format", size=15)],
             [sg.B("Regen Preview")]
         ]
         setting_col = sg.Column(setting_col_layout)
