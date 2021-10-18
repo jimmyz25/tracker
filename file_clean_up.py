@@ -310,7 +310,7 @@ class RawData:
             df = pd.concat(frame, sort=False, ignore_index=True)
             if self.settings.get('start_time_col') in df.columns.values.tolist():
                 df['StartTimestamp'] = df[self.settings.get('start_time_col')] \
-                    .map(lambda x: self.get_timestamp(x), na_action='ignore')
+                    .map(lambda x: self.get_timestamp(x), na_action='ignore');
                 df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
                 # df = df.dropna(how="all")
             return df
