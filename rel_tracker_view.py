@@ -29,6 +29,7 @@ class rel_tracker_view:
         window = sg.Window('Welcome Page', layout, keep_on_top=True, grab_anywhere=False, no_titlebar=True,
                            finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
+        print(sg.Window.get_screen_size())
         if sg.Window.get_screen_size()[0] < 1500:
             rel_tracker_view.scale = rel_tracker_view.scale / 1.2
             rel_tracker_view.button_font = "Helvetica 8"
@@ -39,12 +40,12 @@ class rel_tracker_view:
             rel_tracker_view.station_font = "Helvetica 9 bold"
         elif sg.Window.get_screen_size()[0] < 2500:
             rel_tracker_view.scale = rel_tracker_view.scale / 1
-            rel_tracker_view.button_font = "Helvetica 9"
-            rel_tracker_view.table_font = "Helvetica 9"
-            rel_tracker_view.table_header_font = "Helvetica 9 bold"
-            rel_tracker_view.text_font = "Helvetica 9"
-            rel_tracker_view.logo_font = 'Helvetica 30 bold'
-            rel_tracker_view.station_font = "Helvetica 14 bold"
+            rel_tracker_view.button_font = "Helvetica 12"
+            rel_tracker_view.table_font = "Helvetica 12"
+            rel_tracker_view.table_header_font = "Helvetica 12 bold"
+            rel_tracker_view.text_font = "Helvetica 12"
+            rel_tracker_view.logo_font = 'Helvetica 25 bold'
+            rel_tracker_view.station_font = "Helvetica 15 bold"
         else:
             rel_tracker_view.scale = rel_tracker_view.scale / 1
             rel_tracker_view.button_font = "Helvetica 10"
@@ -169,47 +170,47 @@ class rel_tracker_view:
 
         layout_button_column = [
             [self.__station_name__()],
-            [sg.B("Add", size=(20, 1), pad=(5, 2),
+            [sg.B("Add", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="register new units in batch",
                   ),
-             sg.B("Assign WIP", size=(20, 1), pad=(5, 2),
+             sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="select or enter existing units then fill in WIP in 'register new unit' tab "),
              ],
-            [sg.B("Reset", size=(20, 1), pad=(5, 2),
+            [sg.B("Reset", size=(15, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="reset filter"),
-             sg.B("Update", size=(20, 1), pad=(5, 2),
+             sg.B("Update", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="only available in update mode")],
-            [sg.B("CheckIn", size=(20, 1), pad=(5, 2),
+            [sg.B("CheckIn", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="check in selected units to new checkpoints \n"
                           "Note: only available to latest status row"),
-             sg.B("Checkout", size=(20, 1), pad=(5, 2),
+             sg.B("Checkout", size=(15, 1), pad=(5, 2),
                   disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="checkout current checkpoint to indicate completion of checkpoint")
              ],
-            [sg.B("Delete", size=(20, 1), pad=(5, 2),
+            [sg.B("Delete", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Add Dummy SN", size=(20, 1), pad=(5, 2),
+             sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="only for demo, disabled for normal use")
              ],
-            [sg.B("Remove for FA", size=(20, 1), pad=(5, 2),
+            [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=True, disabled_button_color="#ababab",
                   tooltip="assign selected row to WIP: 'FA' "),
-             sg.B("Show Summary", size=(20, 1), pad=(5, 2),
+             sg.B("Show Summary", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=False, disabled_button_color="#ababab",
                   tooltip="generate a summary to show test status")
@@ -217,7 +218,7 @@ class rel_tracker_view:
 
         ]
         button_column = sg.Column(layout=layout_button_column,
-                                  size=(int(320 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)))
+                                  size=(int(350 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)))
 
         table_col = ['PK', 'Config', 'WIP', 'SerialNumber', 'Stress', 'Checkpoint', 'Start', 'End',
                      'Note']
@@ -230,11 +231,22 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(170, 5), background_color="white", expand_x=True, key="-output-",
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
                                 font=rel_tracker_view.text_font)
         layout_status_column = [
+            [
+                sg.Rad("Latest record", group_id="table_show_latest", default=False,
+                       enable_events=True, font=rel_tracker_view.text_font,
+                       key="-show_latest1-"),
+                sg.Rad("All record", group_id="table_show_latest", font=rel_tracker_view.text_font,
+                       default=True, enable_events=True, key="-show_latest0-")],
 
-            [sg.Txt("")]
+            [sg.Rad("Self Station", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("All Stations", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
         ]
         status_column = sg.Column(layout=layout_status_column,
                                   size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
@@ -242,20 +254,6 @@ class rel_tracker_view:
         layout = [
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
-            [sg.Txt("Latest Checkpoint Only", size=20, font=rel_tracker_view.text_font),
-             sg.Rad("T", group_id="table_show_latest", default=False,
-                    enable_events=True, font=rel_tracker_view.text_font,
-                    key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", font=rel_tracker_view.text_font,
-                    default=True, enable_events=True, key="-show_latest0-")],
-            [sg.Txt("Current Station Only", font=rel_tracker_view.text_font,
-                    size=20),
-             sg.Rad("T", font=rel_tracker_view.text_font,
-                    group_id="table_show_current_station",
-                    default=False, enable_events=True, key="-show_current1-"),
-             sg.Rad("F", font=rel_tracker_view.text_font,
-                    group_id="table_show_current_station",
-                    default=True, enable_events=True, key="-show_current0-")],
             [table_view],
             [output_view]
         ]
@@ -300,12 +298,14 @@ class rel_tracker_view:
     @staticmethod
     def popup_stress_select():
         layout1 = [
-            [sg.Txt("RelStress", size=15,font=rel_tracker_view.text_font),
-             sg.InputCombo(size=30,font=rel_tracker_view.text_font, values=[], key="RelStress", enable_events=True), sg.Stretch()],
-            [sg.Txt("RelCheckpoint", size=15, font=rel_tracker_view.text_font), sg.InputCombo(values=[], size=30, readonly=True,
-                                                             key="RelCheckpoint", enable_events=True), sg.Stretch()],
-            [sg.B("Save and Close",font=rel_tracker_view.text_font, enable_events=True, key="-Save-", size=(25, 1)),
-             sg.B("Clear",font=rel_tracker_view.text_font, enable_events=True, key="-Clear-")]
+            [sg.Txt("RelStress", size=15, font=rel_tracker_view.text_font),
+             sg.InputCombo(size=30, font=rel_tracker_view.text_font, values=[], key="RelStress", enable_events=True),
+             sg.Stretch()],
+            [sg.Txt("RelCheckpoint", size=15, font=rel_tracker_view.text_font),
+             sg.InputCombo(values=[], size=30, readonly=True,
+                           key="RelCheckpoint", enable_events=True), sg.Stretch()],
+            [sg.B("Save and Close", font=rel_tracker_view.text_font, enable_events=True, key="-Save-", size=(25, 1)),
+             sg.B("Clear", font=rel_tracker_view.text_font, enable_events=True, key="-Clear-")]
 
         ]
 
@@ -427,16 +427,19 @@ class rel_tracker_view:
 
         layout_filter_column = [
             [self.__station_name__()],
-            [sg.Txt("Last Checkpoint Only", size=20, font=rel_tracker_view.text_font),
-             sg.Rad("T", group_id="table_show_latest", font=rel_tracker_view.text_font,
-                    default=False, enable_events=True, key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", font=rel_tracker_view.text_font,
-                    default=True, enable_events=True, key="-show_latest0-")],
-            [sg.Txt("Current Station Only", size=20, font=rel_tracker_view.text_font),
-             sg.Rad("T", group_id="table_show_current_station", default=False, enable_events=True,
-                    key="-show_current1-", font=rel_tracker_view.text_font),
-             sg.Rad("F", group_id="table_show_current_station", default=True, enable_events=True,
-                    key="-show_current0-", font=rel_tracker_view.text_font)],
+            [
+                sg.Rad("Latest record", group_id="table_show_latest", default=False,
+                       enable_events=True, font=rel_tracker_view.text_font,
+                       key="-show_latest1-"),
+                sg.Rad("All record", group_id="table_show_latest", font=rel_tracker_view.text_font,
+                       default=True, enable_events=True, key="-show_latest0-")],
+
+            [sg.Rad("Self Station", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("All Stations", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
             [sg.Txt("SerialNumber", size=(15, 1), font=rel_tracker_view.text_font),
              sg.In(key="-SN_Input-", enable_events=True, font=rel_tracker_view.text_font)],
             [sg.Txt(text="WIP", font=rel_tracker_view.text_font, size=(15, 1)),
@@ -604,20 +607,23 @@ class rel_tracker_view:
              sg.In("", disabled=True, key="-Config_Input-", font=rel_tracker_view.text_font)],
             [sg.Txt("Current Checkpoint", size=(15, 1), key="-display-ckp", font=rel_tracker_view.text_font),
              sg.In("", disabled=True, key="-Ckp_Input-", font=rel_tracker_view.text_font)],
-            [sg.Txt("Last Checkpoint Only", size=20, font=rel_tracker_view.text_font),
-             sg.Rad("T", group_id="table_show_latest", font=rel_tracker_view.text_font,
-                    default=False, enable_events=True, key="-show_latest1-"),
-             sg.Rad("F", group_id="table_show_latest", font=rel_tracker_view.text_font,
-                    default=True, enable_events=True, key="-show_latest0-")],
-            [sg.Txt("Current Station Only", size=20, font=rel_tracker_view.text_font),
-             sg.Rad("T", group_id="table_show_current_station", default=False, enable_events=True,
-                    key="-show_current1-", font=rel_tracker_view.text_font),
-             sg.Rad("F", group_id="table_show_current_station", default=True, enable_events=True,
-                    key="-show_current0-", font=rel_tracker_view.text_font)],
+            [
+                sg.Rad("Latest record", group_id="table_show_latest", default=False,
+                       enable_events=True, font=rel_tracker_view.text_font,
+                       key="-show_latest1-"),
+                sg.Rad("All record", group_id="table_show_latest", font=rel_tracker_view.text_font,
+                       default=True, enable_events=True, key="-show_latest0-")],
+
+            [sg.Rad("Self Station", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=False, enable_events=True, key="-show_current1-"),
+             sg.Rad("All Stations", font=rel_tracker_view.text_font,
+                    group_id="table_show_current_station",
+                    default=True, enable_events=True, key="-show_current0-")],
         ]
 
         filter_column = sg.Column(layout=layout_filter_column,
-                                  size=(int(300 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)), )
+                                  size=(int(300 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)), )
 
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
@@ -658,14 +664,16 @@ class rel_tracker_view:
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
-            [sg.Rad("Group Tagging", group_id="tagging_flavor",
+            [sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
                     default=False, enable_events=True, key="-tag_group-"),
-             sg.Rad("Single Unit Tagging", group_id="tagging_flavor",
+             sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
                     default=True, enable_events=True, key="-tag_single-"),
-             sg.Txt("Folder Name:"), sg.In(default_text="",
-                                           tooltip="provide a name if "
-                                                   "you need data to be placed in a specific "
-                                                   "sub-folder", key="-folder_name-"), ],
+             sg.Txt("Folder Name:", font=rel_tracker_view.text_font),
+             sg.In(default_text="",
+                   tooltip="provide a name if "
+                           "you need data to be placed in a specific "
+                           "sub-folder",
+                   key="-folder_name-"), ],
             button_row,
             [table_view2],
             [output_view]
@@ -743,7 +751,7 @@ class rel_tracker_view:
                           font=rel_tracker_view.text_font, key="-Preview-"), sg.Stretch(),
              sg.FileBrowse(size=(10, 1), enable_events=True, font=rel_tracker_view.text_font,
                            target=(sg.ThisRow, -2), disabled=False),
-             sg.B("Open File",font=rel_tracker_view.text_font)],
+             sg.B("Open File", font=rel_tracker_view.text_font)],
             [sg.HorizontalSeparator()],
             [table_view, setting_col],
             [sg.Txt("Scan all files", size=15, font=rel_tracker_view.text_font),
