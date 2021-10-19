@@ -100,6 +100,7 @@ class RawData:
             # for ind, line in enumerate(lines):
             #     print(ind)
             col_name_row_separated = data[start_row]
+            print(col_name_row_separated)
             max_col_to_display = min(max_col, len(col_name_row_separated))
             col_length = len(col_name_row_separated)
             sn_col_candidates = list(filter(lambda x: self.settings.get("serial_number_keyword") in x,
@@ -126,7 +127,7 @@ class RawData:
                 filter(lambda x: sn_kw.lower() in x.lower(), data[start_row]))
             if len(result) > 0:
                 self.settings.update({"sn_col": result[0]})
-            all_data = [self.row_validation(ind, row=line, row_count=row_count, row_length=col_length)[
+            all_data = [self.row_validation(ind, this_row=line, row_count=row_count, row_length=col_length)[
                         self.settings.get("start_col"):]
                         for ind, line in enumerate(data)]
             # all_data = [self.row_validation(ind=ind, row=line, row_count=row_count, row_length=col_length)
@@ -177,39 +178,43 @@ class RawData:
                 return i
         return None
 
-    @staticmethod
-    def fill_up_row(max_col: int, row: list):
-        if row:
-            length_of_row = len(row)
+    @classmethod
+    def fill_up_row(cls, max_col: int, row_to_fil: list):
+        if isinstance(row_to_fil, list):
+            length_of_row = len(row_to_fil)
             if length_of_row < max_col:
-                delta = max_col - len(row)
-                row.extend(["" for _ in range(delta)])
+                delta = max_col - len(row_to_fil)
+                row_to_fil.extend(["" for _ in range(delta)])
+                return row_to_fil
             elif length_of_row > max_col:
-                return row[:max_col]
+                return row_to_fil[:max_col]
             else:
-                return row
+                return row_to_fil
         else:
             return ["" for _ in range(max_col)]
 
-    def row_validation(self, ind: int, row: list, row_count: int, row_length: int):
+    def row_validation(self, ind: int, this_row: list, row_count: int, row_length: int):
         # print (row)
         # return row
         # if skip_keyword in row, remove row
-        if row is None:
-            return self.fill_up_row(max_col=row_length, row=[])
-        if self.settings.get("skip_keywords"):
-            for keyword in self.settings.get("skip_keywords"):
-                if keyword in "".join(row):
-                    print("row skipped")
-                    return self.fill_up_row(max_col=row_length, row=[])
-        if self.settings.get("skip_rows"):
-            for row_index in self.settings.get("skip_rows"):
-                if row_index.strip('-').isnumeric():
-                    row_index = int(row_index)
-                    if ind == row_index or row_count + row_index == ind:
-                        return self.fill_up_row(max_col=row_length, row=[])
-        # a = self.fill_up_row(max_col=row_length, row=row)
-        return self.fill_up_row(max_col=row_length, row=row)
+        current_row = this_row
+        if current_row is None:
+            return RawData.fill_up_row(max_col=row_length, row_to_fil=[])
+        else:
+            current_row = this_row
+            if self.settings.get("skip_keywords"):
+                for keyword in self.settings.get("skip_keywords"):
+                    if keyword in "".join(this_row):
+                        print("row skipped")
+                        return RawData.fill_up_row(max_col=row_length, row_to_fil=[])
+            elif self.settings.get("skip_rows"):
+                for row_index in self.settings.get("skip_rows"):
+                    if row_index.strip('-').isnumeric():
+                        row_index = int(row_index)
+                        if ind == row_index or row_count + row_index == ind:
+                            return RawData.fill_up_row(max_col=row_length, row_to_fil=[])
+                return RawData.fill_up_row(max_col=row_length, row_to_fil=current_row)
+            return RawData.fill_up_row(max_col=row_length, row_to_fil=current_row)
         #
         # if isinstance(self.settings.get("start_time_pos"), int):
         #     row.insert(0, row.pop(self.settings.get("start_time_pos")))
@@ -270,7 +275,8 @@ class RawData:
                         header_column_count = len(header)
                     else:
                         new_row = self.row_validation(ind=ind,
-                                                      row=line, row_count=row_count, row_length=header_column_count)
+                                                      this_row=line,
+                                                      row_count=row_count, row_length=header_column_count)
                         if len(list(filter(lambda x: x != "", new_row))) > 0:
                             values.append(new_row)
                 df = pd.DataFrame(columns=header, data=values)
@@ -310,7 +316,7 @@ class RawData:
             df = pd.concat(frame, sort=False, ignore_index=True)
             if self.settings.get('start_time_col') in df.columns.values.tolist():
                 df['StartTimestamp'] = df[self.settings.get('start_time_col')] \
-                    .map(lambda x: self.get_timestamp(x), na_action='ignore');
+                    .map(lambda x: self.get_timestamp(x), na_action='ignore')
                 df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
                 # df = df.dropna(how="all")
             return df
