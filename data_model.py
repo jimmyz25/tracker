@@ -137,13 +137,11 @@ class DBsqlite:
                     }
                 ) +\
               f" ORDER BY EndTimestamp"
-        print(sql)
         result = self.cur.execute(sql).fetchall()
         if result:
             T1 = None,
             T2 = result[0]["FK_RelStress"]
             for row in result:
-                print (list(row))
                 T1 = T2
                 T2 = row["FK_RelStress"]
                 if row["FailureMode"] is not None:
