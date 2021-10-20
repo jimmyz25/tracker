@@ -6,7 +6,7 @@ import random
 import string
 import pandas as pd
 
-RMD = "/Users/jimmyzhong/Desktop/Empty DB for Training.db"
+RMD = "/Users/jimmyzhong/Desktop/Tracker App package/Demo Package/RelStationDB.db"
 db = DBsqlite(RMD)
 golden_address = "/Users/mingyuzhong/Documents/tracker/ReliabilityManagementDB copy.db"
 gold = DBsqlite(golden_address)
@@ -15,7 +15,7 @@ gold = DBsqlite(golden_address)
 def test_sn_exist():
     print(timeit.timeit(lambda: db.sn_exist("32ANN3Q31MRB"), number=1000))
     for i in range(1):
-        assert db.sn_exist("AA") is True
+        assert db.sn_exist("AA") is False
 
 
 def test_stress_exist():
@@ -277,3 +277,15 @@ def test_rel_tagging():
     rel_tag = db.rel_tagging(sn="03734D43H7", timestamp=1633639394)
     print(rel_tag)
     assert True == True
+
+
+def test_weibull_output():
+    db.filter_set.update({
+        "failure_mode": "Display Crack"
+    })
+    sn = "06QGLA3FX"
+    failureMode = "Lens detach"
+    a = db.weibull_output(sn)
+    print(a)
+
+    assert 1 == 1
