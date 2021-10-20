@@ -109,13 +109,6 @@ class preference_vc:
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
-
-        if self.window["-station-type-"].get() == "Data Tagging":
-            self.window["input_folder_browse"].update(disabled=False)
-            self.window["output_folder_browse"].update(disabled=False)
-        else:
-            self.window["input_folder_browse"].update(disabled=True)
-            self.window["output_folder_browse"].update(disabled=True)
         while True:  # the event loop
             event, values = self.window.read()
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
@@ -175,12 +168,6 @@ class preference_vc:
             if self.window["-Golden_Database-"].get() == self.window["-Local_Database-"].get():
                 sg.popup_error("local database cannot be the same as golden database")
                 self.window["-Golden_Database-"].update(value="")
-            if self.window["-station-type-"].get() == "Data Tagging":
-                self.window["input_folder_browse"].update(disabled=False)
-                self.window["output_folder_browse"].update(disabled=False)
-            else:
-                self.window["input_folder_browse"].update(disabled=True)
-                self.window["output_folder_browse"].update(disabled=True)
         self.close_window()
 
     def close_window(self):

@@ -94,14 +94,14 @@ class rel_tracker_view:
                           font=rel_tracker_view.text_font, key="-Input_Folder-"), sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), font=rel_tracker_view.text_font,
                              tooltip="Input folder where data will be saved before tagging",
-                             target=(sg.ThisRow, -2), key="input_folder_browse", disabled=True)],
+                             target=(sg.ThisRow, -2), key="input_folder_browse", disabled=False)],
             [sg.Txt("Output Folder", size=15,
                     font=rel_tracker_view.text_font),
              sg.InputText(size=30, readonly=True, key="-Output_Folder-",
                           font=rel_tracker_view.text_font),
              sg.Stretch(),
              sg.FolderBrowse(size=(10, 1), target=(sg.ThisRow, -2), font=rel_tracker_view.text_font,
-                             key="output_folder_browse", disabled=True, )],
+                             key="output_folder_browse", disabled=False, )],
             [sg.HorizontalSeparator()],
             [sg.Txt("Golden Database", size=15, font=rel_tracker_view.text_font
                     ), sg.InputText(size=30, font=rel_tracker_view.text_font,
@@ -231,7 +231,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
+        output_view = sg.Output(size=(140, 5), background_color="white", expand_x=True, key="-output-",
                                 font=rel_tracker_view.text_font)
         layout_status_column = [
             [
@@ -483,7 +483,7 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(150, 5),
+        output_view = sg.Output(size=(140, 5),
                                 font=rel_tracker_view.text_font,
                                 background_color="white", expand_x=True, key="-output-")
 
@@ -658,7 +658,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
+        output_view = sg.Output(size=(140, 5), font=rel_tracker_view.text_font,
                                 background_color="white", expand_x=True, key="-output-")
 
         layout = [
