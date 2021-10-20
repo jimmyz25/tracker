@@ -468,7 +468,8 @@ class rel_tracker_view:
                  disabled=True, disabled_button_color="#ababab"),
             sg.B("Show Summary", size=(20, 1), pad=(5, 2),
                  font=rel_tracker_view.button_font,
-                 disabled=False, disabled_button_color="#ababab")
+                 disabled=False, disabled_button_color="#ababab"),
+            sg.B("Distribution Fitting", enable_events=True, font=rel_tracker_view.button_font, size=(15, 1))
         ]
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
@@ -702,7 +703,7 @@ class rel_tracker_view:
 
     @staticmethod
     def file_view():
-        table_col = ["     " + str(i) + "     " for i in range(10)]
+        table_col = ["   " + str(i) + "   " for i in range(10)]
         table_value = [["" for _ in range(10)] for _ in range(1)]
         table_view = sg.Table(values=table_value,
                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_NONE,
@@ -725,13 +726,11 @@ class rel_tracker_view:
              sg.Combo(values=[], size=15, key="encode", font=rel_tracker_view.text_font)],
             [sg.Txt("start_row", font=rel_tracker_view.text_font), sg.Stretch(),
              sg.Spin(values=[i for i in range(10)], size=15, key="start_row", font=rel_tracker_view.text_font)],
-            [sg.Txt("start_time", font=rel_tracker_view.text_font), sg.Stretch(),
+            [sg.Txt("timestamp_col", font=rel_tracker_view.text_font), sg.Stretch(),
              sg.Combo(values=[], size=15, key="start_time", font=rel_tracker_view.text_font)],
-            [sg.Txt("end_time", font=rel_tracker_view.text_font), sg.Stretch(),
-             sg.Combo(values=[], size=15, key="end_time", font=rel_tracker_view.text_font)],
-            [sg.Txt("serial_number", font=rel_tracker_view.text_font), sg.Stretch(),
+            [sg.Txt("serial_number_col", font=rel_tracker_view.text_font), sg.Stretch(),
              sg.Combo(values=[], size=15, key="serial_number", font=rel_tracker_view.text_font)],
-            [sg.Txt("separator", font=rel_tracker_view.text_font), sg.Stretch(),
+            [sg.Txt("delimiter", font=rel_tracker_view.text_font), sg.Stretch(),
              sg.Combo(values=[], size=15, key="separator", font=rel_tracker_view.text_font)],
             [sg.Txt("skip_keywords", font=rel_tracker_view.text_font), sg.Stretch(),
              sg.Input(size=15, key="skip_keywords", font=rel_tracker_view.text_font, tooltip="separated by ; ")],
@@ -754,7 +753,7 @@ class rel_tracker_view:
              sg.B("Open File", font=rel_tracker_view.text_font)],
             [sg.HorizontalSeparator()],
             [table_view, setting_col],
-            [sg.Txt("Scan all files", size=15, font=rel_tracker_view.text_font),
+            [sg.Txt("Directory Path", size=15, font=rel_tracker_view.text_font),
              sg.InputText(size=30, readonly=True,
                           font=rel_tracker_view.text_font, key="-Folder_to_Scan-", enable_events=True),
              sg.Stretch(),
@@ -767,5 +766,67 @@ class rel_tracker_view:
         ]
 
         window = sg.Window('CSV Compiler', layout1, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False, modal=True)
+        return window
+
+    @staticmethod
+    def fitting_view():
+        config_table_heading = ["PK", "Program", "Build", "Config", "Group"]
+        config_table_value = [["" for _ in range(5)]]
+        config_table_show = [False, True, True, True, True]
+        config_col_layout = [
+            [sg.Text("Config Selection and Grouping", font=rel_tracker_view.text_font)],
+            [sg.Table(values=config_table_value, headings=config_table_heading, visible_column_map=config_table_show,
+                      font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
+                      num_rows=10)],
+            [sg.Button("Update Grouping", font=rel_tracker_view.button_font)]
+        ]
+        config_table_col = sg.Column(layout=config_col_layout)
+
+        stress_table_heading = ["PK", "RelCheckpoint", "RelStress", "Value"]
+        stress_table_value = [["" for _ in range(4)]]
+        stress_table_show = [False, True, True, True]
+        stress_col_layout = [
+            [sg.Text("Stress Selection", font=rel_tracker_view.text_font)],
+            [sg.Table(values=stress_table_value, headings=stress_table_heading, visible_column_map=stress_table_show,
+                      font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
+                      num_rows=10)],
+            [sg.Button("Update Checkpoint Value", font=rel_tracker_view.button_font)]
+        ]
+        stress_table_col = sg.Column(layout=stress_col_layout)
+
+        failure_mode_table_heading = ["PK", "FailureMode Group", "Failure Mode"]
+        failure_mode_table_value = [["" for _ in range(3)]]
+        failure_mode_table_show = [False, True, True]
+        failure_mode_col_layout = [
+            [sg.Text("Failure Mode Selection", font=rel_tracker_view.text_font)],
+            [sg.Table(values=failure_mode_table_value, headings=failure_mode_table_heading,
+                      visible_column_map=failure_mode_table_show,
+                      font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
+                      num_rows=10)],
+            [sg.Button("Update Data Table", font=rel_tracker_view.button_font)]
+        ]
+        failure_mode_table_col = sg.Column(layout=failure_mode_col_layout)
+
+        data_table_heading = ["SN", "T1", "T2", "Group"]
+        data_table_value = [["" for _ in range(4)]]
+        data_table_show = [True, True, True, True]
+        data_col_layout = [
+            [sg.Text("Data for distribution fitting", font=rel_tracker_view.text_font)],
+            [sg.Table(values=data_table_value, headings=data_table_heading,
+                      visible_column_map=data_table_show,
+                      font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
+                      num_rows=10, expand_x=True)],
+            [sg.Button("output for JMP", font=rel_tracker_view.button_font),
+             sg.Button("output for Relisoft", font=rel_tracker_view.button_font),
+             sg.Button("Just Plot here", font=rel_tracker_view.button_font),]
+        ]
+
+        layout = [
+            [config_table_col, stress_table_col, failure_mode_table_col],
+            [data_col_layout]
+            ]
+
+        window = sg.Window('distribution fitting', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)
         return window

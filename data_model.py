@@ -118,35 +118,36 @@ class DBsqlite:
             return False
 
     def weibull_output(self, sn: str):
-        sql = f" SELECT RelLog_T.SerialNumber,RelLog_T.FK_RelStress,A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
+        sql = f" SELECT RelLog_T.SerialNumber, RelLog_T.FK_RelStress," \
+              f"A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
               f" left join" \
               f" (SELECT SerialNumber, FK_RelStress , FailureMode_T.FailureMode as FailureMode from FALog_T" \
-              f" Inner Join FailureMode_T ON FailureMode_T.PK = FALog_T.FK_FailureMode" +\
-                self.sql_filter_str({
-                    "FailureMode_T.FailureMode": self.filter_set.get("failure_mode"),
-                    "FALog_T.removed": 0,
-                    "SerialNumber": sn
-                }) +\
+              f" Inner Join FailureMode_T ON FailureMode_T.PK = FALog_T.FK_FailureMode" + \
+              self.sql_filter_str({
+                  "FailureMode_T.FailureMode": self.filter_set.get("failure_mode"),
+                  "FALog_T.removed": 0,
+                  "SerialNumber": sn
+              }) + \
               f" ) As A" \
               f" On A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress" + \
-                self.sql_filter_str(
-                    {
-                        "RelLog_T.SerialNumber": sn,
-                        "RelLog_T.EndTimestamp": "not none",
-                        "RelLog_T.removed": 0
-                    }
-                ) +\
+              self.sql_filter_str(
+                  {
+                      "RelLog_T.SerialNumber": sn,
+                      "RelLog_T.EndTimestamp": "not none",
+                      "RelLog_T.removed": 0
+                  }
+              ) + \
               f" ORDER BY EndTimestamp"
         result = self.cur.execute(sql).fetchall()
         if result:
-            T1 = None,
-            T2 = result[0]["FK_RelStress"]
+            t1 = None,
             for row in result:
-                T1 = T2
-                T2 = row["FK_RelStress"]
+                t2 = row["FK_RelStress"]
                 if row["FailureMode"] is not None:
-                    return sn, T1, T2
-            return sn, T2, None
+                    return sn, t1, t2
+                else:
+                    t1 = t2
+            return sn, t1, None
 
     @property
     def station(self):
@@ -845,6 +846,21 @@ class DBsqlite:
             return set(result["RelStress"] for result in results)
         else:
             return {None}
+
+    def selected_sn(self, stress_pk_list: list, config_pk_list: list):
+        sql = "SELECT  RelLog_T.SerialNumber, RelLog_T.Config_FK from RelLog_T" \
+              "inner join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber" + \
+              self.sql_filter_str(
+                  {
+                      "RelLog_T.FK_Stress": stress_pk_list,
+                      "Config_SN_T.Config_FK": config_pk_list,
+                  }
+              )
+        results = self.cur.execute(sql).fetchall()
+        if results:
+            return {(result["SerialNumber"], result["Config_FK"]) for result in results}
+        else:
+            return {}
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)

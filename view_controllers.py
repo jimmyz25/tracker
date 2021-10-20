@@ -532,6 +532,9 @@ class fa_log_vc:
                 preference = preference_vc()
                 rel_tracker_app.view_list.append(preference)
                 break
+            elif event == "Distribution Fitting":
+                fitting_view = fitting_view_vc()
+                fitting_view.show()
             elif event == "Report Failure":
                 failure_mode_popup = failure_mode_vc(self.window)
                 failure_mode_popup.show()
@@ -846,7 +849,6 @@ class data_log_vc:
         """
         Try to get the date that a file was created, falling back to when it was
         last modified if that isn't possible.
-        See http://stackoverflow.com/a/39501288/1709587 for explanation.
         """
         if platform.system() == 'Windows':
             return os.path.getctime(path_to_file)
@@ -1416,8 +1418,6 @@ class file_view_vc:
         self.window["start_row"].update(value=self.file.settings.get("start_row"))
         self.window["start_time"].update(values=self.file.settings.get("start_time_candi"),
                                          value=self.file.settings.get("start_time_col"))
-        self.window["end_time"].update(values=self.file.settings.get("end_time_candi"),
-                                       value=self.file.settings.get("end_time_col"))
         self.window["serial_number"].update(values=self.file.settings.get("sn_col_candi"),
                                             value=self.file.settings.get("sn_col"))
         self.window["encode"].update(value=self.file.settings.get("encode"))
@@ -1471,15 +1471,36 @@ class file_view_vc:
                     self.related_files = result
                     self.window["-folder_preview_window-"].update(values=result)
             elif event == "Decode and Combine":
-                result = self.file.concat_matching_files(self.related_files,rel_tracker_app.dbmodel)
+                result = self.file.concat_matching_files(self.related_files, rel_tracker_app.dbmodel)
                 folder = sg.popup_get_folder("Please provide folder where output will be saved")
-                file = os.path.join(folder,str(dt.datetime.now().date())+"output.csv")
+                file = os.path.join(folder, str(dt.datetime.now().date()) + "output.csv")
                 if file:
                     if isinstance(result, pd.DataFrame):
                         with open(file, "w") as f:
                             result.to_csv(path_or_buf=f, index=False, line_terminator="\n")
                             # result.to_csv()
-                    sg.popup_ok(f'decoded file has been saved as {str(dt.datetime.now().date())+"output.csv"} ')
+                    sg.popup_ok(f'decoded file has been saved as {str(dt.datetime.now().date()) + "output.csv"} ')
+        self.close_window()
+
+    def close_window(self):
+        self.window.close()
+
+
+class fitting_view_vc:
+
+    def __init__(self, master: sg.Window = None):
+        view = rel_tracker_view(rel_tracker_app.settings)
+        self.window = view.fitting_view()
+        self.master = master
+        if master:
+            self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+
+    def show(self):
+
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
         self.close_window()
 
     def close_window(self):
