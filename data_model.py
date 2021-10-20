@@ -473,15 +473,19 @@ class DBsqlite:
 
     @property
     def all_stress_pks(self):
-        sql = "SELECT PK FROM RelStress_T"
+        sql = "SELECT PK FROM RelStress_T where removed = 0"
         results = self.cur.execute(sql).fetchall()
         return set(result["PK"] for result in results)
 
     @property
     def config_list_to_select(self):
         if self.cur:
-            sql = "SELECT Config FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
-                                                                        "Build": self.filter_set.get("build")})
+            sql = "SELECT Config FROM Config_T " +\
+                  self.sql_filter_str({
+                      "Program": self.filter_set.get("program"),
+                      "Build": self.filter_set.get("build"),
+                      "removed": 0
+                  })
             results = self.cur.execute(sql).fetchall()
             return set(result["Config"] for result in results)
         return None
@@ -848,6 +852,8 @@ class DBsqlite:
             return {None}
 
     def selected_sn(self, stress_pk_list: list, config_pk_list: list):
+        if len(stress_pk_list) is None:
+            return None
         sql = "SELECT  RelLog_T.SerialNumber, RelLog_T.Config_FK from RelLog_T" \
               "inner join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber" + \
               self.sql_filter_str(
@@ -860,7 +866,7 @@ class DBsqlite:
         if results:
             return {(result["SerialNumber"], result["Config_FK"]) for result in results}
         else:
-            return {}
+            return None
 
     def __connect__(self):
         self.con = sqlite3.connect(self.__address__)

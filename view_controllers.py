@@ -1492,8 +1492,20 @@ class fitting_view_vc:
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.fitting_view()
         self.master = master
+        self.summary = StatusSummary(db=rel_tracker_app.dbmodel)
+        self.configs = self.summary.get_config_obj_list()
+        self.stresses = self.summary.get_stress_obj_list()
+
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
+
+    @property
+    def config_table_data(self):
+        return [[config.id, config.program, config.build, config.config_name] for config in self.configs]
+
+    @property
+    def stress_table_data(self):
+        return []
 
     def show(self):
 
