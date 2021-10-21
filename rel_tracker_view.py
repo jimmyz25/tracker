@@ -231,8 +231,8 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(140, 5), background_color="white", expand_x=True, key="-output-",
-                                font=rel_tracker_view.text_font)
+        # output_view = sg.Output(size=(140, 5), background_color="white", expand_x=True, key="-output-",
+        #                         font=rel_tracker_view.text_font)
         layout_status_column = [
             [
                 sg.Rad("Latest record", group_id="table_show_latest", default=False,
@@ -255,7 +255,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -484,16 +484,16 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(140, 5),
-                                font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(140, 5),
+        #                         font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -659,8 +659,8 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(140, 5), font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(140, 5), font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -677,7 +677,7 @@ class rel_tracker_view:
                    key="-folder_name-"), ],
             button_row,
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -778,7 +778,7 @@ class rel_tracker_view:
             [sg.Text("Config Selection and Grouping", font=rel_tracker_view.text_font)],
             [sg.Table(values=config_table_value, headings=config_table_heading, visible_column_map=config_table_show,
                       font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10)],
+                      num_rows=10, key="-config_table-")],
             [sg.Button("Update Grouping", font=rel_tracker_view.button_font)]
         ]
         config_table_col = sg.Column(layout=config_col_layout)
@@ -790,22 +790,21 @@ class rel_tracker_view:
             [sg.Text("Stress Selection", font=rel_tracker_view.text_font)],
             [sg.Table(values=stress_table_value, headings=stress_table_heading, visible_column_map=stress_table_show,
                       font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10)],
+                      num_rows=10, key="-stress_table-")],
             [sg.Button("Update Checkpoint Value", font=rel_tracker_view.button_font)]
         ]
         stress_table_col = sg.Column(layout=stress_col_layout)
-
-        failure_mode_table_heading = ["PK", "FailureMode Group", "Failure Mode"]
-        failure_mode_table_value = [["" for _ in range(3)]]
-        failure_mode_table_show = [False, True, True]
         failure_mode_col_layout = [
-            [sg.Text("Failure Mode Selection", font=rel_tracker_view.text_font)],
-            [sg.Table(values=failure_mode_table_value, headings=failure_mode_table_heading,
-                      visible_column_map=failure_mode_table_show,
-                      font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10)],
+            [sg.Txt("Failure Mode Sets", size=(15, 1),font=rel_tracker_view.text_font),
+             sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"],
+                      disabled=False,font=rel_tracker_view.text_font,
+                      key="-failure_mode_set-", size=(20, 1), enable_events=True)],
+            [sg.Txt("Failure Mode", size=(15, 1), font=rel_tracker_view.text_font),
+             sg.Listbox(values=[None], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        size=(20, 11), key="-failure_to_select-", enable_events=True, font=rel_tracker_view.text_font)],
             [sg.Button("Update Data Table", font=rel_tracker_view.button_font)]
         ]
+
         failure_mode_table_col = sg.Column(layout=failure_mode_col_layout)
 
         data_table_heading = ["SN", "T1", "T2", "Group"]
@@ -819,13 +818,13 @@ class rel_tracker_view:
                       num_rows=10, expand_x=True)],
             [sg.Button("output for JMP", font=rel_tracker_view.button_font),
              sg.Button("output for Relisoft", font=rel_tracker_view.button_font),
-             sg.Button("Just Plot here", font=rel_tracker_view.button_font),]
+             sg.Button("Just Plot here", font=rel_tracker_view.button_font), ]
         ]
 
         layout = [
             [config_table_col, stress_table_col, failure_mode_table_col],
             [data_col_layout]
-            ]
+        ]
 
         window = sg.Window('distribution fitting', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=False, modal=True)

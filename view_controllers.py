@@ -1493,26 +1493,54 @@ class fitting_view_vc:
         self.window = view.fitting_view()
         self.master = master
         self.summary = StatusSummary(db=rel_tracker_app.dbmodel)
-        self.configs = self.summary.get_config_obj_list()
-        self.stresses = self.summary.get_stress_obj_list()
+        self.stress_table_data = self.get_stress_table_data()
+        self.config_table_data = self.get_config_table_data()
 
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
 
-    @property
-    def config_table_data(self):
-        return [[config.id, config.program, config.build, config.config_name] for config in self.configs]
+    def get_config_table_data(self):
+        configs = self.summary.get_config_obj_list()
+        if len(configs) > 0:
+            return [[config.id, config.program, config.build, config.config_name, None] for config in configs]
+        else:
+            return None
 
-    @property
-    def stress_table_data(self):
-        return []
+    def get_stress_table_data(self):
+        stresses = self.summary.get_stress_obj_list()
+        if len(stresses) > 0:
+            return [[stress.id, stress.rel_stress, stress.rel_checkpoint, None] for stress in stresses]
+        else:
+            return None
 
     def show(self):
-
+        self.window["-config_table-"].update(values=self.config_table_data)
+        self.window["-stress_table-"].update(values=self.stress_table_data)
+        self.window["-failure_mode_set-"].update(value="Default",
+                                                 values=list(rel_tracker_app.dbmodel.failure_mode_group_list))
+        rel_tracker_app.dbmodel.filter_set.update({"failure_group": self.window["-failure_mode_set-"].get()})
+        self.window["-failure_to_select-"].update(values=list(rel_tracker_app.dbmodel.failure_mode_list))
         while True:  # the event loop
             event, values = self.window.read()
             if event == sg.WIN_CLOSED:
                 break
+            elif event == "Update Grouping":
+                group = sg.popup_get_text("Group Name")
+                if group:
+                    rows = values.get("-config_table-")
+                    for row in rows:
+                        self.config_table_data[row][-1] = group.upper()
+                    self.window["-config_table-"].update(values=self.config_table_data)
+            elif event == "Update Checkpoint Value":
+                if len(values.get("-stress_table-"))==1:
+                    checkpoint = self.stress_table_data[values.get("-stress_table-")[0]][-2]
+                    default = StatusSummary.get_number(checkpoint)
+                    number = sg.popup_get_text("Please input numeric value for the checkpoint",default_text=default)
+                    self.stress_table_data[values.get("-stress_table-")[0]][-1] = number
+                    self.window["-stress_table-"].update(values=self.stress_table_data)
+            elif event == "-failure_mode_set-":
+                rel_tracker_app.dbmodel.filter_set.update({"failure_group": self.window["-failure_mode_set-"].get()})
+                self.window["-failure_to_select-"].update(values=list(rel_tracker_app.dbmodel.failure_mode_list))
         self.close_window()
 
     def close_window(self):

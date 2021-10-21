@@ -450,15 +450,20 @@ class DBsqlite:
         else:
             sql = "SELECT PK FROM Config_T " + self.sql_filter_str({"Program": self.filter_set.get("program"),
                                                                     "Build": self.filter_set.get("build"),
-                                                                    "Config": self.filter_set.get("config")})
+                                                                    "Config": self.filter_set.get("config"),
+                                                                    "removed": 0
+                                                                    })
             results = self.cur.execute(sql).fetchall()
             return set(result["PK"] for result in results)
 
     @property
     def all_config_pks(self):
-        sql = "SELECT PK FROM Config_T"
+        sql = "SELECT PK FROM Config_T where removed = 0"
         results = self.cur.execute(sql).fetchall()
-        return set(result["PK"] for result in results)
+        if results:
+            return set(result["PK"] for result in results)
+        else:
+            return None
 
     @property
     def selected_stress_pks(self):
@@ -475,7 +480,10 @@ class DBsqlite:
     def all_stress_pks(self):
         sql = "SELECT PK FROM RelStress_T where removed = 0"
         results = self.cur.execute(sql).fetchall()
-        return set(result["PK"] for result in results)
+        if results:
+            return set(result["PK"] for result in results)
+        else:
+            return {}
 
     @property
     def config_list_to_select(self):
@@ -487,7 +495,8 @@ class DBsqlite:
                       "removed": 0
                   })
             results = self.cur.execute(sql).fetchall()
-            return set(result["Config"] for result in results)
+            if results:
+                return set(result["Config"] for result in results)
         return None
 
     @property
@@ -498,13 +507,15 @@ class DBsqlite:
                   "removed": 0
               })
         results = self.cur.execute(sql).fetchall()
-        return set(result["RelCheckpoint"] for result in results)
+        if results:
+            return set(result["RelCheckpoint"] for result in results)
 
     @property
     def failure_mode_group_list(self):
         sql = "SELECT Distinct FailureGroup FROM FailureMode_T WHERE removed = 0 "
         results = self.cur.execute(sql).fetchall()
-        return set(result["FailureGroup"] for result in results)
+        if results:
+            return set(result["FailureGroup"] for result in results)
 
     @property
     def failure_mode_list_to_add_to_sn(self):
@@ -530,8 +541,11 @@ class DBsqlite:
                       "removed": 0
                   }))
             results = self.cur.execute(sql).fetchall()
-            all_failure_mode = set(result["FailureMode"] for result in results)
-            return all_failure_mode
+            if results:
+                all_failure_mode = set(result["FailureMode"] for result in results)
+                return all_failure_mode
+            else:
+                return {None}
         else:
             return {None}
 
