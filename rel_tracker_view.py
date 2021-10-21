@@ -783,15 +783,17 @@ class rel_tracker_view:
         ]
         config_table_col = sg.Column(layout=config_col_layout)
 
-        stress_table_heading = ["PK", "RelCheckpoint", "RelStress", "Value"]
-        stress_table_value = [["" for _ in range(4)]]
-        stress_table_show = [False, True, True, True]
+        stress_table_heading = ["PK", "RelStresss", "RelCheckpoint", "Value", "P_A", "P_B"]
+        stress_table_value = [["" for _ in range(6)]]
+        stress_table_show = [False, True, True, True, True, True]
         stress_col_layout = [
             [sg.Text("Stress Selection", font=rel_tracker_view.text_font)],
             [sg.Table(values=stress_table_value, headings=stress_table_heading, visible_column_map=stress_table_show,
                       font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10, key="-stress_table-")],
-            [sg.Button("Update Checkpoint Value", font=rel_tracker_view.button_font)]
+                      num_rows=10, key="-stress_table-", expand_x=True)],
+            [sg.Button("Update Checkpoint Value", font=rel_tracker_view.button_font),
+             sg.Button("Assign Parameter A", font=rel_tracker_view.button_font),
+             sg.Button("Assign Parameter B", font=rel_tracker_view.button_font)]
         ]
         stress_table_col = sg.Column(layout=stress_col_layout)
         failure_mode_col_layout = [
@@ -802,7 +804,8 @@ class rel_tracker_view:
             [sg.Txt("Failure Mode", size=(15, 1), font=rel_tracker_view.text_font),
              sg.Listbox(values=[None], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
                         size=(20, 11), key="-failure_to_select-", enable_events=True, font=rel_tracker_view.text_font)],
-            [sg.Button("Update Data Table", font=rel_tracker_view.button_font)]
+            [sg.Button("Update Data Table", font=rel_tracker_view.button_font,
+                       disabled_button_color="#ababab", disabled=True)]
         ]
 
         failure_mode_table_col = sg.Column(layout=failure_mode_col_layout)

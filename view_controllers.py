@@ -1509,9 +1509,28 @@ class fitting_view_vc:
     def get_stress_table_data(self):
         stresses = self.summary.get_stress_obj_list()
         if len(stresses) > 0:
-            return [[stress.id, stress.rel_stress, stress.rel_checkpoint, None] for stress in stresses]
+            return [[stress.id, stress.rel_stress, stress.rel_checkpoint, None, None, None] for stress in stresses]
         else:
             return None
+
+    @property
+    def selected_configs(self):
+        selected = list(filter(lambda x: x[-1], self.config_table_data))
+        if len(selected) == 0:
+            return self.config_table_data
+        else:
+            return selected
+
+    @property
+    def selected_stress(self):
+        selected = list(filter(lambda x: x[3], self.stress_table_data))
+        if len(selected) == 0:
+            return None
+        else:
+            return selected
+
+    def construct_data_table(self):
+        pass
 
     def show(self):
         self.window["-config_table-"].update(values=self.config_table_data)
@@ -1532,15 +1551,28 @@ class fitting_view_vc:
                         self.config_table_data[row][-1] = group.upper()
                     self.window["-config_table-"].update(values=self.config_table_data)
             elif event == "Update Checkpoint Value":
-                if len(values.get("-stress_table-"))==1:
-                    checkpoint = self.stress_table_data[values.get("-stress_table-")[0]][-2]
+                if len(values.get("-stress_table-")) == 1:
+                    checkpoint = self.stress_table_data[values.get("-stress_table-")[0]][2]
                     default = StatusSummary.get_number(checkpoint)
-                    number = sg.popup_get_text("Please input numeric value for the checkpoint",default_text=default)
-                    self.stress_table_data[values.get("-stress_table-")[0]][-1] = number
+                    number = sg.popup_get_text("Please input numeric value for the checkpoint", default_text=default)
+                    self.stress_table_data[values.get("-stress_table-")[0]][3] = number
                     self.window["-stress_table-"].update(values=self.stress_table_data)
             elif event == "-failure_mode_set-":
                 rel_tracker_app.dbmodel.filter_set.update({"failure_group": self.window["-failure_mode_set-"].get()})
                 self.window["-failure_to_select-"].update(values=list(rel_tracker_app.dbmodel.failure_mode_list))
+            elif event == "Update Data Table":
+                rel_tracker_app.dbmodel.filter_set.update({
+                    "failure_mode": self.window["-failure_to_select-"].get()
+                })
+                stress_pk_list = [row[0] for row in self.stress_table_data]
+                config_pk_list = [row[0] for row in self.config_table_data]
+                selected_sn = rel_tracker_app.dbmodel.get_selected_sn(stress_pk_list=stress_pk_list,
+                                                                      config_pk_list=config_pk_list)
+
+            if self.selected_stress and len(values.get("-failure_to_select-")) > 0:
+                self.window["Update Data Table"].update(disabled=False)
+            else:
+                self.window["Update Data Table"].update(disabled=True)
         self.close_window()
 
     def close_window(self):

@@ -119,7 +119,7 @@ class DBsqlite:
 
     def weibull_output(self, sn: str):
         sql = f" SELECT RelLog_T.SerialNumber, RelLog_T.FK_RelStress," \
-              f"A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
+              f" A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
               f" left join" \
               f" (SELECT SerialNumber, FK_RelStress , FailureMode_T.FailureMode as FailureMode from FALog_T" \
               f" Inner Join FailureMode_T ON FailureMode_T.PK = FALog_T.FK_FailureMode" + \
@@ -865,20 +865,20 @@ class DBsqlite:
         else:
             return {None}
 
-    def selected_sn(self, stress_pk_list: list, config_pk_list: list):
+    def get_selected_sn(self, stress_pk_list: list, config_pk_list: list):
         if len(stress_pk_list) is None:
             return None
-        sql = "SELECT  RelLog_T.SerialNumber, RelLog_T.Config_FK from RelLog_T" \
-              "inner join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber" + \
+        sql = " SELECT Config_SN_T.SerialNumber from RelLog_T " \
+              " inner join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber " + \
               self.sql_filter_str(
                   {
-                      "RelLog_T.FK_Stress": stress_pk_list,
+                      "RelLog_T.FK_RelStress": stress_pk_list,
                       "Config_SN_T.Config_FK": config_pk_list,
                   }
               )
         results = self.cur.execute(sql).fetchall()
         if results:
-            return {(result["SerialNumber"], result["Config_FK"]) for result in results}
+            return {result["SerialNumber"] for result in results}
         else:
             return None
 
