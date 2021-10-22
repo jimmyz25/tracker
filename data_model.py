@@ -144,10 +144,10 @@ class DBsqlite:
             for row in result:
                 t2 = row["FK_RelStress"]
                 if row["FailureMode"] is not None:
-                    return sn, t1, t2
+                    return sn, t1, t2, row["FailureMode"]
                 else:
                     t1 = t2
-            return sn, t1, None
+            return sn, t1, None, None
 
     @property
     def station(self):
@@ -866,10 +866,15 @@ class DBsqlite:
             return {None}
 
     def get_selected_sn(self, stress_pk_list: list, config_pk_list: list):
+        """
+        :param stress_pk_list:
+        :param config_pk_list:
+        :return: return a list of sn objects
+        """
         if len(stress_pk_list) is None:
             return None
         sql = " SELECT Config_SN_T.SerialNumber from RelLog_T " \
-              " inner join Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber " + \
+              " INNER JOIN Config_SN_T ON RelLog_T.SerialNumber = Config_SN_T.SerialNumber " + \
               self.sql_filter_str(
                   {
                       "RelLog_T.FK_RelStress": stress_pk_list,
@@ -878,7 +883,8 @@ class DBsqlite:
               )
         results = self.cur.execute(sql).fetchall()
         if results:
-            return {result["SerialNumber"] for result in results}
+            sn_set = { result["SerialNumber"] for result in results}
+            return [SnModel(sn, self) for sn in sn_set]
         else:
             return None
 

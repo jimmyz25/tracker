@@ -1499,6 +1499,29 @@ class fitting_view_vc:
         if master:
             self.window.TKroot.transient(master=master.TKroot.winfo_toplevel())
 
+    @property
+    def config_grouping(self):
+        if isinstance(self.config_table_data, list):
+            return {row[0]: row[-1] for row in self.config_table_data}
+
+    @property
+    def stress_para_a(self):
+        if isinstance(self.stress_table_data, list):
+            print("this is run")
+            return {row[0]: row[-2] for row in self.stress_table_data}
+
+    @property
+    def stress_para_b(self):
+        if isinstance(self.stress_table_data, list):
+            print("this is run")
+            return {row[0]: row[-1] for row in self.stress_table_data}
+
+    @property
+    def stress_value(self):
+        if isinstance(self.stress_table_data, list):
+            print("this is run")
+            return {row[0]: row[-3] for row in self.stress_table_data}
+
     def get_config_table_data(self):
         configs = self.summary.get_config_obj_list()
         if len(configs) > 0:
@@ -1529,7 +1552,8 @@ class fitting_view_vc:
         else:
             return selected
 
-    def construct_data_table(self):
+    def get_config_group(self, sn):
+
         pass
 
     def show(self):
@@ -1568,6 +1592,24 @@ class fitting_view_vc:
                 config_pk_list = [row[0] for row in self.config_table_data]
                 selected_sn = rel_tracker_app.dbmodel.get_selected_sn(stress_pk_list=stress_pk_list,
                                                                       config_pk_list=config_pk_list)
+                # now let's convert selected_sn to the data table
+                # result = [rel_tracker_app.dbmodel.weibull_output(sn.serial_number) for sn in selected_sn]
+                result = []
+                config_group_dict = self.config_grouping
+                stress_value_dict = self.stress_value
+                stress_para_a_dict = self.stress_para_a
+                stress_para_b_dict = self.stress_para_b
+                for sn in selected_sn:
+                    weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number)
+                    row = [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
+                           config_group_dict.get(sn.config.id),
+                           StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint,
+                           StressModel(weibull_output[2], rel_tracker_app.dbmodel).rel_checkpoint, weibull_output[3],
+                           stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
+                           stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
+                    result.append(row)
+
+                print(result)
 
             if self.selected_stress and len(values.get("-failure_to_select-")) > 0:
                 self.window["Update Data Table"].update(disabled=False)
