@@ -497,7 +497,7 @@ class DBsqlite:
             results = self.cur.execute(sql).fetchall()
             if results:
                 return set(result["Config"] for result in results)
-        return None
+        return {}
 
     @property
     def ckp_list_to_select(self):
@@ -509,6 +509,8 @@ class DBsqlite:
         results = self.cur.execute(sql).fetchall()
         if results:
             return set(result["RelCheckpoint"] for result in results)
+        else:
+            return {}
 
     @property
     def failure_mode_group_list(self):
@@ -516,6 +518,8 @@ class DBsqlite:
         results = self.cur.execute(sql).fetchall()
         if results:
             return set(result["FailureGroup"] for result in results)
+        else:
+            return {}
 
     @property
     def failure_mode_list_to_add_to_sn(self):
