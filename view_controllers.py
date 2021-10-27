@@ -1450,7 +1450,6 @@ class file_view_vc:
                     "start_row": self.window["start_row"].get(),
                     "end_row": -1,
                     "start_keyword": self.window["start_time"].get(),
-                    "end_keyword": self.window["end_time"].get(),
                     "serial_number_keyword": self.window["serial_number"].get(),
                     "separator": self.window["separator"].get(),
                     "skip_keywords": skip_keywords,

@@ -235,10 +235,11 @@ class RawData:
                         data = [[cell.strip() for cell in row] for row in limited_row]
                         if len(data) > 1:
                             column_name = set(data[self.settings.get("start_row")])
-                            if len(column_name - self.settings.get("col_name_set")) / len(column_name) < 0.1 and \
-                                    self.settings.get("sn_col") in column_name and \
-                                    self.settings.get("start_time_col") in column_name:
-                                ok_to_process_file_list.append(file)
+                            if len(column_name) > 0:
+                                if len(column_name - self.settings.get("col_name_set")) / len(column_name) < 0.1 and \
+                                        self.settings.get("sn_col") in column_name and \
+                                        self.settings.get("start_time_col") in column_name:
+                                    ok_to_process_file_list.append(file)
                     except csv.Error as e:
                         print(e)
         return [[row] for row in ok_to_process_file_list]
