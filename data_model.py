@@ -113,6 +113,7 @@ class DBsqlite:
             cur = con.cursor()
             cur.execute("SELECT * FROM RelLog_T LIMIT 1")
             con.close()
+            print("database is ok to use")
             return True
         except sqlite3.Error:
             return False

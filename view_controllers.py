@@ -27,6 +27,7 @@ class rel_tracker_app:
                 break
             else:
                 address = sg.popup_get_file("please select database file")
+                print(address)
         else:
             address = sg.popup_get_file("please select database file")
 
