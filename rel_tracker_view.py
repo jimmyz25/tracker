@@ -59,14 +59,14 @@ class rel_tracker_view:
 
     @staticmethod
     def __facebook__():
-        facebook_text = sg.Txt("facebook", border_width=0, text_color="orange", font=rel_tracker_view.logo_font,
+        facebook_text = sg.Txt("Meta", border_width=0, text_color="#4267B2", font=rel_tracker_view.logo_font,
                                justification='center', pad=5, key="-Home-", enable_events=True)
         column1 = sg.Column(layout=[[facebook_text]],
                             size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("FRL project only", font='Helvetica 10', text_color='#4267B2', size=(15, 1))]]
+             sg.Txt("MRL project only", font='Helvetica 10', text_color='#4267B2', size=(15, 1))]]
 
     @staticmethod
     def __station_name__():
