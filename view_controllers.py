@@ -429,7 +429,6 @@ class rel_log_vc:
                                                 f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows")
                 if user_input == "OK":
                     rel_tracker_app.dbmodel.delete_from_rellog_table()
-                    print(f"{len(rel_tracker_app.dbmodel.filter_set.get('selected_pks'))} rows deleted.")
                     self.window['-table_select-'].update(values=self.table_data)
                     self.row_selection = None
                 else:
