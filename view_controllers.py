@@ -226,7 +226,19 @@ class rel_log_vc:
                 # failure_mode_selector_popup.show()
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
-
+            elif event == "Daily Report":
+                today = dt.datetime.now()
+                date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                # print (date_string)
+                start_timestamp = dt.datetime(date_string[2], date_string[0], date_string[1], 0, 0, 0, 0).timestamp()
+                end_timestamp = start_timestamp + 86400
+                print(start_timestamp, end_timestamp)
+                # rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
+                # rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
+                # # failure_mode_selector_popup = failure_mode_summary_vc(self.window)
+                # # failure_mode_selector_popup.show()
+                # summary_popup = summary_table_vc(self.window)
+                # summary_popup.show()
             # elif event == "Save Preference":
             #     rel_tracker_app.settings['-station-'] = values['-Station_Name-']
             elif event == "-Home-":
