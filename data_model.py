@@ -756,6 +756,10 @@ class DBsqlite:
         else:
             return [dict(result) for result in result]
 
+
+    def daily_report(self):
+        pass
+
     @property
     def ongoing_rel_summary_data(self):
         """

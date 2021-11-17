@@ -248,9 +248,9 @@ class rel_tracker_view:
                     group_id="table_show_current_station",
                     default=True, enable_events=True, key="-show_current0-")],
             [sg.B("Daily Report", size=(15, 1), pad=(5, 2),
-                 font=rel_tracker_view.button_font,
-                 disabled=False, disabled_button_color="#ababab",
-                 )]
+                  font=rel_tracker_view.button_font,
+                  disabled=False, disabled_button_color="#ababab",
+                  )]
         ]
         status_column = sg.Column(layout=layout_status_column,
                                   size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
@@ -801,9 +801,9 @@ class rel_tracker_view:
         ]
         stress_table_col = sg.Column(layout=stress_col_layout)
         failure_mode_col_layout = [
-            [sg.Txt("Failure Mode Sets", size=(15, 1),font=rel_tracker_view.text_font),
+            [sg.Txt("Failure Mode Sets", size=(15, 1), font=rel_tracker_view.text_font),
              sg.Combo(["cosmetic inspection set 1", "cosmetic inspection set 2"],
-                      disabled=False,font=rel_tracker_view.text_font,
+                      disabled=False, font=rel_tracker_view.text_font,
                       key="-failure_mode_set-", size=(20, 1), enable_events=True)],
             [sg.Txt("Failure Mode", size=(15, 1), font=rel_tracker_view.text_font),
              sg.Listbox(values=[None], select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,

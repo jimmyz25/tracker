@@ -233,6 +233,8 @@ class rel_log_vc:
                 start_timestamp = dt.datetime(date_string[2], date_string[0], date_string[1], 0, 0, 0, 0).timestamp()
                 end_timestamp = start_timestamp + 86400
                 print(start_timestamp, end_timestamp)
+                daily_report_popup = daily_report_vc(self.window)
+                daily_report_popup.show()
                 # rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
                 # rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
                 # # failure_mode_selector_popup = failure_mode_summary_vc(self.window)
@@ -1270,6 +1272,33 @@ class config_setup_vc:
 
     def close_window(self):
         sg.user_settings_save()
+        self.window.close()
+
+
+class daily_report_vc:
+
+    def __init__(self, master: sg.Window = None):
+        self.master = master
+        self.window = self.generate_report()
+
+    def generate_report(self):
+
+        layout = [
+            [sg.Multiline(default_text="afasdfasdf", size=(100, 20))],
+            [sg.CloseButton("Quit")]
+        ]
+        window = sg.Window('Daily Report', layout, finalize=True, modal=True)
+        if self.master:
+            window.TKroot.transient(master=self.master.TKroot.winfo_toplevel())
+        return window
+
+    def show(self):
+        while True:  # the event loop
+            event, values = self.window.read()
+            if event == sg.WIN_CLOSED:
+                break
+
+    def close_window(self):
         self.window.close()
 
 
