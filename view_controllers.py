@@ -2,6 +2,9 @@
 # import PySimpleGUI
 import shutil
 import platform
+
+import PySimpleGUI
+
 from rel_tracker_view import *
 # from data_model import *
 import sys
@@ -228,7 +231,8 @@ class rel_log_vc:
                 summary_popup.show()
             elif event == "Daily Report":
                 today = dt.datetime.now()
-                date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                date_string = (today.month, today.day, today.year)
+                # date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
                 # print (date_string)
                 rel = rel_tracker_app.dbmodel.daily_rel(date_string)
                 fa = rel_tracker_app.dbmodel.daily_fa(date_string)
@@ -570,6 +574,8 @@ class fa_log_vc:
             elif event == "Distribution Fitting":
                 fitting_view = fitting_view_vc()
                 fitting_view.show()
+            elif event == "FA Report":
+                pass
             elif event == "Report Failure":
                 failure_mode_popup = failure_mode_vc(self.window)
                 failure_mode_popup.show()

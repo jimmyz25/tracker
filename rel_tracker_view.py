@@ -250,7 +250,7 @@ class rel_tracker_view:
             [sg.B("Daily Report", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=False, disabled_button_color="#ababab",
-                  )]
+                  )],
         ]
         status_column = sg.Column(layout=layout_status_column,
                                   size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
@@ -473,7 +473,8 @@ class rel_tracker_view:
             sg.B("Show Summary", size=(20, 1), pad=(5, 2),
                  font=rel_tracker_view.button_font,
                  disabled=False, disabled_button_color="#ababab"),
-            sg.B("Distribution Fitting", enable_events=True, font=rel_tracker_view.button_font, size=(15, 1))
+            sg.B("Distribution Fitting", enable_events=True, font=rel_tracker_view.button_font, size=(15, 1)),
+            sg.B("FA Report", enable_events=True, font=rel_tracker_view.button_font, size=(15, 1))
         ]
 
         table_col = ['PK', 'Failure Group', 'Failure Mode', 'SerialNumber', 'Stress', 'Checkpoint', 'DateAdded',
