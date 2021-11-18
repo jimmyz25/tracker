@@ -489,7 +489,7 @@ class DBsqlite:
     @property
     def config_list_to_select(self):
         if self.cur:
-            sql = "SELECT Config FROM Config_T " +\
+            sql = "SELECT Config FROM Config_T " + \
                   self.sql_filter_str({
                       "Program": self.filter_set.get("program"),
                       "Build": self.filter_set.get("build"),
@@ -756,9 +756,45 @@ class DBsqlite:
         else:
             return [dict(result) for result in result]
 
+    def daily_rel(self, date_tuple):
+        start_timestamp = dt.datetime(date_tuple[2], date_tuple[0], date_tuple[1], 0, 0, 0, 0).timestamp()
+        end_timestamp = start_timestamp + 86400
+        sql = """
+        SELECT  COUNT (DISTINCT RelLog_T.SerialNumber) as SN_Count, RelStress_T.RelStress,
+         RelStress_T.RelCheckpoint, Config_T.Config, RelLog_T.EndTimestamp,
+        Config_T.Program from RelLog_T
+         inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber
+         inner join RelStress_T on FK_RelStress = RelStress_T.PK
+         inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+          WHERE RelLog_T.ModiTimestamp between  ? and ? 
+          and RelLog_T.removed = 0
+          Group by FK_RelStress,Config_SN_T.Config_FK
+          Order by Config_T.Program, RelStress_T.RelStress, RelLog_T.EndTimestamp
+            """
+        result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
+        if result is None:
+            return None
+        else:
+            return [dict(result) for result in result]
 
-    def daily_report(self):
-        pass
+    def daily_fa(self, date_tuple):
+        start_timestamp = dt.datetime(date_tuple[2], date_tuple[0], date_tuple[1], 0, 0, 0, 0).timestamp()
+        end_timestamp = start_timestamp + 86400
+        sql = """
+            SELECT FALog_T.SerialNumber,  Config_T.Config, RelStress_T.RelStress, RelStress_T.RelCheckpoint,
+            FailureMode_T.FailureMode, FALog_T.FA_Details from FALog_T
+            inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
+            inner join Config_SN_T on Config_SN_T.SerialNumber = FALog_T.SerialNumber
+            inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+            inner join RelStress_T on RelStress_T.PK = FALog_T.FK_RelStress
+            where FALog_T.ModiTimestamp between ? and ?
+            and FALog_T.removed = 0
+            """
+        result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
+        if result is None:
+            return None
+        else:
+            return [dict(result) for result in result]
 
     @property
     def ongoing_rel_summary_data(self):
@@ -892,7 +928,7 @@ class DBsqlite:
               )
         results = self.cur.execute(sql).fetchall()
         if results:
-            sn_set = { result["SerialNumber"] for result in results}
+            sn_set = {result["SerialNumber"] for result in results}
             return [SnModel(sn, self) for sn in sn_set]
         else:
             return None
@@ -1108,6 +1144,7 @@ class DBsqlite:
         print(f"{count} rows are deleted from failure_log")
 
     def update_failure_log_table(self, **log):
+
         if isinstance(self.filter_set.get("selected_pks"), list):
             condition = {
                 "PK": self.filter_set.get("selected_pks")
@@ -1448,8 +1485,14 @@ class DBsqlite:
         return question_marks
 
     def __insert_to_table__(self, tablename: str, **log):
+        current_time = dt.datetime.now().timestamp()
         col_to_add = []
         values = []
+        log.update({
+            "ModiTimestamp": current_time,
+            "StartTimestamp": current_time
+        }
+        )
         for col in self.__get_col_names__(tablename):
             values.append(log.get(col))
             col_to_add.append(col)
@@ -1466,15 +1509,21 @@ class DBsqlite:
 
     def __update_to_table__(self, tablename: str, condition: dict, **log):
         # when value is none, it will not get updated, set to "" if need to update
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
         set_statement = []
         value_list = []
+        col_names = self.__get_col_names__(tablename)
+        log.update({
+            "ModiTimestamp": current_time
+        })
 
         for k in condition.keys():
             if k not in self.__get_col_names__(tablename):
                 condition.update({k: None})
         condition_str = self.sql_filter_str(condition, strict=True)
         for key, value in log.items():
-            if key in self.__get_col_names__(tablename):
+            if key in col_names:
                 if value is not None:
                     s = f" {key} = ? "
                     set_statement.append(s)

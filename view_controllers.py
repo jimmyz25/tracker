@@ -230,19 +230,37 @@ class rel_log_vc:
                 today = dt.datetime.now()
                 date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
                 # print (date_string)
-                start_timestamp = dt.datetime(date_string[2], date_string[0], date_string[1], 0, 0, 0, 0).timestamp()
-                end_timestamp = start_timestamp + 86400
-                print(start_timestamp, end_timestamp)
-                daily_report_popup = daily_report_vc(self.window)
+                rel = rel_tracker_app.dbmodel.daily_rel(date_string)
+                fa = rel_tracker_app.dbmodel.daily_fa(date_string)
+                output_string = ""
+                if rel:
+                    output_string = "Today's Rel Lab update: \n"
+                    for result in rel:
+                        if result.get("EndTimestamp") is None:
+                            printout = f'{result.get("Program")}: {result.get("SN_Count")} ' \
+                                       f'entered checkpoint: {result.get("RelStress")},{result.get("RelCheckpoint")} \n'
+                        else:
+                            printout = f'{result.get("Program")}: {result.get("SN_Count")} ' \
+                                       f'completed {result.get("RelStress")},{result.get("RelCheckpoint")}\n'
+                        output_string += printout
+                else:
+                    output_string = "No New update from Rel Lab \n"
+
+                if fa:
+                    output_string2 = "Today's FA update: \n"
+                    for result in fa:
+                        printout = f'{result.get("SerialNumber")} failed at ' \
+                                   f'{result.get("RelStress")},{result.get("RelCheckpoint")} with failure mode:' \
+                                   f'{result.get("FailureMode")}\n ' \
+                                   f'Detail: {result.get("FA_Details")} \n'
+                        output_string2 += printout
+                else:
+                    output_string2 = "No FA update from FA Lab \n"
+                daily_report_popup = daily_report_vc(self.window, output_string + output_string2)
                 daily_report_popup.show()
-                # rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
-                # rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
-                # # failure_mode_selector_popup = failure_mode_summary_vc(self.window)
-                # # failure_mode_selector_popup.show()
-                # summary_popup = summary_table_vc(self.window)
-                # summary_popup.show()
-            # elif event == "Save Preference":
-            #     rel_tracker_app.settings['-station-'] = values['-Station_Name-']
+
+
+
             elif event == "-Home-":
                 self.complete_quit = False
                 preference = preference_vc()
@@ -1277,14 +1295,13 @@ class config_setup_vc:
 
 class daily_report_vc:
 
-    def __init__(self, master: sg.Window = None):
+    def __init__(self, master: sg.Window = None, content=""):
         self.master = master
-        self.window = self.generate_report()
+        self.window = self.generate_report(content)
 
-    def generate_report(self):
-
+    def generate_report(self, content):
         layout = [
-            [sg.Multiline(default_text="afasdfasdf", size=(100, 20))],
+            [sg.Multiline(default_text=content, size=(100, 20), key="output")],
             [sg.CloseButton("Quit")]
         ]
         window = sg.Window('Daily Report', layout, finalize=True, modal=True)
