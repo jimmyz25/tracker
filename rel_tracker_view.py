@@ -66,7 +66,7 @@ class rel_tracker_view:
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("Meta RL project only", font='Helvetica 10', text_color='#4267B2', size=(15, 1))]]
+             sg.Txt("Meta RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))]]
 
     @staticmethod
     def __station_name__():
@@ -426,7 +426,7 @@ class rel_tracker_view:
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=11, font=rel_tracker_view.table_font,
                               header_font=rel_tracker_view.table_header_font,
-                              header_background_color="white",
+                              header_background_color="white", expand_y=True,
                               enable_events=True, key="-table_select-", pad=(5, 5), hide_vertical_scroll=True)
 
         layout_filter_column = [
@@ -484,7 +484,7 @@ class rel_tracker_view:
                                headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
                                expand_x=True, num_rows=15, font=rel_tracker_view.table_font,
                                header_font=rel_tracker_view.table_header_font,
-                               header_background_color="white",
+                               header_background_color="white", expand_y=True,
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 

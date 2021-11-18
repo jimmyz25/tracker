@@ -237,29 +237,31 @@ class rel_log_vc:
                     output_string = "Today's Rel Lab update: \n"
                     for result in rel:
                         if result.get("EndTimestamp") is None:
-                            printout = f'{result.get("Program")}: {result.get("SN_Count")} ' \
+                            printout = f'{result.get("Program")}: {result.get("SN_Count")}x ' \
+                                       f'from {result.get("Config")} ' \
                                        f'entered checkpoint: {result.get("RelStress")},{result.get("RelCheckpoint")} \n'
                         else:
-                            printout = f'{result.get("Program")}: {result.get("SN_Count")} ' \
+                            printout = f'{result.get("Program")}: {result.get("SN_Count")}x' \
+                                       f'from {result.get("Config")} ' \
                                        f'completed {result.get("RelStress")},{result.get("RelCheckpoint")}\n'
                         output_string += printout
+                    output_string += "---------------------------\n\n"
                 else:
-                    output_string = "No New update from Rel Lab \n"
+                    output_string = "No New update from Rel Lab \n" \
+                                    "---------------------------\n"
 
                 if fa:
                     output_string2 = "Today's FA update: \n"
                     for result in fa:
-                        printout = f'{result.get("SerialNumber")} failed at ' \
+                        printout = f'{result.get("SerialNumber")} ({result.get("Config")}) failed at ' \
                                    f'{result.get("RelStress")},{result.get("RelCheckpoint")} with failure mode:' \
                                    f'{result.get("FailureMode")}\n ' \
                                    f'Detail: {result.get("FA_Details")} \n'
-                        output_string2 += printout
+                        output_string2 += printout + "---------------------------\n"
                 else:
                     output_string2 = "No FA update from FA Lab \n"
                 daily_report_popup = daily_report_vc(self.window, output_string + output_string2)
                 daily_report_popup.show()
-
-
 
             elif event == "-Home-":
                 self.complete_quit = False
@@ -553,6 +555,7 @@ class fa_log_vc:
     def show(self):
         self.window['-table_select-'].update(values=self.rel_table_data)
         self.window["-fa_table_select-"].update(values=self.fa_table_data)
+        self.window["-fa_table_select-"].expand(expand_row=True)
         while True:  # the event loop
             event, values = self.window.read()
             if not isinstance(event, str):
@@ -574,6 +577,7 @@ class fa_log_vc:
                     "failure_mode": None
                 })
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window["-fa_table_select-"].expand(expand_row=True)
                 self.fa_selected_row = None
             elif event == "Edit Failure Modes":
                 failure_mode_config_popup = failure_mode_config_vc(self.window)
@@ -585,6 +589,7 @@ class fa_log_vc:
 
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window["-fa_table_select-"].expand(expand_row=True)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event.endswith("-ConfigPop-"):
@@ -593,6 +598,7 @@ class fa_log_vc:
                 self.window["-Config_Input-"].update(rel_tracker_app.dbmodel.config_str)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window["-fa_table_select-"].expand(expand_row=True)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event.endswith("-CkpPop-"):
@@ -601,6 +607,7 @@ class fa_log_vc:
                 self.window["-Ckp_Input-"].update(rel_tracker_app.dbmodel.stress_str)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window["-fa_table_select-"].expand(expand_row=True)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event == "Show Summary":
@@ -615,13 +622,17 @@ class fa_log_vc:
                 rel_tracker_app.reset_window_inputs(self.window)
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-fa_table_select-"].update(values=self.fa_table_data)
+                self.window["-fa_table_select-"].expand(expand_row=True)
                 self.fa_selected_row = None
                 self.rel_selected_row = None
             elif event == "-fa_table_select-":
                 # print(values)
-                self.fa_selected_row = values.get('-fa_table_select-')
-                selected_fa_row = self.window['-fa_table_select-'].get()[values.get('-fa_table_select-')[0]]
-                print(f'{selected_fa_row[3]} FA details: {selected_fa_row[-1]}')
+                try:
+                    self.fa_selected_row = values.get('-fa_table_select-')
+                    selected_fa_row = self.window['-fa_table_select-'].get()[values.get('-fa_table_select-')[0]]
+                    print(f'{selected_fa_row[3]} FA details: {selected_fa_row[-1]}')
+                except:
+                    pass
             elif event == "-table_select-":
                 # selecting SerialNumber table will set filters to selection row state
                 count = len(values.get('-table_select-'))
