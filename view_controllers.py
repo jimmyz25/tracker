@@ -239,7 +239,8 @@ class rel_log_vc:
                         if result.get("EndTimestamp") is None:
                             printout = f'{result.get("Program")}: {result.get("SN_Count")}x ' \
                                        f'from {result.get("Config")} ' \
-                                       f'entered checkpoint: {result.get("RelStress")},{result.get("RelCheckpoint")} \n'
+                                       f'Started/Resumed Rel. upcoming checkpoint: {result.get("RelStress")},' \
+                                       f'{result.get("RelCheckpoint")} \n'
                         else:
                             printout = f'{result.get("Program")}: {result.get("SN_Count")}x' \
                                        f'from {result.get("Config")} ' \
@@ -520,7 +521,6 @@ class rel_log_vc:
         rel_tracker_app.save_user_settings(self.window)
         if self.complete_quit:
             sys.exit()
-
 
 class fa_log_vc:
     def __init__(self):
@@ -1183,7 +1183,6 @@ class failure_mode_config_vc:
 
 
 class stress_setup_vc:
-
     def __init__(self, master: sg.Window = None):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_stress_setup()
