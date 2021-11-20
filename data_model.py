@@ -1456,6 +1456,42 @@ class DBsqlite:
             print(f'timer started for {self.filter_set.get("serial_number")}, '
                   f'you may start parametric test, please make sure parametric raw data is generated before end timer')
 
+    def checkin_to_tester_data_table(self):
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
+        new_stress_pk = self.selected_stress_pks
+        count = 0
+        if new_stress_pk:
+            stress_pk = self.selected_stress_pks.pop()
+        else:
+            return
+        for pk in self.filter_set.get("selected_pks"):
+            result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?", (pk,)).fetchone()
+            uuid_str = str(uuid.uuid1())
+            log = {
+                "PK": uuid_str,
+                "FK_RelStress": stress_pk,
+                "Stress_FK": stress_pk,
+                "DateAdded": current_time,
+                "Station": self.filter_set.get('station'),
+                "SerialNumber": result["SerialNumber"],
+                "StartTimestamp": current_time,
+                "StartTime": time_str,
+                "EndTimestamp": None,
+                "EndTime": None,
+                "WIP": result["WIP"],
+                "removed": 0,
+                "Notes": self.filter_set.get("note"),
+                "ModiTimestamp": current_time
+            }
+            if self.__insert_to_table__("Tagger_Log_T", **log):
+                self.con.commit()
+                count = count + 1
+            else:
+                self.con.rollback()
+                print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
+        print(f'{count} units checkin to {str(StressModel(stress_pk, self))}')
+
     def end_timer_data_table(self, pk: str = None):
         if pk:
             current_time = dt.datetime.now().timestamp()
