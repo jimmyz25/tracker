@@ -231,8 +231,8 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        # output_view = sg.Output(size=(145, 5), background_color="white", expand_x=True, key="-output-",
-        #                         font=rel_tracker_view.text_font)
+        output_view = sg.Output(size=(145, 5), background_color="white", expand_x=True, key="-output-",
+                                font=rel_tracker_view.text_font)
         layout_status_column = [
             [
                 sg.Rad("Latest record", group_id="table_show_latest", default=False,
@@ -259,7 +259,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -488,16 +488,16 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        # output_view = sg.Output(size=(145, 5),
-        #                         font=rel_tracker_view.text_font,
-        #                         background_color="white", expand_x=True, key="-output-")
+        output_view = sg.Output(size=(145, 5),
+                                font=rel_tracker_view.text_font,
+                                background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -596,7 +596,7 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(7)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
+                              headings=table_col, select_mode=sg.SELECT_MODE_EXTENDED,
                               expand_x=True, num_rows=11, font=rel_tracker_view.table_font,
                               header_font=rel_tracker_view.table_header_font,
                               header_background_color="white",
@@ -652,39 +652,38 @@ class rel_tracker_view:
                            disabled=False, disabled_button_color="#ababab"),
                       ]
 
-        table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'folder group',
+        table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'Test Station',
                      "Notes", "StartTime", "EndTime"]
         show_heading = [False, True, True, True, True, True, True, True, True]
         table_value2 = [[str(row) for row in range(9)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
-                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
+                               headings=table_col, select_mode=sg.SELECT_MODE_EXTENDED,
                                expand_x=True, num_rows=15, font=rel_tracker_view.table_font,
                                header_font=rel_tracker_view.table_header_font,
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        # output_view = sg.Output(size=(145, 5), font=rel_tracker_view.text_font,
-        #                         background_color="white", expand_x=True, key="-output-")
+        output_view = sg.Output(size=(145, 5), font=rel_tracker_view.text_font,
+                                background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
-            [sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-                    default=False, enable_events=True, key="-tag_group-"),
-             sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-                    default=True, enable_events=True, key="-tag_single-"),
-             sg.Txt("Folder Name:", font=rel_tracker_view.text_font),
+            [
+             #    sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+             #        default=False, enable_events=True, key="-tag_group-"),
+             # sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+             #        default=True, enable_events=True, key="-tag_single-"),
+             sg.Txt("Parametric Station Name:", font=rel_tracker_view.text_font),
              sg.In(default_text="",
-                   tooltip="provide a name if "
-                           "you need data to be placed in a specific "
-                           "sub-folder",
+                   tooltip="tester name or test stationID",
                    key="-folder_name-"), ],
             button_row,
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
-        window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+        window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, modal=False)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")

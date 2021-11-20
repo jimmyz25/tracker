@@ -106,7 +106,7 @@ class preference_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.preference_view()
-        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station", "Data Tagging"])
+        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station", "Parametric Testing Station"])
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
@@ -180,9 +180,9 @@ class preference_vc:
         elif self.window["-station-type-"].get() == "FailureMode Logging Station":
             rel_tracker_app.view_list.append(fa_log_vc())
             rel_tracker_app.settings.update({"-first_view-": "FailureMode Logging Station"})
-        elif self.window["-station-type-"].get() == "Data Tagging":
+        elif self.window["-station-type-"].get() == "Parametric Testing Station":
             rel_tracker_app.view_list.append(data_log_vc())
-            rel_tracker_app.settings.update({"-first_view-": "Data Tagging"})
+            rel_tracker_app.settings.update({"-first_view-": "Parametric Testing Station"})
         self.window.close()
 
 
@@ -751,8 +751,7 @@ class data_log_vc:
                 file_view.show()
             elif event == "Start Timer":
                 rel_tracker_app.dbmodel.filter_set.update({"station": rel_tracker_app.station})
-                if self.window['-tag_group-'].get():
-                    rel_tracker_app.dbmodel.filter_set.update({"serial_number": "Multiple"})
+                print(rel_tracker_app.dbmodel.filter_set)
                 rel_tracker_app.dbmodel.start_timer_data_table()
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 self.timer_started = True
@@ -862,7 +861,7 @@ class data_log_vc:
                 self.window['-table_select-'].update(values=self.rel_table_data)
 
             if rel_tracker_app.dbmodel.ready_to_data_tagging:
-                if len(values.get('-table_select-')) == 1:
+                if len(values.get('-table_select-')) > 0:
                     self.window["Start Timer"].update(disabled=False)
                 else:
                     self.window["Start Timer"].update(disabled=True)
