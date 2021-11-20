@@ -1013,18 +1013,23 @@ class DBsqlite:
                f'SELECT Config_SN_T.* FROM main.Config_SN_T INNER JOIN main.RelLog_T ' \
                f'ON main.Config_SN_T.SerialNumber = main.RelLog_T.SerialNumber ' \
                f'WHERE RelLog_T.removed = 0 and Station = ?'
+        sql6 = f' INSERT OR REPLACE INTO main.Config_SN_T ' \
+               f' SELECT Config_SN_T.* FROM GOLD.Config_SN_T INNER JOIN GOLD.RelLog_T ' \
+               f' ON GOLD.Config_SN_T.SerialNumber = GOLD.RelLog_T.SerialNumber ' \
+               f' WHERE removed = 0 and Station <> ?'
         sql3 = f'INSERT OR REPLACE INTO main.RelLog_T SELECT * FROM GOLD.RelLog_T ' \
                f'WHERE GOLD.RelLog_T.removed = 0 and GOLD.RelLog_T.Station <> ?'
         sql4 = f'delete from gold.RelLog_T WHERE PK in (SELECT PK FROM main.RelLog_T WHERE main.RelLog_T.removed = 1)'
         sql5 = f'delete from main.RelLog_T WHERE PK in (SELECT PK FROM gold.RelLog_T WHERE gold.RelLog_T.removed = 1)'
         self.cur.execute(sql5)
         self.cur.execute(sql4)
-        self.cur.execute(sql2, (self.station,))
-        self.cur.execute(sql, (self.station,))
-        self.cur.execute(sql3, (self.station,))
+        self.cur.execute(sql2, (self.station,)) # self configSN to golden configSN
+        self.cur.execute(sql, (self.station,))  # self rellog to golden rellog
+        self.cur.execute(sql6, (self.station,))  # golden configSN to self configSN
+        self.cur.execute(sql3, (self.station,)) # golden rellog to self rellog
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
-        self.con.commit()
+        # self.con.commit()
         print("RelLog sync completed")
 
     def sync_fa_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
