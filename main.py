@@ -11,7 +11,7 @@ if __name__ == '__main__':
             rel_tracker_app.view_list.append(rel_log_vc())
         elif first_view_setting == "FailureMode Logging Station":
             rel_tracker_app.view_list.append(fa_log_vc())
-        elif first_view_setting == "Data Tagging":
+        elif first_view_setting == "Parametric Testing Station":
             rel_tracker_app.view_list.append(data_log_vc())
     else:
         rel_tracker_app.view_list.append(rel_log_vc())

@@ -639,11 +639,11 @@ class rel_tracker_view:
                       sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
                            disabled=True, disabled_button_color="#ababab"),
-                      sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
-                           disabled=False, disabled_button_color="#ababab",
-                           tooltip="search input folder and determine which stress and config info the test file "
-                                   "belongs to"),
+                      # sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                      #      font=rel_tracker_view.button_font,
+                      #      disabled=False, disabled_button_color="#ababab",
+                      #      tooltip="search input folder and determine which stress and config info the test file "
+                      #              "belongs to"),
                       sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
                            disabled=True, disabled_button_color="#ababab"),

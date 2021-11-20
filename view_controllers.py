@@ -106,7 +106,8 @@ class preference_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.preference_view()
-        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station", "Parametric Testing Station"])
+        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
+                                                     "Parametric Testing Station"])
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
@@ -814,37 +815,37 @@ class data_log_vc:
                     #
                     # selected_pk = [row[0] for row in selected]
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pks": [self.selected_tagger_pk]})
-            elif event == "Offline Tag":
-                total = 0
-                non_processed = 0
-                confirm = sg.popup_ok_cancel("You are about to search all files under input folder, expect screen "
-                                             "freeze if folder contains too many files")
-                if confirm == "Cancel":
-                    continue
-                self.files_list = self.get_file_info_from_folder(self.input_folder)
-                for file in self.files_list:
-                    rel_tracker_app.dbmodel.filter_set.update({"file_creation_time": file[1]})
-                    tag = rel_tracker_app.dbmodel.data_tag
-                    if tag:
-                        if tag[0]:
-                            new_dir = os.path.join(self.output_folder, tag[0], tag[1], tag[2], tag[3], tag[5], tag[6])
-                        else:
-                            new_dir = os.path.join(self.output_folder, tag[1], tag[2], tag[3], tag[5], tag[6])
-                        new_name = tag[4] + "_" + os.path.basename(file[0])
-                    else:
-                        non_processed += 1
-                        new_dir = os.path.join(self.input_folder, "Non_Processed")
-                        new_name = os.path.basename(file[0])
-                    new_destination = os.path.join(new_dir, new_name)
-                    if not os.path.exists(new_dir):
-                        os.makedirs(new_dir)
-                    if not os.path.exists(new_destination):
-                        shutil.copy2(file[0], new_destination)
-
-                        print(f"{os.path.basename(file[0])} copied to output folder")
-                    total += 1
-                print(f"{total} in total files. {non_processed} non processed files saved in non_processed subfolder "
-                      f"in input folder. Note: this action WILL NOT OVERWRITE existing files")
+            # elif event == "Offline Tag":
+            #     total = 0
+            #     non_processed = 0
+            #     confirm = sg.popup_ok_cancel("You are about to search all files under input folder, expect screen "
+            #                                  "freeze if folder contains too many files")
+            #     if confirm == "Cancel":
+            #         continue
+            #     self.files_list = self.get_file_info_from_folder(self.input_folder)
+            #     for file in self.files_list:
+            #         rel_tracker_app.dbmodel.filter_set.update({"file_creation_time": file[1]})
+            #         tag = rel_tracker_app.dbmodel.data_tag
+            #         if tag:
+            #             if tag[0]:
+            #                 new_dir = os.path.join(self.output_folder, tag[0], tag[1], tag[2], tag[3], tag[5], tag[6])
+            #             else:
+            #                 new_dir = os.path.join(self.output_folder, tag[1], tag[2], tag[3], tag[5], tag[6])
+            #             new_name = tag[4] + "_" + os.path.basename(file[0])
+            #         else:
+            #             non_processed += 1
+            #             new_dir = os.path.join(self.input_folder, "Non_Processed")
+            #             new_name = os.path.basename(file[0])
+            #         new_destination = os.path.join(new_dir, new_name)
+            #         if not os.path.exists(new_dir):
+            #             os.makedirs(new_dir)
+            #         if not os.path.exists(new_destination):
+            #             shutil.copy2(file[0], new_destination)
+            #
+            #             print(f"{os.path.basename(file[0])} copied to output folder")
+            #         total += 1
+            #     print(f"{total} in total files. {non_processed} non processed files saved in non_processed subfolder "
+            #           f"in input folder. Note: this action WILL NOT OVERWRITE existing files")
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.rel_table_data)
