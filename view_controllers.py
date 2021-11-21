@@ -346,6 +346,13 @@ class rel_log_vc:
                 self.window['-table_select-'].update(values=self.table_data)
                 self.row_selection = None
             elif event == "Update":
+                print (values.get("-Note-"))
+                rel_tracker_app.dbmodel.filter_set.update(
+                    {
+                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "note": values.get("-Note-")
+                    }
+                )
                 rel_tracker_app.dbmodel.update_current_row_rellog_table()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
                 self.window['-table_select-'].update(values=self.table_data)
@@ -705,7 +712,6 @@ class data_log_vc:
         self.selected_tagger_pk = None
         self.complete_quit = True
         self.selected_endtime = None
-        self.timer_started = False
         self.files_list = None
         self.output_folder = rel_tracker_app.settings.get("-Output_Folder-")
         self.input_folder = rel_tracker_app.settings.get("-Input_Folder-")
@@ -719,17 +725,15 @@ class data_log_vc:
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),
                  row.get("RelCheckpoint"), row.get("WIP"), row.get("Config"), row.get("EndTime")] for row in
                 datasource]
-        data.sort(key=lambda x: x[1])
+        # data.sort(key=lambda x: x[1])
         return data
 
     @property
     def tagger_table_data(self):
-        if self.timer_started:
-            return None
         datasource = rel_tracker_app.dbmodel.tagger_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("WIP"),
                  row.get("RelStress"), row.get("RelCheckpoint"),
-                 row.get("FolderGroup"), row.get("Notes"), row.get("StartTime"), row.get("EndTime")] for row in
+                 row.get("FolderGroup"), row.get("Notes"), row.get("StartTime")] for row in
                 datasource]
         return data
 
@@ -751,15 +755,13 @@ class data_log_vc:
                 file_view = file_view_vc()
                 file_view.show()
             elif event == "Start Timer":
+                rel_tracker_app.dbmodel.filter_set.update({"tester": self.window["-test_station-"].get().upper()})
                 rel_tracker_app.dbmodel.filter_set.update({"station": rel_tracker_app.station})
-                print(rel_tracker_app.dbmodel.filter_set)
-                rel_tracker_app.dbmodel.start_timer_data_table()
+                rel_tracker_app.dbmodel.checkin_to_tester_data_table()
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
-                self.timer_started = True
-            elif event == "End Timer":
-                rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
-                self.timer_started = False
-                self.window["-data_table_select-"].update(values=self.tagger_table_data)
+            # elif event == "End Timer":
+            #     rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
+            #     self.window["-data_table_select-"].update(values=self.tagger_table_data)
             elif event == "Delete":
                 # delete_from_tagger_log_table
                 rel_tracker_app.dbmodel.delete_from_tagger_log_table()
@@ -787,65 +789,51 @@ class data_log_vc:
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
             elif event == "-table_select-":
-                # selecting SerialNumber table will set filters to selection row state
+                self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 count = len(values.get('-table_select-'))
-                if count > 0:
+                if count == 0:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
+                else:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
+                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
+                    selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
+                    selected_sn_list = [row[1] for row in selected]
+                    selected_pk_list = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
+                    rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
-                    rel_tracker_app.dbmodel.filter_set.update({
-                        "program": sn.config.program,
-                        "build": sn.config.build,
-                        "config": sn.config.config_name,
-                        "wip": selected[4],
-                        "stress": selected[2],
-                        "checkpoint": selected[3],
-                        "serial_number": sn.serial_number
-                    })
-                    self.window["-data_table_select-"].update(values=self.tagger_table_data)
+                    if len(selected_sn_list) == 1:
+                        print(selected_sn_list, " in selection from Rel log")
+                    elif len(selected_sn_list) > 1:
+                        print(len(selected_sn_list), "units selected from Rel log")
+            elif event == "-test_station-":
+                self.window["Start Timer"].set_tooltip(f"check into test station: "
+                                                       f"{self.window['-test_station-'].get()}")
             elif event == "-data_table_select-":
+                self.window["-table_select-"].update(values=self.rel_table_data)
                 count = len(values.get('-data_table_select-'))
-                if count > 0:
-                    row = self.window["-data_table_select-"].get()[values.get('-data_table_select-')[0]]
-                    self.selected_tagger_pk = row[0]
-                    self.selected_endtime = row[8]
-                    # selected = [self.window['-highlighted_failures-']
-                    #                 .get()[index] for index in values.get('-highlighted_failures-')]
-                    #
-                    # selected_pk = [row[0] for row in selected]
-                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": [self.selected_tagger_pk]})
-            # elif event == "Offline Tag":
-            #     total = 0
-            #     non_processed = 0
-            #     confirm = sg.popup_ok_cancel("You are about to search all files under input folder, expect screen "
-            #                                  "freeze if folder contains too many files")
-            #     if confirm == "Cancel":
-            #         continue
-            #     self.files_list = self.get_file_info_from_folder(self.input_folder)
-            #     for file in self.files_list:
-            #         rel_tracker_app.dbmodel.filter_set.update({"file_creation_time": file[1]})
-            #         tag = rel_tracker_app.dbmodel.data_tag
-            #         if tag:
-            #             if tag[0]:
-            #                 new_dir = os.path.join(self.output_folder, tag[0], tag[1], tag[2], tag[3], tag[5], tag[6])
-            #             else:
-            #                 new_dir = os.path.join(self.output_folder, tag[1], tag[2], tag[3], tag[5], tag[6])
-            #             new_name = tag[4] + "_" + os.path.basename(file[0])
-            #         else:
-            #             non_processed += 1
-            #             new_dir = os.path.join(self.input_folder, "Non_Processed")
-            #             new_name = os.path.basename(file[0])
-            #         new_destination = os.path.join(new_dir, new_name)
-            #         if not os.path.exists(new_dir):
-            #             os.makedirs(new_dir)
-            #         if not os.path.exists(new_destination):
-            #             shutil.copy2(file[0], new_destination)
-            #
-            #             print(f"{os.path.basename(file[0])} copied to output folder")
-            #         total += 1
-            #     print(f"{total} in total files. {non_processed} non processed files saved in non_processed subfolder "
-            #           f"in input folder. Note: this action WILL NOT OVERWRITE existing files")
+                if count == 0:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
+                else:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
+                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
+                    selected = [self.window['-data_table_select-'].get()[index] for index in values.get('-data_table_select-')]
+                    selected_sn_list = [row[1] for row in selected]
+                    selected_pk_list = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
+                    rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
+                    if len(selected_sn_list) == 1:
+                        print(selected_sn_list, " in selection from Tester Log")
+                    elif len(selected_sn_list) > 1:
+                        print(len(selected_sn_list), "units selected from Tester Log")
+
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.rel_table_data)
@@ -860,20 +848,18 @@ class data_log_vc:
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 self.window['-table_select-'].update(values=self.rel_table_data)
-
-            if rel_tracker_app.dbmodel.ready_to_data_tagging:
-                if len(values.get('-table_select-')) > 0:
-                    self.window["Start Timer"].update(disabled=False)
-                else:
-                    self.window["Start Timer"].update(disabled=True)
-                self.window["End Timer"].update(disabled=True)
+            if len(values.get('-table_select-')) > 0 and self.window["-test_station-"].get() != "":
+                self.window["Start Timer"].update(disabled=False)
             else:
-                if len(values.get('-data_table_select-')) == 1 and self.selected_endtime is None:
-                    self.window["End Timer"].update(disabled=False)
-                else:
-                    self.window["End Timer"].update(disabled=True)
                 self.window["Start Timer"].update(disabled=True)
-            if len(values.get("-data_table_select-")) == 1:
+            # self.window["End Timer"].update(disabled=True)
+            # else:
+            #     if len(values.get('-data_table_select-')) == 1 and self.selected_endtime is None:
+            #         self.window["End Timer"].update(disabled=False)
+            #     else:
+            #         self.window["End Timer"].update(disabled=True)
+            #     self.window["Start Timer"].update(disabled=True)
+            if len(values.get("-data_table_select-")) > 0:
                 self.window["Delete"].update(disabled=False)
             else:
                 self.window["Delete"].update(disabled=True)

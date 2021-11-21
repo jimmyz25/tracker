@@ -644,7 +644,7 @@ class DBsqlite:
         condition = {
             "Tagger_Log_T.WIP": self.filter_set.get("wip"),
             "Tagger_Log_T.SerialNumber": self.filter_set.get("serial_number"),
-            "FK_Config": self.selected_config_pks,
+            "Config_SN_T.Config_FK": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
             "Tagger_Log_T.Station": self.display_setting.get("station_filter"),
             "Tagger_Log_T.removed": 0,
@@ -656,9 +656,10 @@ class DBsqlite:
                   f'RelStress_T.RelCheckpoint' \
                   f' FROM Tagger_Log_T ' \
                   f' inner Join RelStress_T ON Tagger_Log_T.FK_RelStress = RelStress_T.PK ' + \
-                  f' inner Join Config_T ON Tagger_Log_T.FK_Config = Config_T.PK ' + \
+                  f' inner Join Config_SN_T ON Config_SN_T.SerialNumber = Tagger_Log_T.Serialnumber' + \
+                  f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '   LIMIT 200'
+                  '  ORDER BY Tagger_Log_T.StartTimestamp DESC LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -1074,6 +1075,8 @@ class DBsqlite:
         self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
         sql = f'INSERT OR REPLACE INTO GOLD.Tagger_Log_T SELECT * FROM main.Tagger_Log_T' \
               f' WHERE removed = 0 and Station = ?'
+        # sql = f'INSERT OR REPLACE INTO GOLD.Tagger_Log_T SELECT * FROM main.Tagger_Log_T' \
+        #       f' WHERE removed = 0 and Station = ?'
         sql3 = f'INSERT OR REPLACE INTO main.Tagger_Log_T ' \
                f'SELECT * FROM GOLD.Tagger_Log_T WHERE GOLD.Tagger_Log_T.removed = 0 and GOLD.Tagger_Log_T.Station <> ?'
         sql4 = f'delete from GOLD.Tagger_Log_T WHERE PK in ' \
@@ -1307,7 +1310,7 @@ class DBsqlite:
             log1 = {
                 "FK_RelStress": stress_pk,
                 "WIP": self.filter_set.get("wip"),
-                "notes": self.filter_set.get("note"),
+                "Notes": self.filter_set.get("note"),
                 "ModiTimestamp": current_time
             }
             condition2 = {
@@ -1459,19 +1462,15 @@ class DBsqlite:
     def checkin_to_tester_data_table(self):
         current_time = dt.datetime.now().timestamp()
         time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
-        new_stress_pk = self.selected_stress_pks
         count = 0
-        if new_stress_pk:
-            stress_pk = self.selected_stress_pks.pop()
-        else:
-            return
         for pk in self.filter_set.get("selected_pks"):
             result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?", (pk,)).fetchone()
             uuid_str = str(uuid.uuid1())
             log = {
+                "FolderGroup": self.filter_set.get("tester"),
                 "PK": uuid_str,
-                "FK_RelStress": stress_pk,
-                "Stress_FK": stress_pk,
+                "FK_RelStress": result["FK_RelStress"],
+                "Stress_FK": result["FK_RelStress"],
                 "DateAdded": current_time,
                 "Station": self.filter_set.get('station'),
                 "SerialNumber": result["SerialNumber"],
@@ -1481,7 +1480,7 @@ class DBsqlite:
                 "EndTime": None,
                 "WIP": result["WIP"],
                 "removed": 0,
-                "Notes": self.filter_set.get("note"),
+                "FK_Config": 999999,
                 "ModiTimestamp": current_time
             }
             if self.__insert_to_table__("Tagger_Log_T", **log):
@@ -1489,8 +1488,8 @@ class DBsqlite:
                 count = count + 1
             else:
                 self.con.rollback()
-                print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
-        print(f'{count} units checkin to {str(StressModel(stress_pk, self))}')
+                print("error checkin ? to tester, no insert".format(result["SerialNumber"]))
+        print(f'{count} units checkin to Tester')
 
     def end_timer_data_table(self, pk: str = None):
         if pk:

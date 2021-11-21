@@ -16,18 +16,18 @@ class rel_tracker_view:
     @staticmethod
     def welcome_page():
         layout1 = [
-            [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
+            [sg.Txt("AppleBerry", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
                     auto_size_text=False, key="-version-")],
-            [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
+            [sg.Txt("from Jimmy Z @Meta. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
         column1 = sg.Column(layout1, background_color="#4267B2",
                             size=(int(600 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=True, grab_anywhere=False, no_titlebar=True,
-                           finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
+                           finalize=True, auto_close=True, auto_close_duration=2, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         print(sg.Window.get_screen_size())
         if sg.Window.get_screen_size()[0] < 1500:
@@ -59,14 +59,15 @@ class rel_tracker_view:
 
     @staticmethod
     def __facebook__():
-        facebook_text = sg.Txt("Meta", border_width=0, text_color="#4267B2", font=rel_tracker_view.logo_font,
+        facebook_text = sg.Txt("AppleBerry", border_width=0, text_color="#4267B2", font=rel_tracker_view.logo_font,
                                justification='center', pad=5, key="-Home-", enable_events=True)
         column1 = sg.Column(layout=[[facebook_text]],
-                            size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
+                            size=(int(600 * rel_tracker_view.scale), int(45 * rel_tracker_view.scale)))
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("Meta RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))]]
+             sg.Txt("RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
+        ]
 
     @staticmethod
     def __station_name__():
@@ -633,12 +634,12 @@ class rel_tracker_view:
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
                            disabled=False, disabled_button_color="#ababab"),
-                      sg.B("Start Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
+                      sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                           font=rel_tracker_view.button_font, key="Start Timer",
                            disabled=True, disabled_button_color="#ababab"),
-                      sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
-                           disabled=True, disabled_button_color="#ababab"),
+                      # sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                      #      font=rel_tracker_view.button_font,
+                      #      disabled=True, disabled_button_color="#ababab"),
                       # sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                       #      font=rel_tracker_view.button_font,
                       #      disabled=False, disabled_button_color="#ababab",
@@ -653,8 +654,8 @@ class rel_tracker_view:
                       ]
 
         table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'Test Station',
-                     "Notes", "StartTime", "EndTime"]
-        show_heading = [False, True, True, True, True, True, True, True, True]
+                     "Notes", "StartTime"]
+        show_heading = [False, True, True, True, True, True, True, True]
         table_value2 = [[str(row) for row in range(9)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
                                headings=table_col, select_mode=sg.SELECT_MODE_EXTENDED,
@@ -676,8 +677,8 @@ class rel_tracker_view:
              #        default=True, enable_events=True, key="-tag_single-"),
              sg.Txt("Parametric Station Name:", font=rel_tracker_view.text_font),
              sg.In(default_text="",
-                   tooltip="tester name or test stationID",
-                   key="-folder_name-"), ],
+                   tooltip="must fill in tester name",
+                   key="-test_station-", enable_events=True) ],
             button_row,
             [table_view2],
             [output_view]
