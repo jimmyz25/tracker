@@ -233,6 +233,7 @@ class rel_log_vc:
                 # print (date_string)
                 rel = rel_tracker_app.dbmodel.daily_rel(date_string)
                 fa = rel_tracker_app.dbmodel.daily_fa(date_string)
+                test = rel_tracker_app.dbmodel.daily_test(date_string)
                 output_string = ""
                 if rel:
                     output_string = "Today's Rel Lab update: \n"
@@ -250,7 +251,7 @@ class rel_log_vc:
                     output_string += "---------------------------\n\n"
                 else:
                     output_string = "No New update from Rel Lab \n" \
-                                    "---------------------------\n"
+                                   "=============================\n"
 
                 if fa:
                     output_string2 = "Today's FA update: \n"
@@ -261,8 +262,23 @@ class rel_log_vc:
                                    f'Detail: {result.get("FA_Details")} \n'
                         output_string2 += printout + "---------------------------\n"
                 else:
-                    output_string2 = "No FA update from FA Lab \n"
-                daily_report_popup = daily_report_vc(self.window, output_string + output_string2)
+                    output_string2 = "No FA update from FA Lab \n" \
+                                     "=============================\n"
+
+                if test:
+                    output_string3 = "Today's Test Station update: \n"
+                    for result in test:
+                        printout = f'{result.get("Program")}: {result.get("SN_Count")}x' \
+                                   f'from {result.get("Config")} ' \
+                                   f'at {result.get("RelStress")},{result.get("RelCheckpoint")} ' \
+                                   f'completed {result.get("FolderGroup")}\n'
+                        output_string3 += printout
+                    output_string3 += "---------------------------\n\n"
+                else:
+                    output_string3 = "No New update from Test Stations \n" \
+                                    "---------------------------\n"
+
+                daily_report_popup = daily_report_vc(self.window, output_string + output_string2 + output_string3)
                 daily_report_popup.show()
 
             elif event == "-Home-":

@@ -769,8 +769,29 @@ class DBsqlite:
          inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
           WHERE RelLog_T.ModiTimestamp between  ? and ? 
           and RelLog_T.removed = 0
-          Group by FK_RelStress,Config_SN_T.Config_FK
-          Order by Config_T.Program, RelStress_T.RelStress, RelLog_T.EndTimestamp
+          Group by FK_RelStress,Config_SN_T.Config_FK, RelLog_T.EndTimestamp
+          Order by  RelLog_T.EndTimestamp, Config_T.PK,  RelStress_T.PK ASC
+            """
+        result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
+        if result is None:
+            return None
+        else:
+            return [dict(result) for result in result]
+
+    def daily_test(self, date_tuple):
+        start_timestamp = dt.datetime(date_tuple[2], date_tuple[0], date_tuple[1], 0, 0, 0, 0).timestamp()
+        end_timestamp = start_timestamp + 86400
+        sql = """
+        SELECT COUNT (DISTINCT Tagger_Log_T.SerialNumber) as SN_Count, RelStress_T.RelStress,
+         RelStress_T.RelCheckpoint, Config_T.Config, Tagger_Log_T.FolderGroup,
+        Config_T.Program from Tagger_Log_T
+         inner join Config_SN_T on Config_SN_T.SerialNumber = Tagger_Log_T.SerialNumber
+         inner join RelStress_T on FK_RelStress = RelStress_T.PK
+         inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+          WHERE Tagger_Log_T.ModiTimestamp between  ? and ? 
+          and Tagger_Log_T.removed = 0
+          Group by FK_RelStress,Config_SN_T.Config_FK,Tagger_Log_T.FolderGroup
+          Order by Config_T.PK, RelStress_T.PK, Tagger_Log_T.FolderGroup
             """
         result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
         if result is None:
@@ -790,6 +811,7 @@ class DBsqlite:
             inner join RelStress_T on RelStress_T.PK = FALog_T.FK_RelStress
             where FALog_T.ModiTimestamp between ? and ?
             and FALog_T.removed = 0
+            Order by Config_T.PK, RelStress_T.PK, FailureMode_T.FailureMode
             """
         result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
         if result is None:
@@ -1024,10 +1046,10 @@ class DBsqlite:
         sql5 = f'delete from main.RelLog_T WHERE PK in (SELECT PK FROM gold.RelLog_T WHERE gold.RelLog_T.removed = 1)'
         self.cur.execute(sql5)
         self.cur.execute(sql4)
-        self.cur.execute(sql2, (self.station,)) # self configSN to golden configSN
+        self.cur.execute(sql2, (self.station,))  # self configSN to golden configSN
         self.cur.execute(sql, (self.station,))  # self rellog to golden rellog
         self.cur.execute(sql6, (self.station,))  # golden configSN to self configSN
-        self.cur.execute(sql3, (self.station,)) # golden rellog to self rellog
+        self.cur.execute(sql3, (self.station,))  # golden rellog to self rellog
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
         # self.con.commit()
