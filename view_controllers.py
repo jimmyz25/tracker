@@ -1578,12 +1578,16 @@ class fitting_view_vc:
         if isinstance(self.stress_table_data, list):
             print("this is run")
             return {row[0]: row[-2] for row in self.stress_table_data}
+        else:
+            return None
 
     @property
     def stress_para_b(self):
         if isinstance(self.stress_table_data, list):
             print("this is run")
             return {row[0]: row[-1] for row in self.stress_table_data}
+        else:
+            return None
 
     @property
     def stress_value(self):
@@ -1670,13 +1674,20 @@ class fitting_view_vc:
                 stress_para_b_dict = self.stress_para_b
                 for sn in selected_sn:
                     weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number)
-                    row = [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
-                           config_group_dict.get(sn.config.id),
-                           StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint,
-                           StressModel(weibull_output[2], rel_tracker_app.dbmodel).rel_checkpoint, weibull_output[3],
-                           stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
-                           stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
-                    result.append(row)
+                    if weibull_output:
+                        checkpoint1 = None
+                        checkpoint2 = None
+                        if weibull_output[1]:
+                            checkpoint1 = StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint
+                        if weibull_output[2]:
+                            checkpoint2 = StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint
+                        row = [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
+                               config_group_dict.get(sn.config.id),
+                               checkpoint1,
+                               checkpoint2, weibull_output[3],
+                               stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
+                               stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
+                        result.append(row)
 
                 print(result)
 

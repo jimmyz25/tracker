@@ -141,7 +141,7 @@ class DBsqlite:
               f" ORDER BY EndTimestamp"
         result = self.cur.execute(sql).fetchall()
         if result:
-            t1 = None,
+            t1 = None
             for row in result:
                 t2 = row["FK_RelStress"]
                 if row["FailureMode"] is not None:
@@ -1012,7 +1012,7 @@ class DBsqlite:
         :param idx: "int"
         :return: bool
         """
-        result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
+        result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK = ?', (idx,)).fetchone()
         return result is not None
 
     def sync_rel_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
