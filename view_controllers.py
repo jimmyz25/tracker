@@ -251,7 +251,7 @@ class rel_log_vc:
                     output_string += "---------------------------\n\n"
                 else:
                     output_string = "No New update from Rel Lab \n" \
-                                   "=============================\n"
+                                    "=============================\n"
 
                 if fa:
                     output_string2 = "Today's FA update: \n"
@@ -276,7 +276,7 @@ class rel_log_vc:
                     output_string3 += "---------------------------\n\n"
                 else:
                     output_string3 = "No New update from Test Stations \n" \
-                                    "---------------------------\n"
+                                     "---------------------------\n"
 
                 daily_report_popup = daily_report_vc(self.window, output_string + output_string2 + output_string3)
                 daily_report_popup.show()
@@ -362,7 +362,7 @@ class rel_log_vc:
                 self.window['-table_select-'].update(values=self.table_data)
                 self.row_selection = None
             elif event == "Update":
-                print (values.get("-Note-"))
+                print(values.get("-Note-"))
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
                         "station": rel_tracker_app.settings.get("-Station_Name-"),
@@ -545,6 +545,7 @@ class rel_log_vc:
         rel_tracker_app.save_user_settings(self.window)
         if self.complete_quit:
             sys.exit()
+
 
 class fa_log_vc:
     def __init__(self):
@@ -838,7 +839,8 @@ class data_log_vc:
                 else:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
                     # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
-                    selected = [self.window['-data_table_select-'].get()[index] for index in values.get('-data_table_select-')]
+                    selected = [self.window['-data_table_select-'].get()[index] for index in
+                                values.get('-data_table_select-')]
                     selected_sn_list = [row[1] for row in selected]
                     selected_pk_list = [row[0] for row in selected]
                     rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
@@ -1345,16 +1347,22 @@ class summary_table_vc:
 
     @property
     def on_going_wip_table_date(self):
+        """
+        WIP, On-Going, RelStress, RelCheckpoint,Count, Starttime, elapsed
+        :return:
+        """
+        current_time = dt.datetime.now().timestamp()
         datasource = rel_tracker_app.dbmodel.on_going_wip
         if len(datasource) > 1:
-            data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
+            data = [[row.get("WIP"), row.get("On_going") == 1, row.get("RelStress"), row.get("RelCheckpoint"),
+                     row.get("Count"),
                      dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
-                     row.get("Start")] for row in
+                     int((current_time - row.get("Start")) / 3600)] for row in
                     datasource]
-            data.sort(key=lambda x: x[3], reverse=True)
+            data.sort(key=lambda x: x[6], reverse=False)
             return data
         else:
-            return [["", "", "", "", ""]]
+            return [["", "", "", "", "", "", ""]]
 
     @staticmethod
     def not_all_empty(a: list = None):
@@ -1416,8 +1424,9 @@ class summary_table_vc:
         return window
 
     def generate_on_going_wip_table(self):
-        table_col = ['WIP', 'On-going', 'unit count', 'StartTime', 'StartTimestamp']
-        show_heading = [True, True, True, True, False]
+
+        table_col = ['WIP', 'On-going', 'RelStress', 'RelCheckpoint', 'unit count', 'StartTime', 'Elapsed(hr)']
+        show_heading = [True, True, True, True, True, True, True]
         table_value = self.on_going_wip_table_date
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,

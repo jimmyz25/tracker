@@ -896,11 +896,13 @@ class DBsqlite:
 
     @property
     def on_going_wip(self):
-        sql = " SELECT WIP, min(StartTimestamp) as Start, " \
-              " max(EndTimestamp is Null) as On_going, COUNT(DISTINCT SerialNumber) as Count from RelLog_T" \
-              " WHERE removed = 0 " \
-              " GROUP By WIP" \
-              " ORDER BY Start DESC"
+        sql = " SELECT WIP, RelStress_T.RelStress, RelStress_T.RelCheckpoint," \
+              " min(StartTimestamp) as Start, " \
+              " max(EndTimestamp is Null) as On_going, COUNT(DISTINCT SerialNumber) as Count" \
+              "  from RelLog_T " \
+              " Inner Join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress" \
+              " WHERE RelLog_T.removed = 0 " \
+              " GROUP By WIP"
         results = self.cur.execute(sql).fetchall()
         if results:
             return [dict(result) for result in results]
