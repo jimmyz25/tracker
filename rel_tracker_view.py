@@ -260,7 +260,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -498,7 +498,7 @@ class rel_tracker_view:
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -671,20 +671,21 @@ class rel_tracker_view:
             [self.__facebook__()],
             [filter_column, table_view],
             [
-             #    sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-             #        default=False, enable_events=True, key="-tag_group-"),
-             # sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-             #        default=True, enable_events=True, key="-tag_single-"),
-             sg.Txt("Parametric Station Name:", font=rel_tracker_view.text_font),
-             sg.In(default_text="",
-                   tooltip="must fill in tester name",
-                   key="-test_station-", enable_events=True) ],
+                #    sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+                #        default=False, enable_events=True, key="-tag_group-"),
+                # sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+                #        default=True, enable_events=True, key="-tag_single-"),
+                sg.Txt("Parametric Station Name:", font=rel_tracker_view.text_font),
+                sg.In(default_text="",
+                      tooltip="must fill in tester name",
+                      key="-test_station-", enable_events=True)],
             button_row,
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
-        window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+        window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False,
+                           no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, modal=False)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
@@ -813,16 +814,24 @@ class rel_tracker_view:
         ]
 
         failure_mode_table_col = sg.Column(layout=failure_mode_col_layout)
-
-        data_table_heading = ["SN", "T1", "T2", "Group"]
-        data_table_value = [["" for _ in range(4)]]
-        data_table_show = [True, True, True, True]
+        # [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
+        #  config_group_dict.get(sn.config.id),
+        #  checkpoint1,
+        #  checkpoint2, weibull_output[3],
+        #  stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
+        #  stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
+        #
+        data_table_heading = ["SN", "Program", "Build", "Config", "ConfigGroup",
+                              "T1", "T2", "FailureMode", "T1(value)",
+                              "T2(Value)"]
+        data_table_value = [["" for _ in range(10)]]
+        data_table_show = [True, True, True, True, True, True, True, True, True, True]
         data_col_layout = [
             [sg.Text("Data for distribution fitting", font=rel_tracker_view.text_font)],
             [sg.Table(values=data_table_value, headings=data_table_heading,
                       visible_column_map=data_table_show,
                       font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10, expand_x=True)],
+                      num_rows=10, expand_x=True, key="result_table")],
             [sg.Button("output for JMP", font=rel_tracker_view.button_font),
              sg.Button("output for Relisoft", font=rel_tracker_view.button_font),
              sg.Button("Just Plot here", font=rel_tracker_view.button_font), ]

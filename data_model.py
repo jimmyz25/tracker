@@ -118,7 +118,7 @@ class DBsqlite:
         except sqlite3.Error:
             return False
 
-    def weibull_output(self, sn: str):
+    def weibull_output(self, sn: str, stress_fk: list):
         sql = f" SELECT RelLog_T.SerialNumber, RelLog_T.FK_RelStress," \
               f" A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
               f" left join" \
@@ -127,16 +127,18 @@ class DBsqlite:
               self.sql_filter_str({
                   "FailureMode_T.FailureMode": self.filter_set.get("failure_mode"),
                   "FALog_T.removed": 0,
-                  "SerialNumber": sn
-              }) + \
+                  "SerialNumber": sn,
+
+              }, strict=True) + \
               f" ) As A" \
               f" On A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress" + \
               self.sql_filter_str(
                   {
                       "RelLog_T.SerialNumber": sn,
                       "RelLog_T.EndTimestamp": "not none",
-                      "RelLog_T.removed": 0
-                  }
+                      "RelLog_T.removed": 0,
+                      "RelLog_T.FK_RelStress": stress_fk
+                  }, strict=True
               ) + \
               f" ORDER BY EndTimestamp"
         result = self.cur.execute(sql).fetchall()

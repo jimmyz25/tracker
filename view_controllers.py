@@ -1627,16 +1627,16 @@ class fitting_view_vc:
             return selected
 
     @property
-    def selected_stress(self):
+    def selected_stress_pk(self):
         selected = list(filter(lambda x: x[3], self.stress_table_data))
         if len(selected) == 0:
             return None
         else:
-            return selected
+            return [select[0] for select in selected]
 
-    def get_config_group(self, sn):
-
-        pass
+    # def get_config_group(self, sn):
+    #
+    #     pass
 
     def show(self):
         self.window["-config_table-"].update(values=self.config_table_data)
@@ -1682,7 +1682,7 @@ class fitting_view_vc:
                 stress_para_a_dict = self.stress_para_a
                 stress_para_b_dict = self.stress_para_b
                 for sn in selected_sn:
-                    weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number)
+                    weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number, self.selected_stress_pk)
                     if weibull_output:
                         checkpoint1 = None
                         checkpoint2 = None
@@ -1697,10 +1697,9 @@ class fitting_view_vc:
                                stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
                                stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
                         result.append(row)
+                self.window["result_table"].update(values=result)
 
-                print(result)
-
-            if self.selected_stress and len(values.get("-failure_to_select-")) > 0:
+            if self.selected_stress_pk and len(values.get("-failure_to_select-")) > 0:
                 self.window["Update Data Table"].update(disabled=False)
             else:
                 self.window["Update Data Table"].update(disabled=True)
