@@ -904,7 +904,7 @@ class DBsqlite:
               "  from RelLog_T " \
               " Inner Join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress" \
               " WHERE RelLog_T.removed = 0 " \
-              " GROUP By WIP"
+              " GROUP By WIP, RelStress, RelCheckpoint"
         results = self.cur.execute(sql).fetchall()
         if results:
             return [dict(result) for result in results]

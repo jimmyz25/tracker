@@ -1359,7 +1359,7 @@ class summary_table_vc:
                      dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
                      int((current_time - row.get("Start")) / 3600)] for row in
                     datasource]
-            data.sort(key=lambda x: x[6], reverse=False)
+            data.sort(key=lambda x: x[1], reverse=True)
             return data
         else:
             return [["", "", "", "", "", "", ""]]

@@ -7,7 +7,7 @@ class rel_tracker_view:
     table_font = "Helvetica 10"
     table_header_font = "Helvetica 10 bold"
     text_font = "Helvetica 10"
-    logo_font = 'Helvetica 30 bold'
+    logo_font = 'Helvetica 25 bold'
     station_font = "Helvetica 15 bold"
 
     def __init__(self, settings: sg.user_settings):
