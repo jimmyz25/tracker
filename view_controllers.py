@@ -1,6 +1,6 @@
 # this is a collection of view controllers. each view controller works on a view
 # import PySimpleGUI
-import shutil
+# import shutil
 import platform
 from rel_tracker_view import *
 # from data_model import *
@@ -230,11 +230,12 @@ class rel_log_vc:
             elif event == "Daily Report":
                 today = dt.datetime.now()
                 date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                if not date_string:
+                    continue
                 # print (date_string)
                 rel = rel_tracker_app.dbmodel.daily_rel(date_string)
                 fa = rel_tracker_app.dbmodel.daily_fa(date_string)
                 test = rel_tracker_app.dbmodel.daily_test(date_string)
-                output_string = ""
                 if rel:
                     output_string = "Today's Rel Lab update: \n"
                     for result in rel:

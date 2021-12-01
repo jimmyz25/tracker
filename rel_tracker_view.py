@@ -260,7 +260,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -498,7 +498,7 @@ class rel_tracker_view:
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -681,7 +681,7 @@ class rel_tracker_view:
                       key="-test_station-", enable_events=True)],
             button_row,
             [table_view2],
-            # [output_view]
+            [output_view]
         ]
 
         window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False,
