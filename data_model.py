@@ -118,7 +118,7 @@ class DBsqlite:
         except sqlite3.Error:
             return False
 
-    def weibull_output(self, sn: str):
+    def weibull_output(self, sn: str, stress_fk: list):
         sql = f" SELECT RelLog_T.SerialNumber, RelLog_T.FK_RelStress," \
               f" A.FailureMode,RelLog_T.EndTimestamp from RelLog_T " \
               f" left join" \
@@ -127,21 +127,23 @@ class DBsqlite:
               self.sql_filter_str({
                   "FailureMode_T.FailureMode": self.filter_set.get("failure_mode"),
                   "FALog_T.removed": 0,
-                  "SerialNumber": sn
-              }) + \
+                  "SerialNumber": sn,
+
+              }, strict=True) + \
               f" ) As A" \
               f" On A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress" + \
               self.sql_filter_str(
                   {
                       "RelLog_T.SerialNumber": sn,
                       "RelLog_T.EndTimestamp": "not none",
-                      "RelLog_T.removed": 0
-                  }
+                      "RelLog_T.removed": 0,
+                      "RelLog_T.FK_RelStress": stress_fk
+                  }, strict=True
               ) + \
               f" ORDER BY EndTimestamp"
         result = self.cur.execute(sql).fetchall()
         if result:
-            t1 = None,
+            t1 = None
             for row in result:
                 t2 = row["FK_RelStress"]
                 if row["FailureMode"] is not None:
@@ -644,7 +646,7 @@ class DBsqlite:
         condition = {
             "Tagger_Log_T.WIP": self.filter_set.get("wip"),
             "Tagger_Log_T.SerialNumber": self.filter_set.get("serial_number"),
-            "FK_Config": self.selected_config_pks,
+            "Config_SN_T.Config_FK": self.selected_config_pks,
             "FK_RelStress": self.selected_stress_pks,
             "Tagger_Log_T.Station": self.display_setting.get("station_filter"),
             "Tagger_Log_T.removed": 0,
@@ -656,9 +658,10 @@ class DBsqlite:
                   f'RelStress_T.RelCheckpoint' \
                   f' FROM Tagger_Log_T ' \
                   f' inner Join RelStress_T ON Tagger_Log_T.FK_RelStress = RelStress_T.PK ' + \
-                  f' inner Join Config_T ON Tagger_Log_T.FK_Config = Config_T.PK ' + \
+                  f' inner Join Config_SN_T ON Config_SN_T.SerialNumber = Tagger_Log_T.Serialnumber' + \
+                  f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
-                  '   LIMIT 200'
+                  '  ORDER BY Tagger_Log_T.StartTimestamp DESC LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -768,8 +771,29 @@ class DBsqlite:
          inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
           WHERE RelLog_T.ModiTimestamp between  ? and ? 
           and RelLog_T.removed = 0
-          Group by FK_RelStress,Config_SN_T.Config_FK
-          Order by Config_T.Program, RelStress_T.RelStress, RelLog_T.EndTimestamp
+          Group by FK_RelStress,Config_SN_T.Config_FK, RelLog_T.EndTimestamp
+          Order by  RelLog_T.EndTimestamp, Config_T.PK,  RelStress_T.PK ASC
+            """
+        result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
+        if result is None:
+            return None
+        else:
+            return [dict(result) for result in result]
+
+    def daily_test(self, date_tuple):
+        start_timestamp = dt.datetime(date_tuple[2], date_tuple[0], date_tuple[1], 0, 0, 0, 0).timestamp()
+        end_timestamp = start_timestamp + 86400
+        sql = """
+        SELECT COUNT (DISTINCT Tagger_Log_T.SerialNumber) as SN_Count, RelStress_T.RelStress,
+         RelStress_T.RelCheckpoint, Config_T.Config, Tagger_Log_T.FolderGroup,
+        Config_T.Program from Tagger_Log_T
+         inner join Config_SN_T on Config_SN_T.SerialNumber = Tagger_Log_T.SerialNumber
+         inner join RelStress_T on FK_RelStress = RelStress_T.PK
+         inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+          WHERE Tagger_Log_T.ModiTimestamp between  ? and ? 
+          and Tagger_Log_T.removed = 0
+          Group by FK_RelStress,Config_SN_T.Config_FK,Tagger_Log_T.FolderGroup
+          Order by Config_T.PK, RelStress_T.PK, Tagger_Log_T.FolderGroup
             """
         result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
         if result is None:
@@ -789,6 +813,7 @@ class DBsqlite:
             inner join RelStress_T on RelStress_T.PK = FALog_T.FK_RelStress
             where FALog_T.ModiTimestamp between ? and ?
             and FALog_T.removed = 0
+            Order by Config_T.PK, RelStress_T.PK, FailureMode_T.FailureMode
             """
         result = self.cur.execute(sql, (start_timestamp, end_timestamp)).fetchall()
         if result is None:
@@ -873,11 +898,13 @@ class DBsqlite:
 
     @property
     def on_going_wip(self):
-        sql = " SELECT WIP, min(StartTimestamp) as Start, " \
-              " max(EndTimestamp is Null) as On_going, COUNT(DISTINCT SerialNumber) as Count from RelLog_T" \
-              " WHERE removed = 0 " \
-              " GROUP By WIP" \
-              " ORDER BY Start DESC"
+        sql = " SELECT WIP, RelStress_T.RelStress, RelStress_T.RelCheckpoint," \
+              " min(StartTimestamp) as Start, " \
+              " max(EndTimestamp is Null) as On_going, COUNT(DISTINCT SerialNumber) as Count" \
+              "  from RelLog_T " \
+              " Inner Join RelStress_T ON RelStress_T.PK = RelLog_T.FK_RelStress" \
+              " WHERE RelLog_T.removed = 0 " \
+              " GROUP By WIP, RelStress, RelCheckpoint"
         results = self.cur.execute(sql).fetchall()
         if results:
             return [dict(result) for result in results]
@@ -989,7 +1016,7 @@ class DBsqlite:
         :param idx: "int"
         :return: bool
         """
-        result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK =?', (idx,)).fetchone()
+        result = self.con.execute(f'SELECT PK FROM RelStress_T WHERE PK = ?', (idx,)).fetchone()
         return result is not None
 
     def sync_rel_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
@@ -1013,18 +1040,23 @@ class DBsqlite:
                f'SELECT Config_SN_T.* FROM main.Config_SN_T INNER JOIN main.RelLog_T ' \
                f'ON main.Config_SN_T.SerialNumber = main.RelLog_T.SerialNumber ' \
                f'WHERE RelLog_T.removed = 0 and Station = ?'
+        sql6 = f' INSERT OR REPLACE INTO main.Config_SN_T ' \
+               f' SELECT Config_SN_T.* FROM GOLD.Config_SN_T INNER JOIN GOLD.RelLog_T ' \
+               f' ON GOLD.Config_SN_T.SerialNumber = GOLD.RelLog_T.SerialNumber ' \
+               f' WHERE removed = 0 and Station <> ?'
         sql3 = f'INSERT OR REPLACE INTO main.RelLog_T SELECT * FROM GOLD.RelLog_T ' \
                f'WHERE GOLD.RelLog_T.removed = 0 and GOLD.RelLog_T.Station <> ?'
         sql4 = f'delete from gold.RelLog_T WHERE PK in (SELECT PK FROM main.RelLog_T WHERE main.RelLog_T.removed = 1)'
         sql5 = f'delete from main.RelLog_T WHERE PK in (SELECT PK FROM gold.RelLog_T WHERE gold.RelLog_T.removed = 1)'
         self.cur.execute(sql5)
         self.cur.execute(sql4)
-        self.cur.execute(sql2, (self.station,))
-        self.cur.execute(sql, (self.station,))
-        self.cur.execute(sql3, (self.station,))
+        self.cur.execute(sql2, (self.station,))  # self configSN to golden configSN
+        self.cur.execute(sql, (self.station,))  # self rellog to golden rellog
+        self.cur.execute(sql6, (self.station,))  # golden configSN to self configSN
+        self.cur.execute(sql3, (self.station,))  # golden rellog to self rellog
         self.con.commit()
         self.cur.execute("DETACH DATABASE ? ", ("GOLD",))
-        self.con.commit()
+        # self.con.commit()
         print("RelLog sync completed")
 
     def sync_fa_log_table(self, golden_db_address: str = None, cutoff_time: float = 0.0):
@@ -1069,6 +1101,8 @@ class DBsqlite:
         self.cur.execute("ATTACH ? AS GOLD ", (golden_db_address,))
         sql = f'INSERT OR REPLACE INTO GOLD.Tagger_Log_T SELECT * FROM main.Tagger_Log_T' \
               f' WHERE removed = 0 and Station = ?'
+        # sql = f'INSERT OR REPLACE INTO GOLD.Tagger_Log_T SELECT * FROM main.Tagger_Log_T' \
+        #       f' WHERE removed = 0 and Station = ?'
         sql3 = f'INSERT OR REPLACE INTO main.Tagger_Log_T ' \
                f'SELECT * FROM GOLD.Tagger_Log_T WHERE GOLD.Tagger_Log_T.removed = 0 and GOLD.Tagger_Log_T.Station <> ?'
         sql4 = f'delete from GOLD.Tagger_Log_T WHERE PK in ' \
@@ -1302,7 +1336,7 @@ class DBsqlite:
             log1 = {
                 "FK_RelStress": stress_pk,
                 "WIP": self.filter_set.get("wip"),
-                "notes": self.filter_set.get("note"),
+                "Notes": self.filter_set.get("note"),
                 "ModiTimestamp": current_time
             }
             condition2 = {
@@ -1450,6 +1484,38 @@ class DBsqlite:
             self.con.commit()
             print(f'timer started for {self.filter_set.get("serial_number")}, '
                   f'you may start parametric test, please make sure parametric raw data is generated before end timer')
+
+    def checkin_to_tester_data_table(self):
+        current_time = dt.datetime.now().timestamp()
+        time_str = dt.datetime.now().strftime('%m-%d %H:%M:%S')
+        count = 0
+        for pk in self.filter_set.get("selected_pks"):
+            result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?", (pk,)).fetchone()
+            uuid_str = str(uuid.uuid1())
+            log = {
+                "FolderGroup": self.filter_set.get("tester"),
+                "PK": uuid_str,
+                "FK_RelStress": result["FK_RelStress"],
+                "Stress_FK": result["FK_RelStress"],
+                "DateAdded": current_time,
+                "Station": self.filter_set.get('station'),
+                "SerialNumber": result["SerialNumber"],
+                "StartTimestamp": current_time,
+                "StartTime": time_str,
+                "EndTimestamp": None,
+                "EndTime": None,
+                "WIP": result["WIP"],
+                "removed": 0,
+                "FK_Config": 999999,
+                "ModiTimestamp": current_time
+            }
+            if self.__insert_to_table__("Tagger_Log_T", **log):
+                self.con.commit()
+                count = count + 1
+            else:
+                self.con.rollback()
+                print("error checkin ? to tester, no insert".format(result["SerialNumber"]))
+        print(f'{count} units checkin to Tester')
 
     def end_timer_data_table(self, pk: str = None):
         if pk:

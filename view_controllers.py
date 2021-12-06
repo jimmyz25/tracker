@@ -1,10 +1,7 @@
 # this is a collection of view controllers. each view controller works on a view
 # import PySimpleGUI
-import shutil
+# import shutil
 import platform
-
-import PySimpleGUI
-
 from rel_tracker_view import *
 # from data_model import *
 import sys
@@ -109,7 +106,8 @@ class preference_vc:
     def __init__(self):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.preference_view()
-        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station", "Data Tagging"])
+        self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
+                                                     "Parametric Testing Station"])
         rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
@@ -183,9 +181,9 @@ class preference_vc:
         elif self.window["-station-type-"].get() == "FailureMode Logging Station":
             rel_tracker_app.view_list.append(fa_log_vc())
             rel_tracker_app.settings.update({"-first_view-": "FailureMode Logging Station"})
-        elif self.window["-station-type-"].get() == "Data Tagging":
+        elif self.window["-station-type-"].get() == "Parametric Testing Station":
             rel_tracker_app.view_list.append(data_log_vc())
-            rel_tracker_app.settings.update({"-first_view-": "Data Tagging"})
+            rel_tracker_app.settings.update({"-first_view-": "Parametric Testing Station"})
         self.window.close()
 
 
@@ -231,19 +229,21 @@ class rel_log_vc:
                 summary_popup.show()
             elif event == "Daily Report":
                 today = dt.datetime.now()
-                date_string = (today.month, today.day, today.year)
-                # date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                if not date_string:
+                    continue
                 # print (date_string)
                 rel = rel_tracker_app.dbmodel.daily_rel(date_string)
                 fa = rel_tracker_app.dbmodel.daily_fa(date_string)
-                output_string = ""
+                test = rel_tracker_app.dbmodel.daily_test(date_string)
                 if rel:
                     output_string = "Today's Rel Lab update: \n"
                     for result in rel:
                         if result.get("EndTimestamp") is None:
                             printout = f'{result.get("Program")}: {result.get("SN_Count")}x ' \
                                        f'from {result.get("Config")} ' \
-                                       f'entered checkpoint: {result.get("RelStress")},{result.get("RelCheckpoint")} \n'
+                                       f'Started/Resumed Rel. upcoming checkpoint: {result.get("RelStress")},' \
+                                       f'{result.get("RelCheckpoint")} \n'
                         else:
                             printout = f'{result.get("Program")}: {result.get("SN_Count")}x' \
                                        f'from {result.get("Config")} ' \
@@ -252,7 +252,7 @@ class rel_log_vc:
                     output_string += "---------------------------\n\n"
                 else:
                     output_string = "No New update from Rel Lab \n" \
-                                    "---------------------------\n"
+                                    "=============================\n"
 
                 if fa:
                     output_string2 = "Today's FA update: \n"
@@ -263,8 +263,23 @@ class rel_log_vc:
                                    f'Detail: {result.get("FA_Details")} \n'
                         output_string2 += printout + "---------------------------\n"
                 else:
-                    output_string2 = "No FA update from FA Lab \n"
-                daily_report_popup = daily_report_vc(self.window, output_string + output_string2)
+                    output_string2 = "No FA update from FA Lab \n" \
+                                     "=============================\n"
+
+                if test:
+                    output_string3 = "Today's Test Station update: \n"
+                    for result in test:
+                        printout = f'{result.get("Program")}: {result.get("SN_Count")}x' \
+                                   f'from {result.get("Config")} ' \
+                                   f'at {result.get("RelStress")},{result.get("RelCheckpoint")} ' \
+                                   f'completed {result.get("FolderGroup")}\n'
+                        output_string3 += printout
+                    output_string3 += "---------------------------\n\n"
+                else:
+                    output_string3 = "No New update from Test Stations \n" \
+                                     "---------------------------\n"
+
+                daily_report_popup = daily_report_vc(self.window, output_string + output_string2 + output_string3)
                 daily_report_popup.show()
 
             elif event == "-Home-":
@@ -348,6 +363,13 @@ class rel_log_vc:
                 self.window['-table_select-'].update(values=self.table_data)
                 self.row_selection = None
             elif event == "Update":
+                print(values.get("-Note-"))
+                rel_tracker_app.dbmodel.filter_set.update(
+                    {
+                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "note": values.get("-Note-")
+                    }
+                )
                 rel_tracker_app.dbmodel.update_current_row_rellog_table()
                 rel_tracker_app.dbmodel.filter_set.update({"update_mode": False})
                 self.window['-table_select-'].update(values=self.table_data)
@@ -574,8 +596,6 @@ class fa_log_vc:
             elif event == "Distribution Fitting":
                 fitting_view = fitting_view_vc()
                 fitting_view.show()
-            elif event == "FA Report":
-                pass
             elif event == "Report Failure":
                 failure_mode_popup = failure_mode_vc(self.window)
                 failure_mode_popup.show()
@@ -710,7 +730,6 @@ class data_log_vc:
         self.selected_tagger_pk = None
         self.complete_quit = True
         self.selected_endtime = None
-        self.timer_started = False
         self.files_list = None
         self.output_folder = rel_tracker_app.settings.get("-Output_Folder-")
         self.input_folder = rel_tracker_app.settings.get("-Input_Folder-")
@@ -724,17 +743,15 @@ class data_log_vc:
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),
                  row.get("RelCheckpoint"), row.get("WIP"), row.get("Config"), row.get("EndTime")] for row in
                 datasource]
-        data.sort(key=lambda x: x[1])
+        # data.sort(key=lambda x: x[1])
         return data
 
     @property
     def tagger_table_data(self):
-        if self.timer_started:
-            return None
         datasource = rel_tracker_app.dbmodel.tagger_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("WIP"),
                  row.get("RelStress"), row.get("RelCheckpoint"),
-                 row.get("FolderGroup"), row.get("Notes"), row.get("StartTime"), row.get("EndTime")] for row in
+                 row.get("FolderGroup"), row.get("Notes"), row.get("StartTime")] for row in
                 datasource]
         return data
 
@@ -756,16 +773,13 @@ class data_log_vc:
                 file_view = file_view_vc()
                 file_view.show()
             elif event == "Start Timer":
+                rel_tracker_app.dbmodel.filter_set.update({"tester": self.window["-test_station-"].get().upper()})
                 rel_tracker_app.dbmodel.filter_set.update({"station": rel_tracker_app.station})
-                if self.window['-tag_group-'].get():
-                    rel_tracker_app.dbmodel.filter_set.update({"serial_number": "Multiple"})
-                rel_tracker_app.dbmodel.start_timer_data_table()
+                rel_tracker_app.dbmodel.checkin_to_tester_data_table()
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
-                self.timer_started = True
-            elif event == "End Timer":
-                rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
-                self.timer_started = False
-                self.window["-data_table_select-"].update(values=self.tagger_table_data)
+            # elif event == "End Timer":
+            #     rel_tracker_app.dbmodel.end_timer_data_table(self.selected_tagger_pk)
+            #     self.window["-data_table_select-"].update(values=self.tagger_table_data)
             elif event == "Delete":
                 # delete_from_tagger_log_table
                 rel_tracker_app.dbmodel.delete_from_tagger_log_table()
@@ -793,65 +807,52 @@ class data_log_vc:
                 self.window['-table_select-'].update(values=self.rel_table_data)
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
             elif event == "-table_select-":
-                # selecting SerialNumber table will set filters to selection row state
+                self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 count = len(values.get('-table_select-'))
-                if count > 0:
+                if count == 0:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
+                else:
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]  # first one
+                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
+                    selected = [self.window['-table_select-'].get()[index] for index in values.get('-table_select-')]
+                    selected_sn_list = [row[1] for row in selected]
+                    selected_pk_list = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
+                    rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
-                    sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
-                    rel_tracker_app.dbmodel.filter_set.update({
-                        "program": sn.config.program,
-                        "build": sn.config.build,
-                        "config": sn.config.config_name,
-                        "wip": selected[4],
-                        "stress": selected[2],
-                        "checkpoint": selected[3],
-                        "serial_number": sn.serial_number
-                    })
-                    self.window["-data_table_select-"].update(values=self.tagger_table_data)
+                    if len(selected_sn_list) == 1:
+                        print(selected_sn_list, " in selection from Rel log")
+                    elif len(selected_sn_list) > 1:
+                        print(len(selected_sn_list), "units selected from Rel log")
+            elif event == "-test_station-":
+                self.window["Start Timer"].set_tooltip(f"check into test station: "
+                                                       f"{self.window['-test_station-'].get()}")
             elif event == "-data_table_select-":
+                self.window["-table_select-"].update(values=self.rel_table_data)
                 count = len(values.get('-data_table_select-'))
-                if count > 0:
-                    row = self.window["-data_table_select-"].get()[values.get('-data_table_select-')[0]]
-                    self.selected_tagger_pk = row[0]
-                    self.selected_endtime = row[8]
-                    # selected = [self.window['-highlighted_failures-']
-                    #                 .get()[index] for index in values.get('-highlighted_failures-')]
-                    #
-                    # selected_pk = [row[0] for row in selected]
-                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": [self.selected_tagger_pk]})
-            elif event == "Offline Tag":
-                total = 0
-                non_processed = 0
-                confirm = sg.popup_ok_cancel("You are about to search all files under input folder, expect screen "
-                                             "freeze if folder contains too many files")
-                if confirm == "Cancel":
-                    continue
-                self.files_list = self.get_file_info_from_folder(self.input_folder)
-                for file in self.files_list:
-                    rel_tracker_app.dbmodel.filter_set.update({"file_creation_time": file[1]})
-                    tag = rel_tracker_app.dbmodel.data_tag
-                    if tag:
-                        if tag[0]:
-                            new_dir = os.path.join(self.output_folder, tag[0], tag[1], tag[2], tag[3], tag[5], tag[6])
-                        else:
-                            new_dir = os.path.join(self.output_folder, tag[1], tag[2], tag[3], tag[5], tag[6])
-                        new_name = tag[4] + "_" + os.path.basename(file[0])
-                    else:
-                        non_processed += 1
-                        new_dir = os.path.join(self.input_folder, "Non_Processed")
-                        new_name = os.path.basename(file[0])
-                    new_destination = os.path.join(new_dir, new_name)
-                    if not os.path.exists(new_dir):
-                        os.makedirs(new_dir)
-                    if not os.path.exists(new_destination):
-                        shutil.copy2(file[0], new_destination)
+                if count == 0:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": None})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": None})
+                else:
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
+                    # selected = self.window['-table_select-'].get()[values.get('-table_select-')]
+                    selected = [self.window['-data_table_select-'].get()[index] for index in
+                                values.get('-data_table_select-')]
+                    selected_sn_list = [row[1] for row in selected]
+                    selected_pk_list = [row[0] for row in selected]
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_pks": selected_pk_list})
+                    rel_tracker_app.dbmodel.clean_up_sn_list(",".join(selected_sn_list))
+                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number_list": selected_sn_list})
+                    rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-data_table_select-')})
+                    if len(selected_sn_list) == 1:
+                        print(selected_sn_list, " in selection from Tester Log")
+                    elif len(selected_sn_list) > 1:
+                        print(len(selected_sn_list), "units selected from Tester Log")
 
-                        print(f"{os.path.basename(file[0])} copied to output folder")
-                    total += 1
-                print(f"{total} in total files. {non_processed} non processed files saved in non_processed subfolder "
-                      f"in input folder. Note: this action WILL NOT OVERWRITE existing files")
             elif event == "-show_latest0-":
                 rel_tracker_app.dbmodel.display_setting.update({"show_latest": False})
                 self.window['-table_select-'].update(values=self.rel_table_data)
@@ -866,20 +867,18 @@ class data_log_vc:
                 rel_tracker_app.dbmodel.display_setting.update({"station_filter": None})
                 self.window["-data_table_select-"].update(values=self.tagger_table_data)
                 self.window['-table_select-'].update(values=self.rel_table_data)
-
-            if rel_tracker_app.dbmodel.ready_to_data_tagging:
-                if len(values.get('-table_select-')) == 1:
-                    self.window["Start Timer"].update(disabled=False)
-                else:
-                    self.window["Start Timer"].update(disabled=True)
-                self.window["End Timer"].update(disabled=True)
+            if len(values.get('-table_select-')) > 0 and self.window["-test_station-"].get() != "":
+                self.window["Start Timer"].update(disabled=False)
             else:
-                if len(values.get('-data_table_select-')) == 1 and self.selected_endtime is None:
-                    self.window["End Timer"].update(disabled=False)
-                else:
-                    self.window["End Timer"].update(disabled=True)
                 self.window["Start Timer"].update(disabled=True)
-            if len(values.get("-data_table_select-")) == 1:
+            # self.window["End Timer"].update(disabled=True)
+            # else:
+            #     if len(values.get('-data_table_select-')) == 1 and self.selected_endtime is None:
+            #         self.window["End Timer"].update(disabled=False)
+            #     else:
+            #         self.window["End Timer"].update(disabled=True)
+            #     self.window["Start Timer"].update(disabled=True)
+            if len(values.get("-data_table_select-")) > 0:
                 self.window["Delete"].update(disabled=False)
             else:
                 self.window["Delete"].update(disabled=True)
@@ -1189,7 +1188,6 @@ class failure_mode_config_vc:
 
 
 class stress_setup_vc:
-
     def __init__(self, master: sg.Window = None):
         view = rel_tracker_view(rel_tracker_app.settings)
         self.window = view.popup_stress_setup()
@@ -1350,16 +1348,22 @@ class summary_table_vc:
 
     @property
     def on_going_wip_table_date(self):
+        """
+        WIP, On-Going, RelStress, RelCheckpoint,Count, Starttime, elapsed
+        :return:
+        """
+        current_time = dt.datetime.now().timestamp()
         datasource = rel_tracker_app.dbmodel.on_going_wip
         if len(datasource) > 1:
-            data = [[row.get("WIP"), row.get("On_going") == 1, row.get("Count"),
+            data = [[row.get("WIP"), row.get("On_going") == 1, row.get("RelStress"), row.get("RelCheckpoint"),
+                     row.get("Count"),
                      dt.datetime.fromtimestamp(row.get("Start")).strftime('%m-%d %H:%M:%S'),
-                     row.get("Start")] for row in
+                     int((current_time - row.get("Start")) / 3600)] for row in
                     datasource]
-            data.sort(key=lambda x: x[3], reverse=True)
+            data.sort(key=lambda x: x[1], reverse=True)
             return data
         else:
-            return [["", "", "", "", ""]]
+            return [["", "", "", "", "", "", ""]]
 
     @staticmethod
     def not_all_empty(a: list = None):
@@ -1421,8 +1425,9 @@ class summary_table_vc:
         return window
 
     def generate_on_going_wip_table(self):
-        table_col = ['WIP', 'On-going', 'unit count', 'StartTime', 'StartTimestamp']
-        show_heading = [True, True, True, True, False]
+
+        table_col = ['WIP', 'On-going', 'RelStress', 'RelCheckpoint', 'unit count', 'StartTime', 'Elapsed(hr)']
+        show_heading = [True, True, True, True, True, True, True]
         table_value = self.on_going_wip_table_date
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col,
@@ -1583,12 +1588,16 @@ class fitting_view_vc:
         if isinstance(self.stress_table_data, list):
             print("this is run")
             return {row[0]: row[-2] for row in self.stress_table_data}
+        else:
+            return None
 
     @property
     def stress_para_b(self):
         if isinstance(self.stress_table_data, list):
             print("this is run")
             return {row[0]: row[-1] for row in self.stress_table_data}
+        else:
+            return None
 
     @property
     def stress_value(self):
@@ -1619,16 +1628,16 @@ class fitting_view_vc:
             return selected
 
     @property
-    def selected_stress(self):
+    def selected_stress_pk(self):
         selected = list(filter(lambda x: x[3], self.stress_table_data))
         if len(selected) == 0:
             return None
         else:
-            return selected
+            return [select[0] for select in selected]
 
-    def get_config_group(self, sn):
-
-        pass
+    # def get_config_group(self, sn):
+    #
+    #     pass
 
     def show(self):
         self.window["-config_table-"].update(values=self.config_table_data)
@@ -1674,18 +1683,24 @@ class fitting_view_vc:
                 stress_para_a_dict = self.stress_para_a
                 stress_para_b_dict = self.stress_para_b
                 for sn in selected_sn:
-                    weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number)
-                    row = [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
-                           config_group_dict.get(sn.config.id),
-                           StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint,
-                           StressModel(weibull_output[2], rel_tracker_app.dbmodel).rel_checkpoint, weibull_output[3],
-                           stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
-                           stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
-                    result.append(row)
+                    weibull_output = rel_tracker_app.dbmodel.weibull_output(sn.serial_number, self.selected_stress_pk)
+                    if weibull_output:
+                        checkpoint1 = None
+                        checkpoint2 = None
+                        if weibull_output[1]:
+                            checkpoint1 = StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint
+                        if weibull_output[2]:
+                            checkpoint2 = StressModel(weibull_output[1], rel_tracker_app.dbmodel).rel_checkpoint
+                        row = [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
+                               config_group_dict.get(sn.config.id),
+                               checkpoint1,
+                               checkpoint2, weibull_output[3],
+                               stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
+                               stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
+                        result.append(row)
+                self.window["result_table"].update(values=result)
 
-                print(result)
-
-            if self.selected_stress and len(values.get("-failure_to_select-")) > 0:
+            if self.selected_stress_pk and len(values.get("-failure_to_select-")) > 0:
                 self.window["Update Data Table"].update(disabled=False)
             else:
                 self.window["Update Data Table"].update(disabled=True)

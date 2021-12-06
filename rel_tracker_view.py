@@ -7,7 +7,7 @@ class rel_tracker_view:
     table_font = "Helvetica 10"
     table_header_font = "Helvetica 10 bold"
     text_font = "Helvetica 10"
-    logo_font = 'Helvetica 30 bold'
+    logo_font = 'Helvetica 25 bold'
     station_font = "Helvetica 15 bold"
 
     def __init__(self, settings: sg.user_settings):
@@ -16,18 +16,18 @@ class rel_tracker_view:
     @staticmethod
     def welcome_page():
         layout1 = [
-            [sg.Txt("Rel Logger", size=(None, 1), font=("Helvetica", 50), text_color='White',
+            [sg.Txt("AppleBerry", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
             [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
                     auto_size_text=False, key="-version-")],
-            [sg.Txt("from Jimmy Z @facebook. All Right Reserved", text_color='White', background_color='#4267B2',
+            [sg.Txt("from Jimmy Z @Meta. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
         ]
         column1 = sg.Column(layout1, background_color="#4267B2",
                             size=(int(600 * rel_tracker_view.scale), int(300 * rel_tracker_view.scale)))
         layout = [[column1]]
         window = sg.Window('Welcome Page', layout, keep_on_top=True, grab_anywhere=False, no_titlebar=True,
-                           finalize=True, auto_close=True, auto_close_duration=1, background_color='#4267B2')
+                           finalize=True, auto_close=True, auto_close_duration=2, background_color='#4267B2')
         rel_tracker_view.scale = window["-version-"].get_size()[0] / 249
         print(sg.Window.get_screen_size())
         if sg.Window.get_screen_size()[0] < 1500:
@@ -59,14 +59,15 @@ class rel_tracker_view:
 
     @staticmethod
     def __facebook__():
-        facebook_text = sg.Txt("Meta", border_width=0, text_color="#4267B2", font=rel_tracker_view.logo_font,
+        facebook_text = sg.Txt("AppleBerry", border_width=0, text_color="#4267B2", font=rel_tracker_view.logo_font,
                                justification='center', pad=5, key="-Home-", enable_events=True)
         column1 = sg.Column(layout=[[facebook_text]],
-                            size=(int(600 * rel_tracker_view.scale), int(40 * rel_tracker_view.scale)))
+                            size=(int(600 * rel_tracker_view.scale), int(45 * rel_tracker_view.scale)))
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("Meta RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))]]
+             sg.Txt("RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
+        ]
 
     @staticmethod
     def __station_name__():
@@ -597,7 +598,7 @@ class rel_tracker_view:
         show_heading = [False, True, True, True, True, True, True]
         table_value = [[str(row) for row in range(7)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
-                              headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
+                              headings=table_col, select_mode=sg.SELECT_MODE_EXTENDED,
                               expand_x=True, num_rows=11, font=rel_tracker_view.table_font,
                               header_font=rel_tracker_view.table_header_font,
                               header_background_color="white",
@@ -634,17 +635,17 @@ class rel_tracker_view:
         button_row = [sg.B("Reset Filter", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
                            disabled=False, disabled_button_color="#ababab"),
-                      sg.B("Start Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
+                      sg.B("CheckIn", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                           font=rel_tracker_view.button_font, key="Start Timer",
                            disabled=True, disabled_button_color="#ababab"),
-                      sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
-                           disabled=True, disabled_button_color="#ababab"),
-                      sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
-                           font=rel_tracker_view.button_font,
-                           disabled=False, disabled_button_color="#ababab",
-                           tooltip="search input folder and determine which stress and config info the test file "
-                                   "belongs to"),
+                      # sg.B("End Timer", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                      #      font=rel_tracker_view.button_font,
+                      #      disabled=True, disabled_button_color="#ababab"),
+                      # sg.B("Offline Tag", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
+                      #      font=rel_tracker_view.button_font,
+                      #      disabled=False, disabled_button_color="#ababab",
+                      #      tooltip="search input folder and determine which stress and config info the test file "
+                      #              "belongs to"),
                       sg.B("Delete", size=(20, 1), pad=(5, 2), mouseover_colors=("#0f3948", "#a8d8eb"),
                            font=rel_tracker_view.button_font,
                            disabled=True, disabled_button_color="#ababab"),
@@ -653,12 +654,12 @@ class rel_tracker_view:
                            disabled=False, disabled_button_color="#ababab"),
                       ]
 
-        table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'folder group',
-                     "Notes", "StartTime", "EndTime"]
-        show_heading = [False, True, True, True, True, True, True, True, True]
+        table_col = ['PK', 'SerialNumber', 'WIP', 'Stress', 'Checkpoint', 'Test Station',
+                     "Notes", "StartTime"]
+        show_heading = [False, True, True, True, True, True, True, True]
         table_value2 = [[str(row) for row in range(9)] for _ in range(1)]
         table_view2 = sg.Table(values=table_value2, visible_column_map=show_heading,
-                               headings=table_col, select_mode=sg.TABLE_SELECT_MODE_BROWSE,
+                               headings=table_col, select_mode=sg.SELECT_MODE_EXTENDED,
                                expand_x=True, num_rows=15, font=rel_tracker_view.table_font,
                                header_font=rel_tracker_view.table_header_font,
                                header_background_color="white",
@@ -670,22 +671,22 @@ class rel_tracker_view:
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
-            [sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-                    default=False, enable_events=True, key="-tag_group-"),
-             sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
-                    default=True, enable_events=True, key="-tag_single-"),
-             sg.Txt("Folder Name:", font=rel_tracker_view.text_font),
-             sg.In(default_text="",
-                   tooltip="provide a name if "
-                           "you need data to be placed in a specific "
-                           "sub-folder",
-                   key="-folder_name-"), ],
+            [
+                #    sg.Rad("Group Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+                #        default=False, enable_events=True, key="-tag_group-"),
+                # sg.Rad("Single Unit Tagging", group_id="tagging_flavor", font=rel_tracker_view.text_font,
+                #        default=True, enable_events=True, key="-tag_single-"),
+                sg.Txt("Parametric Station Name:", font=rel_tracker_view.text_font),
+                sg.In(default_text="",
+                      tooltip="must fill in tester name",
+                      key="-test_station-", enable_events=True)],
             button_row,
             [table_view2],
             [output_view]
         ]
 
-        window = sg.Window('Data Tagger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+        window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False,
+                           no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, modal=False)
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
@@ -814,16 +815,24 @@ class rel_tracker_view:
         ]
 
         failure_mode_table_col = sg.Column(layout=failure_mode_col_layout)
-
-        data_table_heading = ["SN", "T1", "T2", "Group"]
-        data_table_value = [["" for _ in range(4)]]
-        data_table_show = [True, True, True, True]
+        # [sn.serial_number, sn.config.program, sn.config.build, sn.config.config_name,
+        #  config_group_dict.get(sn.config.id),
+        #  checkpoint1,
+        #  checkpoint2, weibull_output[3],
+        #  stress_value_dict.get(weibull_output[1]), stress_value_dict.get(weibull_output[2]),
+        #  stress_para_a_dict.get(weibull_output[2]), stress_para_b_dict.get(weibull_output[2])]
+        #
+        data_table_heading = ["SN", "Program", "Build", "Config", "ConfigGroup",
+                              "T1", "T2", "FailureMode", "T1(value)",
+                              "T2(Value)"]
+        data_table_value = [["" for _ in range(10)]]
+        data_table_show = [True, True, True, True, True, True, True, True, True, True]
         data_col_layout = [
             [sg.Text("Data for distribution fitting", font=rel_tracker_view.text_font)],
             [sg.Table(values=data_table_value, headings=data_table_heading,
                       visible_column_map=data_table_show,
                       font=rel_tracker_view.table_font, header_font=rel_tracker_view.table_header_font,
-                      num_rows=10, expand_x=True)],
+                      num_rows=10, expand_x=True, key="result_table")],
             [sg.Button("output for JMP", font=rel_tracker_view.button_font),
              sg.Button("output for Relisoft", font=rel_tracker_view.button_font),
              sg.Button("Just Plot here", font=rel_tracker_view.button_font), ]
