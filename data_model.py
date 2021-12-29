@@ -229,7 +229,7 @@ class DBsqlite:
 
     def clean_up_sn_list(self, sn_list: str):
         if isinstance(sn_list, str):
-            temp1 = re.split(',', re.sub('[^a-zA-Z0-9.]', ',', sn_list))
+            temp1 = re.split(',', re.sub('[^a-zA-Z0-9._]', ',', sn_list))
             temp2 = [sn.strip().upper() for sn in temp1 if len(sn) > 0]
             res = []
             for i in temp2:

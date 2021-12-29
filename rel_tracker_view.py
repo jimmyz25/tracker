@@ -119,8 +119,10 @@ class rel_tracker_view:
              sg.Stretch(),
              sg.FileBrowse(size=(10, 1), font=rel_tracker_view.text_font,
                            target=(sg.ThisRow, -2)), ],
-            [sg.Btn("Configs Setup", size=15, font=rel_tracker_view.button_font),
-             sg.Btn("Stress Setup", size=15, font=rel_tracker_view.button_font)],
+            [sg.Btn("Configs Setup", size=15, font=rel_tracker_view.button_font,
+                    tooltip="please sync with golden before and after adding configs"),
+             sg.Btn("Stress Setup", size=15, font=rel_tracker_view.button_font,
+                    tooltip="please sync with golden before and after adding stress")],
             [sg.Btn("Save Preference", size=15, font=rel_tracker_view.button_font),
              sg.Btn("Sync with Golden", size=15, font=rel_tracker_view.button_font)]
         ]
