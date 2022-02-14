@@ -119,8 +119,10 @@ class rel_tracker_view:
              sg.Stretch(),
              sg.FileBrowse(size=(10, 1), font=rel_tracker_view.text_font,
                            target=(sg.ThisRow, -2)), ],
-            [sg.Btn("Configs Setup", size=15, font=rel_tracker_view.button_font),
-             sg.Btn("Stress Setup", size=15, font=rel_tracker_view.button_font)],
+            [sg.Btn("Configs Setup", size=15, font=rel_tracker_view.button_font,
+                    tooltip="please sync with golden before and after adding configs"),
+             sg.Btn("Stress Setup", size=15, font=rel_tracker_view.button_font,
+                    tooltip="please sync with golden before and after adding stress")],
             [sg.Btn("Save Preference", size=15, font=rel_tracker_view.button_font),
              sg.Btn("Sync with Golden", size=15, font=rel_tracker_view.button_font)]
         ]
@@ -420,9 +422,10 @@ class rel_tracker_view:
         return window
 
     def fa_log_view(self):
-        table_col = ['PK', '   SerialNumber   ', '   Stress   ', '   Checkpoint   ', "   Config   ", "   EndTime   "]
-        show_heading = [False, True, True, True, True, True]
-        table_value = [[str(row) for row in range(6)] for _ in range(1)]
+        table_col = ['PK', '   SerialNumber   ', '   Stress   ', '   Checkpoint   ', "   Config   ", "   WIP   "
+            , "EndTime   "]
+        show_heading = [False, True, True, True, True, True, True]
+        table_value = [[str(row) for row in range(7)] for _ in range(1)]
         table_view = sg.Table(values=table_value, visible_column_map=show_heading,
                               headings=table_col, select_mode=sg.SELECT_MODE_BROWSE,
                               expand_x=True, num_rows=11, font=rel_tracker_view.table_font,

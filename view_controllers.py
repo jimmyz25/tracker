@@ -564,7 +564,7 @@ class fa_log_vc:
         else:
             datasource = rel_tracker_app.dbmodel.all_station_rel_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),
-                 row.get("RelCheckpoint"), row.get("Config"), row.get("EndTime")] for row in
+                 row.get("RelCheckpoint"), row.get("Config"), row.get("WIP"), row.get("EndTime")] for row in
                 datasource]
         data.sort(key=lambda x: x[1])
         return data
@@ -642,6 +642,7 @@ class fa_log_vc:
                     sg.popup_ok("Note: only config and stress related to table selection is shown ")
                 rel_tracker_app.dbmodel.filter_set.update({"checkpoint": None})
                 rel_tracker_app.dbmodel.filter_set.update({"failure_mode": None})
+                rel_tracker_app.dbmodel.filter_set.update({"failure_group": None})
                 failure_mode_selector_popup = failure_mode_summary_vc(self.window)
                 failure_mode_selector_popup.show()
             elif event == "Reset Filter":
