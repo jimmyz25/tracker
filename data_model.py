@@ -285,6 +285,13 @@ class DBsqlite:
         result = self.cur.execute("SELECT PK FROM Tagger_Log_T WHERE EndTimestamp is Null").fetchone()
         return result is None
 
+    def ready_to_delete_from_rel_log(self,pk):
+        result = self.cur.execute("SELECT FALog_T.PK FROM FALog_T Inner join RelLog_T ON "
+                                  "RelLog_T.SerialNumber = FALog_T.SerialNumber "
+                                  "and RelLog_T.FK_RelStress = FALog_T.FK_RelStress "
+                                  "WHERE FALog_T.removed is 0 and RelLog_T.PK = ?",(pk,)).fetchone()
+        return result is None
+
     @property
     def ready_to_add(self):
         a = 0
@@ -575,6 +582,7 @@ class DBsqlite:
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
                   ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
+            # print (sql)
             results = self.cur.execute(sql).fetchall()
 
             if results is None:
@@ -1385,11 +1393,15 @@ class DBsqlite:
     def delete_from_rellog_table(self):
         count = 0
         for pk in self.filter_set.get("selected_pks"):
-            if self.__delete_from_table__("RelLog_T", {"PK": pk}):
-                self.con.commit()
-                count += 1
+            # add logic to check if same checkpoint is used in FA log or test log
+            if self.ready_to_delete_from_rel_log(pk):
+                if self.__delete_from_table__("RelLog_T", {"PK": pk}):
+                    self.con.commit()
+                    count += 1
+                else:
+                    self.con.rollback()
             else:
-                self.con.rollback()
+                print("not able to delete log as it's referenced in FA log")
         print(f'{count} rows deleted from RelLog')
 
     def delete_from_tagger_log_table(self):
