@@ -462,7 +462,8 @@ class DBsqlite:
                                                                     "Build": self.filter_set.get("build"),
                                                                     "Config": self.filter_set.get("config"),
                                                                     "removed": 0
-                                                                    })
+                                                                    },
+                                                                   strict=True)
             results = self.cur.execute(sql).fetchall()
             return set(result["PK"] for result in results)
 
@@ -482,7 +483,8 @@ class DBsqlite:
         else:
             sql = "SELECT PK FROM RelStress_T " + self.sql_filter_str({"RelStress": self.filter_set.get("stress"),
                                                                        "RelCheckpoint": self.filter_set.get(
-                                                                           "checkpoint")})
+                                                                           "checkpoint")},
+                                                                      strict=True)
             results = self.cur.execute(sql).fetchall()
             return set(result["PK"] for result in results)
 
@@ -503,7 +505,8 @@ class DBsqlite:
                       "Program": self.filter_set.get("program"),
                       "Build": self.filter_set.get("build"),
                       "removed": 0
-                  })
+                  },
+                      strict=True)
             results = self.cur.execute(sql).fetchall()
             if results:
                 return set(result["Config"] for result in results)
@@ -515,7 +518,7 @@ class DBsqlite:
               self.sql_filter_str({
                   "RelStress": self.filter_set.get("stress"),
                   "removed": 0
-              })
+              }, strict=True)
         results = self.cur.execute(sql).fetchall()
         if results:
             return set(result["RelCheckpoint"] for result in results)
@@ -540,7 +543,7 @@ class DBsqlite:
                       "SerialNumber": self.filter_set.get("serial_number"),
                       "FK_RelStress": self.selected_stress_pks,
                       "FALog_T.removed": 0
-                  })
+                  }, strict=True)
             result_existing = self.cur.execute(sql).fetchall()
             existing = set(result["FailureMode"] for result in result_existing)
             return self.failure_mode_list - existing
@@ -550,10 +553,10 @@ class DBsqlite:
     def failure_mode_list(self):
         if self.cur:
             sql = "SELECT FailureMode FROM FailureMode_T  " + \
-                  self.sql_filter_str(({
+                  self.sql_filter_str({
                       "FailureGroup": self.filter_set.get("failure_group"),
                       "removed": 0
-                  }))
+                  }, strict=True)
             results = self.cur.execute(sql).fetchall()
             if results:
                 all_failure_mode = set(result["FailureMode"] for result in results)

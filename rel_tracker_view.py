@@ -234,7 +234,7 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(145, 5), background_color="white", expand_x=True, key="-output-",
+        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
                                 font=rel_tracker_view.text_font)
         layout_status_column = [
             [
@@ -493,7 +493,7 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(145, 5),
+        output_view = sg.Output(size=(150, 5),
                                 font=rel_tracker_view.text_font,
                                 background_color="white", expand_x=True, key="-output-")
 
@@ -668,7 +668,7 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(145, 5), font=rel_tracker_view.text_font,
+        output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
                                 background_color="white", expand_x=True, key="-output-")
 
         layout = [
