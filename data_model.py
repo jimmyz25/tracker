@@ -479,17 +479,22 @@ class DBsqlite:
 
     def tableau_output(self):
         sql = """
-        SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.WIP, Config_T.Program,
-         Config_T.Build, Config_T.Config, RelStress_T.RelStress, RelStress_T.RelCheckpoint,
-        FailureMode_T.FailureGroup, FailureMode_T.FailureMode ,FALog_T.FA_Details,FALog_T.ModiTimestamp
+        SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime, 
+        RelLog_T.WIP, Config_T.Program, Config_T.Build, Config_T.Config, 
+        RelStress_T.RelStress, RelStress_T.RelCheckpoint,
+        A.FailureGroup, A.FailureMode ,A.FA_Details, A.ModiTimestamp
         From RelLog_T
-        left join FALog_T on FALog_T.SerialNumber = RelLog_T.SerialNumber and 
-        FALog_T.FK_RelStress = RelLog_T.FK_RelStress
+        left join (SELECT FailureMode_T.FailureGroup, FailureMode_T.FailureMode,
+        FALog_T.FA_Details,FALog_T.ModiTimestamp, FALog_T.SerialNumber,FALog_T.FK_RelStress,FALog_T.ModiTimestamp
+        From FALog_T
+        inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
+        where FALog_T.removed = 0) as A
+        
+        on A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress
         inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber
         inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
         inner join RelStress_T on RelStress_T.PK = RelLog_T.FK_RelStress
-        left join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
-        where RelLog_T.removed = 0 and FALog_T.removed = 0
+        where RelLog_T.removed = 0
         """
         self.cur.execute(sql)
         with open("tableau_output.csv", "w") as csv_file:
