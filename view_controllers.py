@@ -227,6 +227,8 @@ class rel_log_vc:
                 # failure_mode_selector_popup.show()
                 summary_popup = summary_table_vc(self.window)
                 summary_popup.show()
+            elif event == "Output to Tableau":
+                rel_tracker_app.dbmodel.tableau_output()
             elif event == "Daily Report":
                 today = dt.datetime.now()
                 # date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)

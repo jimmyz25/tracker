@@ -1,5 +1,6 @@
 import datetime as dt
 # import os
+import os
 import sqlite3
 # import sys
 import re
@@ -7,7 +8,7 @@ import uuid
 # import random
 import string
 import secrets
-
+import csv
 
 # noinspection SpellCheckingInspection
 
@@ -475,6 +476,28 @@ class DBsqlite:
             return set(result["PK"] for result in results)
         else:
             return None
+
+    def tableau_output(self):
+        sql = """
+        SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime, RelLog_T.WIP, Config_T.Program,
+         Config_T.Build, Config_T.Config, RelStress_T.RelStress, RelStress_T.RelCheckpoint,
+        FailureMode_T.FailureGroup, FailureMode_T.FailureMode ,FALog_T.FA_Details,FALog_T.ModiTimestamp
+        From RelLog_T
+        left join FALog_T on FALog_T.SerialNumber = RelLog_T.SerialNumber and 
+        FALog_T.FK_RelStress = RelLog_T.FK_RelStress
+        inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber
+        inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+        inner join RelStress_T on RelStress_T.PK = RelLog_T.FK_RelStress
+        left join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
+        where RelLog_T.removed = 0 and FALog_T.removed = 0
+        """
+        self.cur.execute(sql)
+        with open("tableau_output.csv", "w") as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=",")
+            csv_writer.writerow([i[0] for i in self.cur.description])
+            csv_writer.writerows(self.cur)
+        dirpath = os.path.join(os.getcwd(), "tableau_output.csv")
+        print ("Data exported Successfully into {}".format(dirpath))
 
     @property
     def selected_stress_pks(self):

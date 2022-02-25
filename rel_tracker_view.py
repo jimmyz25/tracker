@@ -66,7 +66,7 @@ class rel_tracker_view:
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("RL project only", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
+             sg.Txt("Ver 1.0", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
         ]
 
     @staticmethod
@@ -253,7 +253,14 @@ class rel_tracker_view:
             [sg.B("Daily Report", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=False, disabled_button_color="#ababab",
-                  )],
+                  )
+             ],
+            [
+             sg.B("Output to Tableau", size=(15, 1), pad=(5, 2),
+                  font=rel_tracker_view.button_font,
+                  disabled=False, disabled_button_color="#ababab",
+                  )
+             ],
         ]
         status_column = sg.Column(layout=layout_status_column,
                                   size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
