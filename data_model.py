@@ -262,6 +262,7 @@ class DBsqlite:
                 return [list(row) for row in result]
 
     def rel_tagging(self, sn: str, timestamp: float):
+
         """
         :param sn:
         :param timestamp:
@@ -272,10 +273,14 @@ class DBsqlite:
 
             history = self.get_test_history(sn)
             if history:
+                latest_log = history[0]
+                program = latest_log[4]
+                build = latest_log[5]
+                config = latest_log[6]
                 for log in history:
                     if timestamp > log[1]:
                         return [log[i] for i in range(7)]
-                return [None for _ in range(7)]
+                return ["T0",timestamp,"T0","T0",program,build,config]
             else:
                 return [None for _ in range(7)]
         else:
