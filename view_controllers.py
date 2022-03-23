@@ -10,7 +10,9 @@ from file_clean_up import *
 
 
 class rel_tracker_app:
-    sg.user_settings_filename(path='.')
+
+    # sg.user_settings_filename(path=os.getcwd())
+    sg.user_settings_filename()
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
     station = settings.get("-Station_Name-")

@@ -1,6 +1,6 @@
 import csv
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 # import datetime as dt
 from data_model import *
@@ -322,7 +322,7 @@ class RawData:
                     .map(lambda x: self.get_timestamp(x), na_action='ignore')
                 df = df.apply(lambda x: self.rel_tagging(x, db, sn_col_name), axis=1)
                 # df = df.dropna(how="all")
-                df.replace(to_replace=[None], value=np.nan, inplace=True)
+
             return df
         else:
             return None
