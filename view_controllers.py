@@ -563,7 +563,7 @@ class fa_log_vc:
     @property
     def rel_table_data(self):
         if rel_tracker_app.dbmodel.display_setting.get("show_latest"):
-            datasource = rel_tracker_app.dbmodel.all_station_latest_sn_history
+            datasource = rel_tracker_app.dbmodel.latest_sn_history
         else:
             datasource = rel_tracker_app.dbmodel.all_station_rel_log_table_view_data
         data = [[row.get("PK"), row.get("SerialNumber"), row.get("RelStress"),

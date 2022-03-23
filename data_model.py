@@ -755,15 +755,16 @@ class DBsqlite:
             "RelLog_T.SerialNumber": self.filter_set.get("serial_number"),
             "FK_RelStress": self.selected_stress_pks,
             "RelLog_T.removed": 0,
+            "RelLog_T.WIP": self.filter_set.get("wip"),
             "Station": self.display_setting.get("station_filter"),
         }
         condition2 = {
-            "RelLog_T.WIP": self.filter_set.get("wip"),
+            # "RelLog_T.WIP": self.filter_set.get("wip"),
             "Config_SN_T.Config_FK": self.selected_config_pks,
         }
         if self.cur:
             sql = "SELECT RelLog_T.PK,RelLog_T.SerialNumber,RelLog_T.WIP,Config_T.Config, RelLog_T.StartTime, " \
-                  " RelLog_T.EndTime, RelLog_T.Notes, RelStress_T.RelStress,RelStress_T.RelCheckpoint " \
+                  " RelLog_T.EndTime, RelLog_T.Notes, RelStress_T.RelStress, RelStress_T.RelCheckpoint " \
                   " from RelLog_T inner join (SELECT Max(StartTimestamp) as " \
                   " StartTimestamp,SerialNumber from RelLog_T  " \
                   + self.sql_filter_str(condition) + \
