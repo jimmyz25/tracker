@@ -445,7 +445,7 @@ class DBsqlite:
                   "SerialNumber": self.filter_set.get("serial_number"),
                   "FK_RelStress": self.selected_stress_pks,
                   "FALog_T.removed": 0
-              })
+              },strict=True)
         # sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
         #       self.sql_filter_str({
         #           "SerialNumber": self.filter_set.get("serial_number"),
