@@ -677,7 +677,6 @@ class DBsqlite:
                   f' inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode' + \
                   self.sql_filter_str(condition,strict=True) + \
                   '   LIMIT 200'
-            print (sql)
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -936,7 +935,6 @@ class DBsqlite:
                     return None
                 else:
                     result = results[0]
-                    print(result)
                     a = (result["FolderGroup"], result["Program"],
                          result["Build"], result["Config"], result["SerialNumber"],
                          result["RelStress"], result["RelCheckpoint"])

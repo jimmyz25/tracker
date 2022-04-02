@@ -676,7 +676,6 @@ class fa_log_vc:
                     # select first one, actually only one is allowed to select
                     # rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
-                    print(self.rel_selected_row,selected[1],sn.serial_number)
                     rel_tracker_app.dbmodel.filter_set.update({
                         "program": sn.config.program,
                         "build": sn.config.build,
