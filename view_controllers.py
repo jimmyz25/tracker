@@ -670,11 +670,13 @@ class fa_log_vc:
                 count = len(values.get('-table_select-'))
                 if count > 0:
                     self.rel_selected_row = values.get('-table_select-')
+
                     rel_tracker_app.dbmodel.filter_set.update({"selected_row": self.rel_selected_row})
                     selected = self.window['-table_select-'].get()[values.get('-table_select-')[0]]
                     # select first one, actually only one is allowed to select
                     # rel_tracker_app.dbmodel.filter_set.update({"selected_row": values.get('-table_select-')})
                     sn = SnModel(selected[1], database=rel_tracker_app.dbmodel)
+                    print(self.rel_selected_row,selected[1],sn.serial_number)
                     rel_tracker_app.dbmodel.filter_set.update({
                         "program": sn.config.program,
                         "build": sn.config.build,

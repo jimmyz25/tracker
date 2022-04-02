@@ -675,8 +675,9 @@ class DBsqlite:
                   f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' \
                   f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' \
                   f' inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode' + \
-                  self.sql_filter_str(condition) + \
+                  self.sql_filter_str(condition,strict=True) + \
                   '   LIMIT 200'
+            print (sql)
             results = self.cur.execute(sql).fetchall()
             if results is None:
                 return [dict()]
@@ -1765,7 +1766,7 @@ class SnModel:
             if self.database:
                 if self.database.sn_exist(sn):
                     sql = f'SELECT SerialNumber,Config_FK, ' \
-                          f'DateAdded From Config_SN_T WHERE SerialNumber like "{sn}%" '
+                          f'DateAdded From Config_SN_T WHERE SerialNumber = "{sn}" '
                     result = self.database.cur.execute(sql).fetchone()
                     self._serial_number = result["SerialNumber"]
                     self._config = ConfigModel(result["Config_FK"], self.database)
