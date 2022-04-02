@@ -502,10 +502,10 @@ class DBsqlite:
         where RelLog_T.removed = 0
         """
         self.cur.execute(sql)
-        with open("tableau_output.csv", "w") as csv_file:
+        with open("tableau_output.csv", "w", encoding='UTF8', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=",")
             csv_writer.writerow([i[0] for i in self.cur.description])
-            csv_writer.writerows(self.cur)
+            csv_writer.writerows(self.cur.fetchall())
         dirpath = os.path.join(os.getcwd(), "tableau_output.csv")
         print ("Data exported Successfully into {}".format(dirpath))
 

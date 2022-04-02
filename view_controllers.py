@@ -233,8 +233,8 @@ class rel_log_vc:
                 rel_tracker_app.dbmodel.tableau_output()
             elif event == "Daily Report":
                 today = dt.datetime.now()
-                # date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
-                date_string = (today.month,today.day,today.year)
+                date_string = sg.popup_get_date(start_year=today.year, start_day=today.day, start_mon=today.month)
+                # date_string = (today.month,today.day,today.year)
                 if not date_string:
                     continue
                 # print (date_string)
