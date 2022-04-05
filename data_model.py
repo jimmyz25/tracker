@@ -10,6 +10,7 @@ import string
 import secrets
 import csv
 
+
 # noinspection SpellCheckingInspection
 
 class DBsqlite:
@@ -49,11 +50,16 @@ class DBsqlite:
                     row.append(f'{key} in {tuple(value)}')
                 elif len(value) == 1:
                     row.append(self.sql_filter_str({key: list(value)[0]}, final=False, strict=strict))
+                elif len(value) == 0:
+                    row.append(f'{key} is Null ')
             elif isinstance(value, tuple):
                 if len(value) > 1:
                     row.append(f'{key} in {tuple(value)}')
                 elif len(value) == 1:
                     row.append(self.sql_filter_str({key: value[0]}, final=False, strict=strict))
+                elif len(value) == 0:
+                    row.append(f'{key} is Null ')
+
         if final:
             row = list(filter(lambda x: x != "", row))
             if len(row) == 0:
@@ -280,7 +286,7 @@ class DBsqlite:
                 for log in history:
                     if timestamp > log[1]:
                         return [log[i] for i in range(7)]
-                return ["T0",timestamp,"T0","T0",program,build,config]
+                return ["T0", timestamp, "T0", "T0", program, build, config]
             else:
                 return [None for _ in range(7)]
         else:
@@ -291,11 +297,11 @@ class DBsqlite:
         result = self.cur.execute("SELECT PK FROM Tagger_Log_T WHERE EndTimestamp is Null").fetchone()
         return result is None
 
-    def ready_to_delete_from_rel_log(self,pk):
+    def ready_to_delete_from_rel_log(self, pk):
         result = self.cur.execute("SELECT FALog_T.PK FROM FALog_T Inner join RelLog_T ON "
                                   "RelLog_T.SerialNumber = FALog_T.SerialNumber "
                                   "and RelLog_T.FK_RelStress = FALog_T.FK_RelStress "
-                                  "WHERE FALog_T.removed is 0 and RelLog_T.PK = ?",(pk,)).fetchone()
+                                  "WHERE FALog_T.removed is 0 and RelLog_T.PK = ?", (pk,)).fetchone()
         return result is None
 
     @property
@@ -447,7 +453,7 @@ class DBsqlite:
                   "SerialNumber": self.filter_set.get("serial_number"),
                   "FK_RelStress": self.selected_stress_pks,
                   "FALog_T.removed": 0
-              },strict=True)
+              }, strict=True)
         # sql = f'SELECT PK,FailureGroup,FailureMode,FA_Details FROM FALog_T ' + \
         #       self.sql_filter_str({
         #           "SerialNumber": self.filter_set.get("serial_number"),
@@ -509,7 +515,7 @@ class DBsqlite:
             csv_writer.writerow([i[0] for i in self.cur.description])
             csv_writer.writerows(self.cur.fetchall())
         dirpath = os.path.join(os.getcwd(), "tableau_output.csv")
-        print ("Data exported Successfully into {}".format(dirpath))
+        print("Data exported Successfully into {}".format(dirpath))
 
     @property
     def selected_stress_pks(self):
@@ -620,7 +626,6 @@ class DBsqlite:
                   f'  inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' + \
                   self.sql_filter_str(condition) + \
                   ' ORDER BY RelLog_T.ModiTimestamp DESC LIMIT 200'
-            # print (sql)
             results = self.cur.execute(sql).fetchall()
 
             if results is None:
@@ -677,7 +682,7 @@ class DBsqlite:
                   f' inner Join Config_SN_T ON FALog_T.SerialNumber = Config_SN_T.SerialNumber ' \
                   f' inner Join Config_T ON Config_SN_T.Config_FK = Config_T.PK ' \
                   f' inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode' + \
-                  self.sql_filter_str(condition,strict=True) + \
+                  self.sql_filter_str(condition, strict=True) + \
                   '   LIMIT 200'
             results = self.cur.execute(sql).fetchall()
             if results is None:
@@ -1363,8 +1368,6 @@ class DBsqlite:
                 self.con.rollback()
                 print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
         print(f'{count} units checkin to {str(StressModel(stress_pk, self))}')
-
-
 
     def checkout_current_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
