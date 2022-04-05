@@ -308,10 +308,12 @@ class DBsqlite:
         if self.filter_set.get("serial_number_list") is None:
             return False
         for sn in self.filter_set.get("serial_number_list", []):
-            if self.sn_exist(sn):
+            if self.sn_is_alive(sn):
                 existed_sn.append(sn)
             else:
                 unknown_sn.append(sn)
+        # if len(existed_sn) == 0 and len(unknown_sn) > 0:
+        #     c = 1
         if len(existed_sn) == 0 and len(unknown_sn) > 0:
             c = 1
         if self.selected_config_pks is not None:
@@ -1036,6 +1038,25 @@ class DBsqlite:
                 .fetchone()
             return results is not None
 
+    def sn_is_alive(self, sn):
+        """
+        :param sn: "string"
+        :return: bool
+        """
+        if not isinstance(sn, str):
+            return False
+        if sn == "":
+            return False
+        else:
+            # results = self.con.execute(f'SELECT SerialNumber FROM Config_SN_T WHERE SerialNumber like "{sn}%"') \
+            #     .fetchmany(size=2)
+
+            results = self.con.execute('select RelLog_T.SerialNumber from RelLog_T '
+                                       'inner join Config_SN_T on RelLog_T.SerialNumber = Config_SN_T.SerialNumber'
+                                       ' where RelLog_T.removed=0 and RelLog_T.SerialNumber = ?', (sn,)) \
+                .fetchone()
+            return results is not None
+
     def wip_exist(self, wip):
         """
         :param wip: "string"
@@ -1273,7 +1294,7 @@ class DBsqlite:
         count = 0
         if isinstance(self.filter_set.get("serial_number_list"), list):
             for sn in self.filter_set.get("serial_number_list"):
-                if not self.sn_exist(sn):
+                if not self.sn_is_alive(sn):
                     uuid_str = str(uuid.uuid1())
                     if self.selected_stress_pks:
                         if len(self.selected_stress_pks) == 0:
@@ -1342,6 +1363,8 @@ class DBsqlite:
                 self.con.rollback()
                 print("error checkin ?to next checkpoint, no insert".format(result["SerialNumber"]))
         print(f'{count} units checkin to {str(StressModel(stress_pk, self))}')
+
+
 
     def checkout_current_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
@@ -1664,6 +1687,10 @@ class DBsqlite:
             return False
 
         return self.__update_to_table__(tablename, condition, **log)
+
+    def __clean_up_database__(self):
+        sql = "delete"
+        pass
 
 
 class ConfigModel:
