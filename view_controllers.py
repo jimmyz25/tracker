@@ -5,8 +5,9 @@ import platform
 from rel_tracker_view import *
 # from data_model import *
 import sys
-import os
+# import os
 from file_clean_up import *
+
 
 
 class rel_tracker_app:
@@ -32,6 +33,11 @@ class rel_tracker_app:
                 print(address)
         else:
             address = sg.popup_get_file("please select database file")
+            if address:
+                continue
+            else:
+                #TODO need to redirect to an empty database
+                break
 
     def __init__(self):
         pass
