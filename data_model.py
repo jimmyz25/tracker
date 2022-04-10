@@ -18,7 +18,6 @@ class DBsqlite:
      on timestamp.
      station can be treated as user. station can read all but only have write access to row with same statio
     """
-    #TODO add a check update function, to read version of sqlite file, then do necessary database operations.
     #TODO add a check station name function, and display the station name in preference setting.
     #TODO change station name text field to a label for display only. add a button to create a new station and lock this name with this paticular sqlite file
 

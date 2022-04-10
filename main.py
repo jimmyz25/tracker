@@ -1,6 +1,4 @@
-from data_model import DBsqlite
-import sys
-import PySimpleGUI as sg
+from view_controllers import *
 
 if __name__ == '__main__':
     if len(sys.argv)>1:
@@ -13,9 +11,8 @@ if __name__ == '__main__':
             sys.exit()
     else:
         sg.popup_ok("loading, please be patient")
-    from view_controllers import rel_tracker_app, welcome_vc, rel_log_vc, fa_log_vc, data_log_vc
-    app = rel_tracker_app()
 
+    app = rel_tracker_app()
     loading_page = welcome_vc()
     loading_page.show()
     first_view_setting = rel_tracker_app.settings.get("-first_view-")

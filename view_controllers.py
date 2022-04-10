@@ -9,9 +9,7 @@ import sys
 from file_clean_up import *
 
 
-
 class rel_tracker_app:
-
     # sg.user_settings_filename(path=os.getcwd())
     sg.user_settings_filename()
     settings = sg.user_settings()
@@ -36,8 +34,7 @@ class rel_tracker_app:
             if address:
                 continue
             else:
-                #TODO need to redirect to an empty database
-                break
+                sys.exit()
 
     def __init__(self):
         pass
