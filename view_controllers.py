@@ -121,6 +121,15 @@ class preference_vc:
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
                 break
+            elif event =="Change Station Name":
+                input1 = sg.popup_ok_cancel("Warning! \n Change name to an existing one used"
+                                         " by other station may result sync conflict"
+                                         " Are You Sure to Continue?",background_color="red",non_blocking=False)
+                if input1 == "OK":
+                    station_name = sg.popup_get_text(message="Please provide new station name")
+                    if station_name != "":
+                        self.window["-Station_Name-"].update(value=station_name)
+
             elif event == "Save Preference":
                 if self.window["-Station_Name-"].get() == "":
                     sg.popup_error("station name cannot be empty")

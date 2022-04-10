@@ -94,7 +94,7 @@ class DBsqlite:
             self.__address__ = address
             self.__connect__()
             self.station = station
-            self.db_memory = sqlite3.connect(':memory:')
+            # self.db_memory = sqlite3.connect(':memory:')
             # self.con.backup(self.db_memory)
             self.current_table = "RelLog_T"
             self.filter_set = dict(
