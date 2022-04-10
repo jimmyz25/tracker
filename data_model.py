@@ -1,5 +1,4 @@
 import datetime as dt
-# import os
 import os
 import sqlite3
 # import sys
@@ -19,6 +18,22 @@ class DBsqlite:
      on timestamp.
      station can be treated as user. station can read all but only have write access to row with same statio
     """
+    #TODO add a check update function, to read version of sqlite file, then do necessary database operations.
+    #TODO add a check station name function, and display the station name in preference setting.
+    #TODO change station name text field to a label for display only. add a button to create a new station and lock this name with this paticular sqlite file
+
+    def upgrade_db(self):
+        try:
+            table = self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sys';").fetchone()
+        except sqlite3.Error:
+            return False
+        if table is None:
+            sql = "CREATE TABLE IF NOT EXISTS 'sys' ('version' TEXT, 'station_id' TEXT, 'user' TEXT) "
+            self.cur.execute(sql)
+            sql = "INSERT INTO sys (version) VALUES (1.0)"
+            self.cur.execute(sql)
+            self.con.commit()
+        # check version first, then based on version do upgrades accordingly
 
     def generate_random_sn(self):
         a_lot_of_sn = [str("".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
@@ -110,6 +125,7 @@ class DBsqlite:
                 }
             )
             self.printout = None
+            self.upgrade_db()
             # self.cur.execute("UPDATE RelLog_T SET removed = a  WHERE  PK = \"aa\"")
 
     @classmethod
