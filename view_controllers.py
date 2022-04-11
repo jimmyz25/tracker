@@ -25,6 +25,7 @@ class rel_tracker_app:
             if DBsqlite.ok2use(address):
                 dbmodel = DBsqlite(address, saved_station=station)
                 station = dbmodel.station
+                # dbmodel.station = station #
                 settings.update({"-Local_Database-": address})
                 break
             else:
