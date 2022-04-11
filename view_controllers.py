@@ -9,8 +9,8 @@ class rel_tracker_app:
     # sg.user_settings_filename(path=os.getcwd())
     # sg.user_settings_filename()
     settings = sg.user_settings()
-    address = settings.get("-Local_Database-")
-    station = settings.get("-station_name-") #saved station in setting file,
+    address = sg.user_settings().get("-Local_Database-")
+    station = sg.user_settings().get("-station_name-")  # saved station in setting file,
     # will later be override by station name saved in database
     view_list = []
     sg.theme("LightGrey1")
@@ -22,8 +22,9 @@ class rel_tracker_app:
             if DBsqlite.ok2use(address):
                 dbmodel = DBsqlite(address, saved_station=station)
                 station = dbmodel.station
-                dbmodel.station = station #reset trigger (embeded in setter)
-                settings.update({"-Local_Database-": address})
+                dbmodel.station = station  # reset trigger (embeded in setter)
+                sg.user_settings().update({"-Local_Database-": address})
+                sg.user_settings().update({"-station_name-": dbmodel.station})
                 break
             else:
                 address = sg.popup_get_file("please select database file")
@@ -83,7 +84,7 @@ class rel_tracker_app:
 
 class welcome_vc:
     def __init__(self):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.welcome_page()
         # self.show()
 
@@ -108,7 +109,7 @@ class welcome_vc:
 class preference_vc:
 
     def __init__(self):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.preference_view()
         self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
                                                      "Parametric Testing Station"])
@@ -137,7 +138,8 @@ class preference_vc:
                     station_name = sg.popup_get_text(message="Please provide new station name")
                     if station_name != "":
                         self.window["-station_name-"].update(value=station_name)
-                        rel_tracker_app.dbmodel.station = station_name # this will associate station name with databased
+                        rel_tracker_app.dbmodel.station = station_name  # this will associate station name with
+                        # databased
 
             elif event == "Save Preference":
                 if self.window["-station_name-"].get() == "":
@@ -221,7 +223,7 @@ class preference_vc:
 
 class rel_log_vc:
     def __init__(self):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.rel_lab_station_view()
         self.complete_quit = True
         self.row_selection = None
@@ -588,7 +590,7 @@ class rel_log_vc:
 
 class fa_log_vc:
     def __init__(self):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.fa_log_view()
         rel_tracker_app.reset_window_inputs(self.window)
         self.rel_selected_row = None
@@ -765,15 +767,13 @@ class fa_log_vc:
 
 class data_log_vc:
     def __init__(self):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.data_log_view()
         rel_tracker_app.reset_window_inputs(self.window)
         self.selected_tagger_pk = None
         self.complete_quit = True
         self.selected_endtime = None
         self.files_list = None
-        self.output_folder = rel_tracker_app.settings.get("-Output_Folder-")
-        self.input_folder = rel_tracker_app.settings.get("-Input_Folder-")
 
     @property
     def rel_table_data(self):
@@ -965,7 +965,7 @@ class data_log_vc:
 
 class config_select_vc:
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.popup_config_select()
         self.master = master
         if master:
@@ -1018,7 +1018,7 @@ class config_select_vc:
 class stress_select_vc:
 
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.popup_stress_select()
         self.master = master
         if master:
@@ -1060,7 +1060,7 @@ class stress_select_vc:
 class failure_mode_vc:
 
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         rel_tracker_app.dbmodel.filter_set.update({
             "station": rel_tracker_app.settings.get('-station_name-')
         })
@@ -1160,7 +1160,7 @@ class failure_mode_vc:
 class failure_mode_config_vc:
 
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.popup_fm_config()
         self.master = master
         if master:
@@ -1230,7 +1230,7 @@ class failure_mode_config_vc:
 
 class stress_setup_vc:
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.popup_stress_setup()
         self.master = master
         if master:
@@ -1294,7 +1294,7 @@ class stress_setup_vc:
 
 class config_setup_vc:
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.popup_config_setup()
         self.master = master
         if master:
@@ -1494,7 +1494,7 @@ class summary_table_vc:
 
 class failure_mode_summary_vc:
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.all_failure_modes = list(rel_tracker_app.dbmodel.failure_mode_list)
         self.window = view.failure_mode_summary()
         self.window["-Failure_Mode_Selection-"].update(values=self.all_failure_modes)
@@ -1527,7 +1527,7 @@ class failure_mode_summary_vc:
 class file_view_vc:
 
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.file_view()
         self.master = master
         self.file = RawData()
@@ -1609,7 +1609,7 @@ class file_view_vc:
 class fitting_view_vc:
 
     def __init__(self, master: sg.Window = None):
-        view = rel_tracker_view(rel_tracker_app.settings)
+        view = rel_tracker_view()
         self.window = view.fitting_view()
         self.master = master
         self.summary = StatusSummary(db=rel_tracker_app.dbmodel)

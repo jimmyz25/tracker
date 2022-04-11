@@ -10,7 +10,7 @@ class rel_tracker_view:
     logo_font = 'Helvetica 25 bold'
     station_font = "Helvetica 15 bold"
 
-    def __init__(self, settings: sg.user_settings):
+    def __init__(self):
         # self.default_settings = settings
         pass
 

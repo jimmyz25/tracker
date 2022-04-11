@@ -13,9 +13,11 @@ if __name__ == '__main__':
         sg.popup_ok("loading, please be patient")
 
     app = rel_tracker_app()
+    sg.user_settings().update({"-station_name-": rel_tracker_app.dbmodel.station})
+
     loading_page = welcome_vc()
     loading_page.show()
-    first_view_setting = rel_tracker_app.settings.get("-first_view-")
+    first_view_setting = sg.user_settings().get("-first_view-")
     if first_view_setting:
         if first_view_setting == "RelLog Station":
             rel_tracker_app.view_list.append(rel_log_vc())
