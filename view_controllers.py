@@ -1,11 +1,7 @@
 # this is a collection of view controllers. each view controller works on a view
-# import PySimpleGUI
-# import shutil
 import platform
 from rel_tracker_view import *
-# from data_model import *
 import sys
-# import os
 from file_clean_up import *
 
 
