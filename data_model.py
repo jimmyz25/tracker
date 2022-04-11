@@ -187,6 +187,21 @@ class DBsqlite:
                         """
         self.con.executescript(del_trigger)
 
+    # def set_db_station(self):
+    #     sql = "SELECT station_id from sys"
+    #     result = self.cur.execute(sql).fetchone()
+    #     if result:
+    #         station_id = result[0]
+    #         return station_id
+    #     elif self.station:
+    #         station_id = self.station
+    #         sql = "UPDATE sys SET station_id = ?"
+    #         self.cur.execute(sql,(station_id,))
+    #         self.con.commit()
+    #         return station_id
+    #     else:
+    #         return None
+
     @station.setter
     def station(self, station_name: str = None):
         if isinstance(station_name, str):
@@ -246,6 +261,9 @@ class DBsqlite:
                 """
             self.con.executescript(row_security_trigger)
             self._station = station_name
+            sql = "UPDATE sys SET station_id = ?"
+            self.cur.execute(sql, (self._station,))
+            self.con.commit()
         else:
             self._station = None
 
