@@ -178,7 +178,7 @@ class DBsqlite:
         sql = "SELECT station_id from sys"
         result = self.cur.execute(sql).fetchone()
         if result:
-            self.station=result[0]
+            # self.station=result[0]
             return result[0]
         else:
             return None

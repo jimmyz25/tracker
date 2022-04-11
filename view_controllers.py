@@ -14,7 +14,8 @@ class rel_tracker_app:
     sg.user_settings_filename()
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
-    station = settings.get("-Station_Name-")
+    station = settings.get("-Station_Name-") #saved station in setting file,
+    # will later be override by station name saved in database
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font=rel_tracker_view.text_font, element_padding=(2, 2), element_size=(35, 1),
@@ -25,7 +26,7 @@ class rel_tracker_app:
             if DBsqlite.ok2use(address):
                 dbmodel = DBsqlite(address, saved_station=station)
                 station = dbmodel.station
-                # dbmodel.station = station #
+                dbmodel.station = station #reset trigger (embeded in setter)
                 settings.update({"-Local_Database-": address})
                 break
             else:
