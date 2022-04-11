@@ -81,7 +81,7 @@ class rel_tracker_view:
         layout1 = [
             [sg.Txt("Station Name", size=15, font=rel_tracker_view.text_font),
              sg.Txt(size=30, font=rel_tracker_view.text_font,
-                    key="-Station_Name-"), sg.B("Change Station Name",
+                    key="-station_name-"), sg.B("Change Station Name",
                                                 font=rel_tracker_view.button_font),
              sg.Stretch(),
              ],
