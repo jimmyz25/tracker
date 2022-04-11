@@ -1,20 +1,16 @@
 # this is a collection of view controllers. each view controller works on a view
-# import PySimpleGUI
-# import shutil
 import platform
 from rel_tracker_view import *
-# from data_model import *
 import sys
-# import os
 from file_clean_up import *
 
 
 class rel_tracker_app:
     # sg.user_settings_filename(path=os.getcwd())
-    sg.user_settings_filename()
+    # sg.user_settings_filename()
     settings = sg.user_settings()
     address = settings.get("-Local_Database-")
-    station = settings.get("-Station_Name-") #saved station in setting file,
+    station = settings.get("-station_name-") #saved station in setting file,
     # will later be override by station name saved in database
     view_list = []
     sg.theme("LightGrey1")
@@ -52,9 +48,8 @@ class rel_tracker_app:
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                     window[key].update(value=rel_tracker_app.settings.get(key))
-        # rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
         rel_tracker_app.station = rel_tracker_app.dbmodel.station
-        window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+        window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
         print("USER SETTINGS APPLIED")
 
     @staticmethod
@@ -118,14 +113,17 @@ class preference_vc:
         self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
                                                      "Parametric Testing Station"])
 
-        rel_tracker_app.settings.update({"-Station_Name-": rel_tracker_app.dbmodel.station})
+    def show(self):
+        rel_tracker_app.settings.update({"-station_name-": rel_tracker_app.dbmodel.station})
         rel_tracker_app.apply_user_settings(self.window)
         if rel_tracker_app.dbmodel.station:
-            self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+            print("dbmodel has station")
+            self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
         else:
-            self.window["-Station_Name-"].update(value="")
-
-    def show(self):
+            print("dbmodel does not have station")
+            self.window["-station_name-"].update(value="")
+        if rel_tracker_app.dbmodel.station != "":
+            self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
         while True:  # the event loop
             event, values = self.window.read()
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
@@ -138,11 +136,11 @@ class preference_vc:
                 if input1 == "OK":
                     station_name = sg.popup_get_text(message="Please provide new station name")
                     if station_name != "":
-                        self.window["-Station_Name-"].update(value=station_name)
+                        self.window["-station_name-"].update(value=station_name)
                         rel_tracker_app.dbmodel.station = station_name # this will associate station name with databased
 
             elif event == "Save Preference":
-                if self.window["-Station_Name-"].get() == "":
+                if self.window["-station_name-"].get() == "":
                     sg.popup_error("station name cannot be empty")
                 else:
                     rel_tracker_app.save_user_settings(self.window)
@@ -160,7 +158,7 @@ class preference_vc:
                     rel_tracker_app.dbmodel.sync_fa_log_table(golden_db_address=gold)
                     rel_tracker_app.dbmodel.sync_tagger_log_table(golden_db_address=gold)
                     sg.popup_ok(f"sync completed. Note: only {rel_tracker_app.station} data is uploaded to golden")
-                    rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+                    rel_tracker_app.station = rel_tracker_app.settings.get("-station_name-")
                     rel_tracker_app.dbmodel.station = rel_tracker_app.station
                 else:
                     sg.popup_ok("no change is made to golden and local copy")
@@ -184,12 +182,12 @@ class preference_vc:
                         break
                     else:
                         address = sg.popup_get_file("please select database file")
-                rel_tracker_app.settings.update({"-Station_Name-": rel_tracker_app.dbmodel.station})
-                self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+                rel_tracker_app.settings.update({"-station_name-": rel_tracker_app.dbmodel.station})
+                self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
                 rel_tracker_app.settings.update({"-Local_Database-": address})
                 rel_tracker_app.apply_user_settings(self.window)
                 if rel_tracker_app.dbmodel.station != "":
-                    self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+                    self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
 
             elif event == "-Golden_Database-":
                 address = values.get("-Golden_Database-")
@@ -208,7 +206,7 @@ class preference_vc:
 
     def close_window(self):
         rel_tracker_app.save_user_settings(self.window)
-        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+        rel_tracker_app.station = rel_tracker_app.settings.get("-station_name-")
         if self.window["-station-type-"].get() == "RelLog Station":
             rel_tracker_app.view_list.append(rel_log_vc())
             rel_tracker_app.settings.update({"-first_view-": "RelLog Station"})
@@ -345,7 +343,7 @@ class rel_log_vc:
                 if user_input == "OK":
                     rel_tracker_app.dbmodel.filter_set.update(
                         {
-                            "station": rel_tracker_app.settings.get("-Station_Name-"),
+                            "station": rel_tracker_app.settings.get("-station_name-"),
                             "note": values.get("-New-Note-")
                         }
                     )
@@ -366,7 +364,7 @@ class rel_log_vc:
                 rel_tracker_app.dbmodel.clean_up_sn_list(rel_tracker_app.dbmodel.generate_random_sn())
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
-                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "station": rel_tracker_app.settings.get("-station_name-"),
                     }
                 )
                 rel_tracker_app.dbmodel.insert_new_to_rel_log_table()
@@ -380,7 +378,7 @@ class rel_log_vc:
                 # print(values.get("-Note-"))
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
-                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "station": rel_tracker_app.settings.get("-station_name-"),
                         "note": values.get("-Note-")
                     }
                 )
@@ -406,7 +404,7 @@ class rel_log_vc:
                 print(values.get("-Note-"))
                 rel_tracker_app.dbmodel.filter_set.update(
                     {
-                        "station": rel_tracker_app.settings.get("-Station_Name-"),
+                        "station": rel_tracker_app.settings.get("-station_name-"),
                         "note": values.get("-Note-")
                     }
                 )
@@ -1064,7 +1062,7 @@ class failure_mode_vc:
     def __init__(self, master: sg.Window = None):
         view = rel_tracker_view(rel_tracker_app.settings)
         rel_tracker_app.dbmodel.filter_set.update({
-            "station": rel_tracker_app.settings.get('-Station_Name-')
+            "station": rel_tracker_app.settings.get('-station_name-')
         })
         self.window = view.popup_fm_select()
         self.window["-SN_Input-"].update(str(rel_tracker_app.dbmodel.filter_set.get("serial_number")))

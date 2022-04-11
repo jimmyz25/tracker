@@ -1,8 +1,4 @@
-# import csv
-
-# import numpy as np
 import pandas as pd
-# import datetime as dt
 from data_model import *
 
 
