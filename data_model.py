@@ -18,8 +18,6 @@ class DBsqlite:
      on timestamp.
      station can be treated as user. station can read all but only have write access to row with same statio
     """
-    #TODO add a check station name function, and display the station name in preference setting.
-    #TODO change station name text field to a label for display only. add a button to create a new station and lock this name with this paticular sqlite file
 
     def upgrade_db(self):
         try:
@@ -88,12 +86,12 @@ class DBsqlite:
 
         return sql
 
-    def __init__(self, address, station=None):
+    def __init__(self, address, saved_station=None):
         print(address)
         if DBsqlite.ok2use(address):
             self.__address__ = address
             self.__connect__()
-            self.station = station
+            self.upgrade_db()
             # self.db_memory = sqlite3.connect(':memory:')
             # self.con.backup(self.db_memory)
             self.current_table = "RelLog_T"
@@ -124,7 +122,8 @@ class DBsqlite:
                 }
             )
             self.printout = None
-            self.upgrade_db()
+            if not self.station:
+                self.station = saved_station  # sqlite station take priority than saved_station
             # self.cur.execute("UPDATE RelLog_T SET removed = a  WHERE  PK = \"aa\"")
 
     @classmethod
@@ -176,7 +175,12 @@ class DBsqlite:
 
     @property
     def station(self):
-        return self._station
+        sql = "SELECT station_id from sys"
+        result = self.cur.execute(sql).fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
 
     def delete_trigger(self):
         del_trigger = f"""
@@ -260,12 +264,12 @@ class DBsqlite:
                 END;
                 """
             self.con.executescript(row_security_trigger)
-            self._station = station_name
+            # self._station = station_name
             sql = "UPDATE sys SET station_id = ?"
-            self.cur.execute(sql, (self._station,))
+            self.cur.execute(sql, (station_name,))
             self.con.commit()
-        else:
-            self._station = None
+        # else:
+        #     self._station = None
 
     def clean_up_sn_list(self, sn_list: str):
         if isinstance(sn_list, str):

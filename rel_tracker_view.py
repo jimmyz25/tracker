@@ -13,6 +13,7 @@ class rel_tracker_view:
     def __init__(self, settings: sg.user_settings):
         # self.default_settings = settings
         pass
+
     @staticmethod
     def welcome_page():
         layout1 = [
@@ -79,9 +80,9 @@ class rel_tracker_view:
     def preference_view():
         layout1 = [
             [sg.Txt("Station Name", size=15, font=rel_tracker_view.text_font),
-             sg.InputText(size=30, font=rel_tracker_view.text_font,
-                          key="-Station_Name-", disabled=True),sg.B("Change Station Name",
-                                                                    font=rel_tracker_view.button_font),
+             sg.Txt(size=30, font=rel_tracker_view.text_font,
+                    key="-Station_Name-"), sg.B("Change Station Name",
+                                                font=rel_tracker_view.button_font),
              sg.Stretch(),
              ],
             [sg.Txt("Station Type", size=15, font=rel_tracker_view.text_font),
@@ -236,8 +237,8 @@ class rel_tracker_view:
                               header_background_color="white",
                               right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
-                                font=rel_tracker_view.text_font)
+        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
+        #                         font=rel_tracker_view.text_font)
         layout_status_column = [
             [
                 sg.Rad("Latest record", group_id="table_show_latest", default=False,
@@ -258,11 +259,11 @@ class rel_tracker_view:
                   )
              ],
             [
-             sg.B("Output to Tableau", size=(15, 1), pad=(5, 2),
-                  font=rel_tracker_view.button_font,
-                  disabled=False, disabled_button_color="#ababab",
-                  )
-             ],
+                sg.B("Output to Tableau", size=(15, 1), pad=(5, 2),
+                     font=rel_tracker_view.button_font,
+                     disabled=False, disabled_button_color="#ababab",
+                     )
+            ],
         ]
         status_column = sg.Column(layout=layout_status_column,
                                   size=(int(250 * rel_tracker_view.scale), int(150 * rel_tracker_view.scale)),
@@ -271,7 +272,7 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -502,16 +503,16 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(150, 5),
-                                font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5),
+        #                         font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -677,8 +678,8 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -694,7 +695,7 @@ class rel_tracker_view:
                       key="-test_station-", enable_events=True)],
             button_row,
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False,

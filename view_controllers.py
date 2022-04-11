@@ -23,7 +23,8 @@ class rel_tracker_app:
     while True:
         if address:
             if DBsqlite.ok2use(address):
-                dbmodel = DBsqlite(address, station=station)
+                dbmodel = DBsqlite(address, saved_station=station)
+                station = dbmodel.station
                 settings.update({"-Local_Database-": address})
                 break
             else:
@@ -49,8 +50,9 @@ class rel_tracker_app:
             if isinstance(key, str) and key in window.key_dict.keys():
                 if isinstance(window[key], sg.PySimpleGUI.Input) or isinstance(window[key], sg.PySimpleGUI.Combo):
                     window[key].update(value=rel_tracker_app.settings.get(key))
-        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
-        rel_tracker_app.dbmodel.station = rel_tracker_app.station
+        # rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
+        rel_tracker_app.station = rel_tracker_app.dbmodel.station
+        window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
         print("USER SETTINGS APPLIED")
 
     @staticmethod
@@ -74,8 +76,8 @@ class rel_tracker_app:
         # clear filterset
         rel_tracker_app.dbmodel.filter_set.clear()
         # save settings to jason file
-        rel_tracker_app.station = rel_tracker_app.settings.get("-Station_Name-")
-        rel_tracker_app.dbmodel.station = rel_tracker_app.station
+        rel_tracker_app.station = rel_tracker_app.dbmodel.station
+        # rel_tracker_app.dbmodel.station = rel_tracker_app.station
         station_name_display = "Station: " + str(rel_tracker_app.station)
         if "-station_name-" in window.key_dict.keys():
             window["-station_name-"].update(value=station_name_display)
@@ -113,7 +115,13 @@ class preference_vc:
         self.window = view.preference_view()
         self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
                                                      "Parametric Testing Station"])
+
+        rel_tracker_app.settings.update({"-Station_Name-": rel_tracker_app.dbmodel.station})
         rel_tracker_app.apply_user_settings(self.window)
+        if rel_tracker_app.dbmodel.station:
+            self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+        else:
+            self.window["-Station_Name-"].update(value="")
 
     def show(self):
         while True:  # the event loop
@@ -121,14 +129,15 @@ class preference_vc:
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
                 break
-            elif event =="Change Station Name":
+            elif event == "Change Station Name":
                 input1 = sg.popup_ok_cancel("Warning! \n Change name to an existing one used"
-                                         " by other station may result sync conflict"
-                                         " Are You Sure to Continue?",background_color="red",non_blocking=False)
+                                            " by other station may result sync conflict"
+                                            " Are You Sure to Continue?", background_color="red", non_blocking=False)
                 if input1 == "OK":
                     station_name = sg.popup_get_text(message="Please provide new station name")
                     if station_name != "":
                         self.window["-Station_Name-"].update(value=station_name)
+                        rel_tracker_app.dbmodel.station = station_name # this will associate station name with databased
 
             elif event == "Save Preference":
                 if self.window["-Station_Name-"].get() == "":
@@ -165,14 +174,21 @@ class preference_vc:
                 while True:
                     if DBsqlite.ok2use(address):
                         rel_tracker_app.dbmodel = DBsqlite(address,
-                                                           station=rel_tracker_app.station)
-                        rel_tracker_app.settings.update({"-Local_Database-": address})
+                                                           saved_station=rel_tracker_app.station)
+                        # saved_station will soon be deprecated
                         sg.popup_ok("Great, this database is ok2use. please double \n"
                                     "confirm this is the latest local copy "
                                     "before continuing")
                         break
                     else:
                         address = sg.popup_get_file("please select database file")
+                rel_tracker_app.settings.update({"-Station_Name-": rel_tracker_app.dbmodel.station})
+                self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+                rel_tracker_app.settings.update({"-Local_Database-": address})
+                rel_tracker_app.apply_user_settings(self.window)
+                if rel_tracker_app.dbmodel.station != "":
+                    self.window["-Station_Name-"].update(value=rel_tracker_app.dbmodel.station)
+
             elif event == "-Golden_Database-":
                 address = values.get("-Golden_Database-")
                 if DBsqlite.ok2use(address):
@@ -181,6 +197,8 @@ class preference_vc:
                 else:
                     self.window["-Golden_Database-"].update(value="")
                     rel_tracker_app.settings.update({"-Golden_Database-": None})
+                    sg.popup_error("selected database is broken")
+                rel_tracker_app.apply_user_settings(self.window)
             if self.window["-Golden_Database-"].get() == self.window["-Local_Database-"].get():
                 sg.popup_error("local database cannot be the same as golden database")
                 self.window["-Golden_Database-"].update(value="")
