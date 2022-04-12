@@ -1,7 +1,7 @@
 # import OS module
 import os
 import sqlite3
-# import datetime as dt
+import datetime as dt
 
 # Get the list of all files and directories
 path = "/Users/jimmyzhong/Desktop/test lib/"
