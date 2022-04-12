@@ -1,4 +1,7 @@
-from view_controllers import *
+from data_model import DBsqlite
+from view_controllers import rel_tracker_app, welcome_vc, rel_log_vc, fa_log_vc, data_log_vc
+from rel_tracker_view import *
+import sys
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
