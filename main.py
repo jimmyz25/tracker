@@ -1,10 +1,10 @@
 from view_controllers import *
 
 if __name__ == '__main__':
-    if len(sys.argv)>1:
-        address = sys.argv[1]
-        if DBsqlite.ok2use(address):
-            sg.user_settings().update({"-Local_Database-": address})
+    if len(sys.argv) > 1:
+        new_address = sys.argv[1]
+        if DBsqlite.ok2use(new_address):
+            sg.user_settings().update({"-Local_Database-": new_address})
             sg.popup_ok("ok to use, loading app may take a few sec")
         else:
             sg.popup_ok("cannot open this file with AppleBerry")
@@ -13,7 +13,7 @@ if __name__ == '__main__':
         sg.popup_ok("loading, please be patient")
 
     app = rel_tracker_app()
-    sg.user_settings().update({"-station_name-": rel_tracker_app.dbmodel.station})
+    rel_tracker_app.reset_app_class()
 
     loading_page = welcome_vc()
     loading_page.show()

@@ -19,7 +19,7 @@ class rel_tracker_view:
         layout1 = [
             [sg.Txt("AppleBerry", size=(None, 1), font=("Helvetica", 50), text_color='White',
                     background_color='#4267B2', justification="right", pad=(5, 40), auto_size_text=True)],
-            [sg.Txt("Version 0.1 ", text_color='White', background_color='#4267B2', justification="left",
+            [sg.Txt("Version 1.0 ", text_color='White', background_color='#4267B2', justification="left",
                     auto_size_text=False, key="-version-")],
             [sg.Txt("from Jimmy Z @Meta. All Right Reserved", text_color='White', background_color='#4267B2',
                     justification="left", auto_size_text=False)]
@@ -72,7 +72,7 @@ class rel_tracker_view:
 
     @staticmethod
     def __station_name__():
-        text = sg.Txt("Station", text_color="Black", font=rel_tracker_view.station_font, key="-station_name-"
+        text = sg.Txt("Station", text_color="Black", font=rel_tracker_view.station_font, key="-station_display-"
                       )
         return text
 

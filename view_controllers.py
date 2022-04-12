@@ -8,36 +8,44 @@ from file_clean_up import *
 class rel_tracker_app:
     # sg.user_settings_filename(path=os.getcwd())
     # sg.user_settings_filename()
-    settings = sg.user_settings()
-    address = sg.user_settings().get("-Local_Database-")
-    station = sg.user_settings().get("-station_name-")  # saved station in setting file,
-    # will later be override by station name saved in database
+
     view_list = []
     sg.theme("LightGrey1")
     sg.SetOptions(font=rel_tracker_view.text_font, element_padding=(2, 2), element_size=(35, 1),
                   auto_size_buttons=True, input_elements_background_color="#f7f7f7", auto_size_text=True,
                   use_ttk_buttons=True, button_element_size=(20, 1))
-    while True:
-        if address:
-            if DBsqlite.ok2use(address):
-                dbmodel = DBsqlite(address, saved_station=station)
-                station = dbmodel.station
-                dbmodel.station = station  # reset trigger (embeded in setter)
-                sg.user_settings().update({"-Local_Database-": address})
-                sg.user_settings().update({"-station_name-": dbmodel.station})
-                break
-            else:
-                address = sg.popup_get_file("please select database file")
-                print(address)
-        else:
-            address = sg.popup_get_file("please select database file")
-            if address:
-                continue
-            else:
-                sys.exit()
+    settings = sg.user_settings()
+    address = sg.user_settings().get("-Local_Database-")
+    station = sg.user_settings().get("-station_name-")
+    dbmodel = DBsqlite(address, saved_station=station)
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def reset_app_class():
+        rel_tracker_app.settings = sg.user_settings()
+        rel_tracker_app.address = sg.user_settings().get("-Local_Database-")
+        rel_tracker_app.station = sg.user_settings().get("-station_name-")  # saved station in setting file,
+        # will later be override by station name saved in database
+        while True:
+            if rel_tracker_app.address:
+                if DBsqlite.ok2use(rel_tracker_app.address):
+                    rel_tracker_app.dbmodel = DBsqlite(rel_tracker_app.address, saved_station=rel_tracker_app.station)
+                    rel_tracker_app.station = rel_tracker_app.dbmodel.station
+                    rel_tracker_app.dbmodel.station = rel_tracker_app.station  # reset trigger (embeded in setter)
+                    sg.user_settings().update({"-Local_Database-": rel_tracker_app.address})
+                    sg.user_settings().update({"-station_name-": rel_tracker_app.dbmodel.station})
+                    break
+                else:
+                    rel_tracker_app.address = sg.popup_get_file("please select database file")
+                    print(rel_tracker_app.address)
+            else:
+                rel_tracker_app.address = sg.popup_get_file("please select database file")
+                if rel_tracker_app.address:
+                    continue
+                else:
+                    sys.exit()
 
     @staticmethod
     def set_address(address):
@@ -75,10 +83,11 @@ class rel_tracker_app:
         rel_tracker_app.dbmodel.filter_set.clear()
         # save settings to jason file
         rel_tracker_app.station = rel_tracker_app.dbmodel.station
+        print(rel_tracker_app.station)
         # rel_tracker_app.dbmodel.station = rel_tracker_app.station
         station_name_display = "Station: " + str(rel_tracker_app.station)
-        if "-station_name-" in window.key_dict.keys():
-            window["-station_name-"].update(value=station_name_display)
+        if "-station_display-" in window.key_dict.keys():
+            window["-station_display-"].update(value=station_name_display)
         print("window reset")
 
 
@@ -113,18 +122,19 @@ class preference_vc:
         self.window = view.preference_view()
         self.window["-station-type-"].update(values=["RelLog Station", "FailureMode Logging Station",
                                                      "Parametric Testing Station"])
+        rel_tracker_app.apply_user_settings(self.window)
 
     def show(self):
-        rel_tracker_app.settings.update({"-station_name-": rel_tracker_app.dbmodel.station})
-        rel_tracker_app.apply_user_settings(self.window)
-        if rel_tracker_app.dbmodel.station:
-            print("dbmodel has station")
-            self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
-        else:
-            print("dbmodel does not have station")
-            self.window["-station_name-"].update(value="")
-        if rel_tracker_app.dbmodel.station != "":
-            self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
+        # rel_tracker_app.settings.update({"-station_name-": rel_tracker_app.dbmodel.station})
+        # rel_tracker_app.apply_user_settings(self.window)
+        # if rel_tracker_app.dbmodel.station:
+        #     print("dbmodel has station")
+        #     self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
+        # else:
+        #     print("dbmodel does not have station")
+        #     self.window["-station_name-"].update(value="")
+        # if rel_tracker_app.dbmodel.station != "":
+        #     self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
         while True:  # the event loop
             event, values = self.window.read()
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
