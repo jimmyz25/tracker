@@ -531,10 +531,10 @@ class DBsqlite:
         SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime, 
         RelLog_T.WIP, Config_T.Program, Config_T.Build, Config_T.Config, 
         RelStress_T.RelStress, RelStress_T.RelCheckpoint,
-        A.FailureGroup, A.FailureMode ,A.FA_Details,  RelLog_T.ModiTimestamp
+        A.FailureGroup, A.FailureMode ,A.FA_Details, A.ModiTimestamp
         From RelLog_T
         left join (SELECT FailureMode_T.FailureGroup, FailureMode_T.FailureMode,
-        FALog_T.FA_Details,FALog_T.ModiTimestamp, FALog_T.SerialNumber,FALog_T.FK_RelStress,FALog_T.ModiTimestamp
+        FALog_T.FA_Details,FALog_T.ModiTimestamp, FALog_T.SerialNumber,FALog_T.FK_RelStress
         From FALog_T
         inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
         where FALog_T.removed = 0) as A
