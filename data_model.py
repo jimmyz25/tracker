@@ -1248,7 +1248,7 @@ class DBsqlite:
 
     def insert_to_failure_log_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         if isinstance(self.filter_set.get("failure_mode"), list):
             for failure_mode in self.filter_set.get("failure_mode"):
                 result = self.cur.execute("SELECT PK FROM FailureMode_T WHERE FailureMode = ?",
@@ -1331,7 +1331,7 @@ class DBsqlite:
 
     def insert_new_to_rel_log_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         count = 0
         if isinstance(self.filter_set.get("serial_number_list"), list):
             for sn in self.filter_set.get("serial_number_list"):
@@ -1371,7 +1371,7 @@ class DBsqlite:
 
     def checkin_to_new_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         new_stress_pk = self.selected_stress_pks
         count = 0
         if new_stress_pk:
@@ -1407,7 +1407,7 @@ class DBsqlite:
 
     def checkout_current_checkpoint_rellog_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         if isinstance(self.filter_set.get("selected_pks"), list):
             condition = {
                 "PK": self.filter_set.get("selected_pks")
@@ -1577,7 +1577,7 @@ class DBsqlite:
 
     def start_timer_data_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         uuid_str = str(uuid.uuid1())
         log = {
             "PK": uuid_str,
@@ -1597,7 +1597,7 @@ class DBsqlite:
 
     def checkin_to_tester_data_table(self):
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         count = 0
         for pk in self.filter_set.get("selected_pks"):
             result = self.cur.execute("SELECT * FROM RelLog_T WHERE PK = ?", (pk,)).fetchone()
@@ -1630,7 +1630,7 @@ class DBsqlite:
     def end_timer_data_table(self, pk: str = None):
         if pk:
             current_time = dt.datetime.now().timestamp()
-            time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
             result = self.cur.execute("SELECT EndTimestamp from Tagger_Log_T WHERE PK = ? ", (pk,)).fetchone()
             if result["EndTimestamp"] is None:
                 log = {
@@ -1686,7 +1686,7 @@ class DBsqlite:
     def __update_to_table__(self, tablename: str, condition: dict, **log):
         # when value is none, it will not get updated, set to "" if need to update
         current_time = dt.datetime.now().timestamp()
-        time_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        time_str = dt.datetime.now().strftime('%y-%m-%d %H:%M')
         set_statement = []
         value_list = []
         col_names = self.__get_col_names__(tablename)
