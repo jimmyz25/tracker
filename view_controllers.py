@@ -81,9 +81,8 @@ class rel_tracker_app:
                 window[key].update(value="")
         # clear filterset
         rel_tracker_app.dbmodel.filter_set.clear()
-        # save settings to jason file
+        # save settings to json file
         rel_tracker_app.station = rel_tracker_app.dbmodel.station
-        print(rel_tracker_app.station)
         # rel_tracker_app.dbmodel.station = rel_tracker_app.station
         station_name_display = "Station: " + str(rel_tracker_app.station)
         if "-station_display-" in window.key_dict.keys():
@@ -478,7 +477,8 @@ class rel_log_vc:
                     if len(selected_sn_list) == 1:
                         print(selected_sn_list, "in selection", "Note: ", str(selected[0][-1]))
                     elif len(selected_sn_list) > 1:
-                        print(len(selected_sn_list), "units selected")
+                        # print(len(set(selected_sn_list)), "units selected")
+                        print(f'{len(set(selected_sn_list))} units selected in {len(selected_sn_list)} rows')
                     if rel_tracker_app.dbmodel.filter_set.get("update_mode"):
                         sn = SnModel(selected[0][3], database=rel_tracker_app.dbmodel)
                         rel_tracker_app.dbmodel.filter_set.update({
@@ -585,9 +585,11 @@ class rel_log_vc:
                 self.window["Delete"].update(disabled=False)
             else:
                 self.window["Delete"].update(disabled=True)
-            if rel_tracker_app.dbmodel.filter_set.get("serial_number_list") is not None:
+            if rel_tracker_app.dbmodel.filter_set.get("serial_number_list"):
                 total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                 self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
+            else:
+                self.window["-Multi_SN-"].update(value=f'SerialNumber (0)')
         self.close_window()
 
     def close_window(self):
