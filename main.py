@@ -5,12 +5,15 @@ import sys
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        new_address = sys.argv[1]
-        if DBsqlite.ok2use(new_address):
-            sg.user_settings().update({"-Local_Database-": new_address})
-            sg.popup_ok("ok to use, loading app may take a few sec")
+        if sys.argv[1]:
+            new_address = sys.argv[1]
+            if DBsqlite.ok2use(new_address):
+                sg.user_settings().update({"-Local_Database-": new_address})
+                sg.popup_ok("ok to use, loading app may take a few sec")
+            else:
+                sg.popup_ok("cannot open this file with AppleBerry")
+                sys.exit()
         else:
-            sg.popup_ok("cannot open this file with AppleBerry")
             sys.exit()
     else:
         sg.popup_ok("loading, please be patient")

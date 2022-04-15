@@ -17,7 +17,8 @@ class rel_tracker_app:
     settings = sg.user_settings()
     address = sg.user_settings().get("-Local_Database-")
     station = sg.user_settings().get("-station_name-")
-    dbmodel = DBsqlite(address, saved_station=station)
+    # if address:
+    #     dbmodel = DBsqlite(address, saved_station=station)
 
     def __init__(self):
         pass
