@@ -135,10 +135,15 @@ class preference_vc:
         #     self.window["-station_name-"].update(value="")
         # if rel_tracker_app.dbmodel.station != "":
         #     self.window["-station_name-"].update(value=rel_tracker_app.dbmodel.station)
+        if self.window["-station_name-"].get():
+            self.window["Go"].update(disabled=False)
+        else:
+            self.window["Go"].update(disabled=True)
         while True:  # the event loop
             event, values = self.window.read()
             if event == "-WINDOW CLOSE ATTEMPTED-" or event == "Go":
                 rel_tracker_app.save_user_settings(self.window)
+                # print(sg.user_settings())
                 break
             elif event == "Change Station Name":
                 input1 = sg.popup_ok_cancel("Warning! \n Change name to an existing one used"
