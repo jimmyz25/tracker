@@ -527,23 +527,41 @@ class DBsqlite:
             return None
 
     def tableau_output(self):
+        # sql = """
+        # SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime,
+        # RelLog_T.WIP, Config_T.Program, Config_T.Build, Config_T.Config,
+        # RelStress_T.RelStress, RelStress_T.RelCheckpoint,
+        # A.FailureGroup, A.FailureMode ,A.FA_Details, A.ModiTimestamp
+        # From RelLog_T
+        # left join (SELECT FailureMode_T.FailureGroup, FailureMode_T.FailureMode,
+        # FALog_T.FA_Details,FALog_T.ModiTimestamp, FALog_T.SerialNumber,FALog_T.FK_RelStress
+        # From FALog_T
+        # inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
+        # where FALog_T.removed = 0) as A
+        #
+        # on A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress
+        # inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber
+        # inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
+        # inner join RelStress_T on RelStress_T.PK = RelLog_T.FK_RelStress
+        # where RelLog_T.removed = 0
+        # """
+
         sql = """
-        SELECT RelLog_T.SerialNumber,  RelLog_T.StartTime, RelLog_T.EndTime, 
-        RelLog_T.WIP, Config_T.Program, Config_T.Build, Config_T.Config, 
-        RelStress_T.RelStress, RelStress_T.RelCheckpoint,
-        A.FailureGroup, A.FailureMode ,A.FA_Details, A.ModiTimestamp
-        From RelLog_T
-        left join (SELECT FailureMode_T.FailureGroup, FailureMode_T.FailureMode,
-        FALog_T.FA_Details,FALog_T.ModiTimestamp, FALog_T.SerialNumber,FALog_T.FK_RelStress
-        From FALog_T
-        inner join FailureMode_T on FailureMode_T.PK = FALog_T.FK_FailureMode
-        where FALog_T.removed = 0) as A
-        
-        on A.SerialNumber = RelLog_T.SerialNumber and A.FK_RelStress = RelLog_T.FK_RelStress
-        inner join Config_SN_T on Config_SN_T.SerialNumber = RelLog_T.SerialNumber
-        inner join Config_T on Config_T.PK = Config_SN_T.Config_FK
-        inner join RelStress_T on RelStress_T.PK = RelLog_T.FK_RelStress
-        where RelLog_T.removed = 0
+        SELECT FailureMode_T.FailureGroup,FailureMode_T.FailureMode, Config_T.Program,Config_T.Build,Config_T.Config,
+        RelStress_T.RelStress,RelStress_T.RelCheckpoint, A.SerialNumber, A.StartTime,A.EndTime, A.FA_Details
+        from 
+        (SELECT SerialNumber,  StartTime, EndTime, FK_RelStress, NULL as FK_FailureMode, NULL as FA_Details, WIP,StartTimestamp
+        From RelLog_T where removed = 0 
+        UNION
+        SELECT SerialNumber,  StartTime, StartTime  as EndTime, FK_RelStress, FK_FailureMode,FA_Details, NULL as WIP,StartTimestamp
+        From FALog_T where removed = 0
+		) as A 
+        LEFT JOIN FailureMode_T on FailureMode_T.PK = A.FK_FailureMode
+        INNER JOIN Config_SN_T on Config_SN_T.SerialNumber = A.SerialNumber
+        INNER JOIN Config_T on Config_T.PK = Config_SN_T.Config_FK
+        INNER JOIN RelStress_T on RelStress_T.PK = A.FK_RelStress
+		order by A.StartTimestamp DESC
+		
         """
         self.cur.execute(sql)
         with open("tableau_output.csv", "w", encoding='UTF8', newline='') as csv_file:
