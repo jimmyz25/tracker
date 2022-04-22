@@ -341,6 +341,16 @@ class DBsqlite:
         return result is None
 
     @property
+    def ready_to_add_dummy(self):
+        a = 0
+        c = 0
+        if self.selected_config_pks is not None:
+            a = len(self.selected_config_pks)
+        if self.selected_stress_pks is not None:
+            b = len(self.selected_stress_pks)
+        return a == 1 and b == 1
+
+    @property
     def ready_to_add(self):
         a = 0
         b = 0

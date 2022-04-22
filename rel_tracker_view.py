@@ -135,24 +135,24 @@ class rel_tracker_view:
         return window
 
     def rel_lab_station_view(self):
-        tab_new_left = [
-            [sg.Txt(text="WIP", size=(15, 1),
-                    font=rel_tracker_view.text_font),
-             sg.In(key="-New-WIP_Input-", enable_events=True, font=rel_tracker_view.text_font)],
-            [sg.Txt("Assign Config", size=(15, 1), font=rel_tracker_view.text_font),
-             sg.In(key="-New-Config_Input-", enable_events=True, font=rel_tracker_view.text_font)],
-            [sg.Txt("initial Checkpoint", size=(15, 1), font=rel_tracker_view.text_font),
-             sg.In(key="-New-Ckp_Input-", enable_events=True, font=rel_tracker_view.text_font)],
-            [sg.Txt("Notes", size=(15, 1), font=rel_tracker_view.text_font),
-             sg.In(key="-New-Note-", enable_events=False, font=rel_tracker_view.text_font)],
-            [sg.Txt("SerialNumber (0)", size=(15, 3),
-                    expand_y=True, key="-Multi_SN-", font=rel_tracker_view.text_font),
-             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
-                          font=rel_tracker_view.text_font,
-                          tooltip="copy paste from csv or manually enter, finish with RETURN \n Note:duplicates will "
-                                  "be removed ")]
-        ]
-        tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
+        # tab_new_left = [
+        #     [sg.Txt(text="WIP", size=(15, 1),
+        #             font=rel_tracker_view.text_font),
+        #      sg.In(key="-New-WIP_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+        #     [sg.Txt("Assign Config", size=(15, 1), font=rel_tracker_view.text_font),
+        #      sg.In(key="-New-Config_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+        #     [sg.Txt("initial Checkpoint", size=(15, 1), font=rel_tracker_view.text_font),
+        #      sg.In(key="-New-Ckp_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+        #     [sg.Txt("Notes", size=(15, 1), font=rel_tracker_view.text_font),
+        #      sg.In(key="-New-Note-", enable_events=False, font=rel_tracker_view.text_font)],
+        #     [sg.Txt("SerialNumber (0)", size=(15, 3),
+        #             expand_y=True, key="-Multi_SN-", font=rel_tracker_view.text_font),
+        #      sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
+        #                   font=rel_tracker_view.text_font,
+        #                   tooltip="copy paste from csv or manually enter, finish with RETURN \n Note:duplicates will "
+        #                           "be removed ")]
+        # ]
+        # tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
 
         tab_old_left = [
             [sg.Txt("SerialNumber", size=(15, 1), key="-old_sn-", font=rel_tracker_view.text_font),
@@ -168,23 +168,23 @@ class rel_tracker_view:
                           no_scrollbar=True, key="-Note-")]
         ]
 
-        tab2 = sg.Tab(layout=tab_old_left, title="Existing Units")
+        tab2 = sg.Tab(layout=tab_old_left, title="Filters")
 
-        tab_group = sg.TabGroup(layout=[[tab1, tab2]],
+        tab_group = sg.TabGroup(layout=[[tab2]],
                                 size=(int(350 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
                                 enable_events=True, key="-Tab_Selection-")
 
         layout_button_column = [
             [self.__station_name__()],
-            [sg.B("Add", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab",
+            [sg.B("Add New", size=(15, 1), pad=(5, 2),
+                  disabled=False, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
-                  tooltip="register new units in batch",
+                  tooltip="register new units in batch", key="Add"
                   ),
              sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
-                  disabled=True, disabled_button_color="#ababab",
+                  disabled=False, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
-                  tooltip="select or enter existing units then fill in WIP in 'register new unit' tab "),
+                  tooltip="it's eaiser to track a group of units as in a WIP"),
              ],
             [sg.B("Reset", size=(15, 1), pad=(5, 2),
                   disabled=False, disabled_button_color="#ababab",
@@ -207,10 +207,7 @@ class rel_tracker_view:
             [sg.B("Delete", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
                   disabled=True, disabled_button_color="#ababab"),
-             sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
-                  font=rel_tracker_view.button_font,
-                  disabled=False, disabled_button_color="#ababab",
-                  tooltip="only for demo, disabled for normal use")
+
              ],
             [sg.B("Remove for FA", size=(15, 1), pad=(5, 2),
                   font=rel_tracker_view.button_font,
@@ -235,10 +232,9 @@ class rel_tracker_view:
                               expand_x=True, num_rows=15, font=rel_tracker_view.table_font,
                               header_font=rel_tracker_view.table_header_font,
                               header_background_color="white",
-                              right_click_menu=['&right_click', ["Enter Update Mode", "Exit Update Mode"]],
                               enable_events=True, key="-table_select-", pad=(5, 10), hide_vertical_scroll=False)
-        output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
-                                font=rel_tracker_view.text_font)
+        # output_view = sg.Output(size=(150, 5), background_color="white", expand_x=True, key="-output-",
+        #                         font=rel_tracker_view.text_font)
         layout_status_column = [
             [
                 sg.Rad("Latest record", group_id="table_show_latest", default=False,
@@ -272,15 +268,120 @@ class rel_tracker_view:
             [self.__facebook__()],
             [tab_group, button_column, status_column, sg.Stretch()],
             [table_view],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Rel Status Logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
                            finalize=True, enable_close_attempted_event=True, default_button_element_size=(5, 1))
         window["-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        # window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
+        # window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        # window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
+        # window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
+
+        return window
+
+    @staticmethod
+    def add_new_view():
+        tab_new_left = [
+            [sg.Txt(text="WIP", size=(15, 1),
+                    font=rel_tracker_view.text_font),
+             sg.In(key="-New-WIP_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+            [sg.Txt("Assign Config", size=(15, 1), font=rel_tracker_view.text_font),
+             sg.In(key="-New-Config_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+            [sg.Txt("initial Checkpoint", size=(15, 1), font=rel_tracker_view.text_font),
+             sg.In(key="-New-Ckp_Input-", enable_events=True, font=rel_tracker_view.text_font)],
+            [sg.Txt("Notes", size=(15, 1), font=rel_tracker_view.text_font),
+             sg.In(key="-New-Note-", enable_events=False, font=rel_tracker_view.text_font)],
+            [sg.Txt("SerialNumber (0)", size=(15, 3),
+                    expand_y=True, key="-Multi_SN-", font=rel_tracker_view.text_font),
+             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
+                          font=rel_tracker_view.text_font,
+                          tooltip="copy paste from csv or manually enter, finish with RETURN \n Note:duplicates will "
+                                  "be removed ")]
+        ]
+        tab1 = sg.Tab(layout=tab_new_left, title="Register New Unit")
+
+        tab_group = sg.TabGroup(layout=[[tab1]],
+                                size=(int(350 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
+                                enable_events=True, key="-Tab_Selection-")
+
+        layout_button_column = [
+
+            [sg.B("Add", size=(15, 1), pad=(5, 2),
+                  disabled=True, disabled_button_color="#ababab",
+                  font=rel_tracker_view.button_font,
+                  tooltip="register new units in batch",
+                  ), ],
+            [sg.B("Add Dummy SN", size=(15, 1), pad=(5, 2),
+                  font=rel_tracker_view.button_font,
+                  disabled=True, disabled_button_color="#ababab",
+                  tooltip="only for demo, disabled for normal use")],
+            [sg.B("Reset", size=(15, 1), pad=(5, 2),
+                  disabled=False, disabled_button_color="#ababab",
+                  font=rel_tracker_view.button_font,
+                  ), ]
+        ]
+
+        button_column = sg.Column(layout=layout_button_column,
+                                  size=(int(350 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)))
+
+        layout = [
+            [tab_group, button_column, sg.Stretch()],
+        ]
+
+        window = sg.Window('add_new_view', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False, default_button_element_size=(5, 1))
         window["-New-Config_Input-"].bind("<Button-1>", "-ConfigPop-")
         window["-New-Ckp_Input-"].bind("<Button-1>", "-CkpPop-")
+        window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
+        window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
+
+        return window
+
+    @staticmethod
+    def assign_wip_view():
+        tab_new_left = [
+            [sg.Txt(text="WIP", size=(15, 1),
+                    font=rel_tracker_view.text_font),
+             sg.In(key="-New-WIP_Input-", enable_events=False, font=rel_tracker_view.text_font)],
+            [sg.Txt("SerialNumber (0)", size=(15, 3),
+                    expand_y=True, key="-Multi_SN-", font=rel_tracker_view.text_font),
+             sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
+                          font=rel_tracker_view.text_font,
+                          tooltip="copy paste from csv or manually enter, finish with RETURN \n Note:duplicates will "
+                                  "be removed ")]
+        ]
+        tab1 = sg.Tab(layout=tab_new_left, title="Add SerialNumber to WIP")
+
+        tab_group = sg.TabGroup(layout=[[tab1]],
+                                size=(int(350 * rel_tracker_view.scale), int(180 * rel_tracker_view.scale)),
+                                enable_events=True, key="-Tab_Selection-")
+
+        layout_button_column = [
+
+            [sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
+                  disabled=False, disabled_button_color="#ababab",
+                  font=rel_tracker_view.button_font,
+                  tooltip="assign units in batch"
+                  ),
+             ],
+            [sg.B("Reset", size=(15, 1), pad=(5, 2),
+                  disabled=False, disabled_button_color="#ababab",
+                  font=rel_tracker_view.button_font,
+                  ),]
+        ]
+
+        button_column = sg.Column(layout=layout_button_column,
+                                  size=(int(350 * rel_tracker_view.scale), int(200 * rel_tracker_view.scale)))
+
+        layout = [
+            [tab_group, button_column, sg.Stretch()],
+        ]
+
+        window = sg.Window('assign_wip_view', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
+                           finalize=True, enable_close_attempted_event=False, default_button_element_size=(5, 1))
         window["-New-SN_Input-"].bind("<Return>", "-sn_count-")
         window["-New-SN_Input-"].bind("<,>", "2-sn_count-")
 
@@ -503,16 +604,16 @@ class rel_tracker_view:
                                enable_events=True, key="-fa_table_select-", pad=(5, 10), hide_vertical_scroll=True,
                                right_click_menu=['&right_click', ["update failure"]])
 
-        output_view = sg.Output(size=(150, 5),
-                                font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5),
+        #                         font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
             [filter_column, table_view],
             [layout_button_row],
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('failure mode logger', layout, keep_on_top=False, grab_anywhere=False, no_titlebar=False,
@@ -678,8 +779,8 @@ class rel_tracker_view:
                                header_background_color="white",
                                enable_events=True, key="-data_table_select-", pad=(5, 10), hide_vertical_scroll=True)
 
-        output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
-                                background_color="white", expand_x=True, key="-output-")
+        # output_view = sg.Output(size=(150, 5), font=rel_tracker_view.text_font,
+        #                         background_color="white", expand_x=True, key="-output-")
 
         layout = [
             [self.__facebook__()],
@@ -695,7 +796,7 @@ class rel_tracker_view:
                       key="-test_station-", enable_events=True)],
             button_row,
             [table_view2],
-            [output_view]
+            # [output_view]
         ]
 
         window = sg.Window('Parametric Testing Station', layout, keep_on_top=False, grab_anywhere=False,
