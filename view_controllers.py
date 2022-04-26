@@ -677,21 +677,27 @@ class assign_wip_vc:
                 self.row_selection = None
             elif event == "Assign WIP":
                 wip = self.window['-New-WIP_Input-'].get()
-                if wip is not None:
+                empty_wip = wip is None or wip == ""
+                if not empty_wip:
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
                     rel_tracker_app.dbmodel.assign_wip_row_rellog_table(wip)
                     # self.row_selection = None
                     self.window["-New-SN_Input-"].update(value="")
                     rel_tracker_app.dbmodel.clean_up_sn_list(self.window["-New-SN_Input-"].get())
+                else:
+                    print("wip is empty, aborted")
 
             if rel_tracker_app.dbmodel.filter_set.get("serial_number_list"):
                 total_sn_to_register = len(rel_tracker_app.dbmodel.filter_set.get("serial_number_list"))
                 self.window["-Multi_SN-"].update(value=f'SerialNumber ({total_sn_to_register})')
             else:
                 self.window["-Multi_SN-"].update(value=f'SerialNumber (0)')
+            wip = self.window['-New-WIP_Input-'].get()
+            empty_wip = wip is None or wip == ""
             if rel_tracker_app.dbmodel \
-                    .ready_to_batch_update:
+                    .ready_to_batch_update and not empty_wip:
                 self.window["Assign WIP"].update(disabled=False)
+
             else:
                 self.window["Assign WIP"].update(disabled=True)
         self.close_window()

@@ -345,7 +345,7 @@ class rel_tracker_view:
         tab_new_left = [
             [sg.Txt(text="WIP", size=(15, 1),
                     font=rel_tracker_view.text_font),
-             sg.In(key="-New-WIP_Input-", enable_events=False, font=rel_tracker_view.text_font)],
+             sg.In(key="-New-WIP_Input-", enable_events=True, font=rel_tracker_view.text_font)],
             [sg.Txt("SerialNumber (0)", size=(15, 3),
                     expand_y=True, key="-Multi_SN-", font=rel_tracker_view.text_font),
              sg.Multiline(size=(40, 3), expand_y=True, no_scrollbar=True, enable_events=False, key="-New-SN_Input-",
@@ -362,7 +362,7 @@ class rel_tracker_view:
         layout_button_column = [
 
             [sg.B("Assign WIP", size=(15, 1), pad=(5, 2),
-                  disabled=False, disabled_button_color="#ababab",
+                  disabled=True, disabled_button_color="#ababab",
                   font=rel_tracker_view.button_font,
                   tooltip="assign units in batch"
                   ),
