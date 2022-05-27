@@ -407,10 +407,9 @@ class rel_log_vc:
                     rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-New-WIP_Input-"].get()})
                     self.window["-WIP_Input-"].update(self.window["-New-WIP_Input-"].get())
                 else:
-                    pass
-                    # rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
-                    # rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
-                    # # self.window["-New-WIP_Input-"].update(self.window["-WIP_Input-"].get())
+                    rel_tracker_app.dbmodel.filter_set.update({"serial_number": self.window["-SN_Input-"].get()})
+                    rel_tracker_app.dbmodel.filter_set.update({"wip": self.window["-WIP_Input-"].get()})
+                    # self.window["-New-WIP_Input-"].update(self.window["-WIP_Input-"].get())
                 self.window['-table_select-'].update(values=self.table_data)
                 self.row_selection = None
             elif event.endswith("-ConfigPop-"):
