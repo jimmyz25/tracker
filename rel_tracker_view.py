@@ -67,7 +67,7 @@ class rel_tracker_view:
 
         return [
             [column1, sg.Stretch(),
-             sg.Txt("Ver 1.0", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
+             sg.Txt("Ver 1.1", font='Helvetica 10', text_color='#4267B2', size=(18, 1))],
         ]
 
     @staticmethod
